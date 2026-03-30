@@ -1,0 +1,135 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://asphalt.io/schemas/event.schema.json",
+  "title": "RoadEvent",
+  "description": "A single detected road anomaly event captured by the Asphalt SDK.",
+  "type": "object",
+  "required": [
+    "event_id",
+    "timestamp_ms",
+    "latitude",
+    "longitude",
+    "intensity",
+    "speed_kmh",
+    "anomaly_type",
+    "sensor_summary",
+    "device_meta",
+    "sdk_version"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Client-generated UUID v4 for deduplication."
+    },
+    "timestamp_ms": {
+      "type": "integer",
+      "description": "Unix epoch milliseconds (UTC) when the anomaly was detected."
+    },
+    "latitude": {
+      "type": "number",
+      "minimum": -90,
+      "maximum": 90,
+      "description": "WGS84 latitude of the anomaly location."
+    },
+    "longitude": {
+      "type": "number",
+      "minimum": -180,
+      "maximum": 180,
+      "description": "WGS84 longitude of the anomaly location."
+    },
+    "accuracy_m": {
+      "type": "number",
+      "minimum": 0,
+      "description": "GPS horizontal accuracy in metres at time of event. Events with accuracy > 50m should be treated as low confidence."
+    },
+    "intensity": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Normalised anomaly intensity score from 0.0 (barely detectable) to 1.0 (severe). Derived from peak acceleration delta and gyroscope confirmation."
+    },
+    "speed_kmh": {
+      "type": "number",
+      "minimum": 0,
+      "description": "Vehicle speed in km/h at time of event, used for speed-normalisation of intensity."
+    },
+    "anomaly_type": {
+      "type": "string",
+      "enum": ["pothole", "bump", "rough_patch", "unknown"],
+      "description": "Classification of the anomaly. 'unknown' when the signal pattern does not clearly match a known type."
+    },
+    "sensor_summary": {
+      "type": "object",
+      "description": "Condensed sensor statistics for the detection window. Raw samples are never transmitted.",
+      "required": ["accel_peak_z", "accel_baseline_z", "gyro_peak_magnitude", "window_duration_ms"],
+      "properties": {
+        "accel_peak_z": {
+          "type": "number",
+          "description": "Peak Z-axis accelerometer value (m/s^2) during the detection window."
+        },
+        "accel_baseline_z": {
+          "type": "number",
+          "description": "Rolling baseline Z-axis accelerometer value before the event (m/s^2). Typically close to 9.8 on flat road."
+        },
+        "accel_delta_z": {
+          "type": "number",
+          "description": "Absolute deviation from baseline: |peak_z - baseline_z|."
+        },
+        "gyro_peak_magnitude": {
+          "type": "number",
+          "description": "Peak magnitude of gyroscope vector during window (rad/s). Used to confirm physical motion rather than sensor noise."
+        },
+        "sample_count": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Number of accelerometer samples collected during the detection window."
+        },
+        "window_duration_ms": {
+          "type": "integer",
+          "description": "Duration of the detection window in milliseconds."
+        }
+      },
+      "additionalProperties": false
+    },
+    "device_meta": {
+      "type": "object",
+      "description": "Anonymous device characteristics for calibration. No PII is collected. No device identifiers, IMEI, advertising IDs, or user accounts.",
+      "required": ["platform", "sdk_int"],
+      "properties": {
+        "platform": {
+          "type": "string",
+          "enum": ["android"],
+          "description": "Platform identifier."
+        },
+        "sdk_int": {
+          "type": "integer",
+          "description": "Android API level (e.g. 33 for Android 13)."
+        },
+        "manufacturer": {
+          "type": "string",
+          "description": "Device manufacturer string from Build.MANUFACTURER. Used to account for known sensor calibration differences across OEMs."
+        },
+        "model": {
+          "type": "string",
+          "description": "Device model from Build.MODEL."
+        },
+        "sensor_vendor": {
+          "type": "string",
+          "description": "Accelerometer sensor vendor string."
+        }
+      },
+      "additionalProperties": false
+    },
+    "sdk_version": {
+      "type": "string",
+      "description": "Asphalt SDK version string (semver, e.g. '1.0.0')."
+    },
+    "session_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Anonymous session UUID generated at SDK start. Rotated each time Asphalt.start() is called. Never persisted across app restarts. Used only for grouping events within a single drive session."
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,34 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgis/postgis:16-3.4-alpine
+    environment:
+      POSTGRES_USER: asphalt
+      POSTGRES_PASSWORD: asphalt
+      POSTGRES_DB: asphalt
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U asphalt"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  server:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      DATABASE_URL: postgres://asphalt:asphalt@db:5432/asphalt?sslmode=disable
+      LISTEN_ADDR: ":8080"
+      CLUSTER_INTERVAL: "5m"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pg_data:

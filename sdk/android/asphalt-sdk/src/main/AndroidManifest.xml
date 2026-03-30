@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+        SDK manifest: declares permissions required by the SDK.
+        The host application must also declare these in its own manifest
+        and request runtime permission for ACCESS_FINE_LOCATION on Android 6+.
+    -->
+
+    <!-- Required: Network access for batch upload -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Required: GPS location for event tagging and speed filtering -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+    <!--
+        Optional: Background location for passive collection while the app is not
+        in the foreground. Requires a foreground service and explicit user consent.
+        Omit if your use case is foreground-only.
+    -->
+    <!-- <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" /> -->
+
+    <!--
+        Required for WorkManager's background job scheduling.
+        Automatically merged from the work-runtime-ktx dependency.
+    -->
+
+    <!--
+        Sensor permissions: Android does not require a manifest permission for
+        TYPE_ACCELEROMETER or TYPE_GYROSCOPE on API 24+. No declaration needed.
+    -->
+
+</manifest>
