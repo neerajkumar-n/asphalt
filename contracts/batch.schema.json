@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://asphalt.io/schemas/batch.schema.json",
+  "title": "EventBatch",
+  "description": "A batch of road events submitted by the Asphalt SDK to the ingestion API. Batching reduces battery and network overhead.",
+  "type": "object",
+  "required": ["batch_id", "submitted_at_ms", "events"],
+  "properties": {
+    "batch_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Client-generated UUID for the batch. Used for idempotent resubmission if the first upload fails."
+    },
+    "submitted_at_ms": {
+      "type": "integer",
+      "description": "Unix epoch milliseconds when the batch was assembled for upload."
+    },
+    "events": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 500,
+      "items": {
+        "$ref": "event.schema.json"
+      },
+      "description": "List of road events. Maximum 500 per batch to bound payload size."
+    }
+  },
+  "additionalProperties": false
+}

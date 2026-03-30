@@ -1,0 +1,242 @@
+openapi: "3.1.0"
+
+info:
+  title: Asphalt Ingestion and Query API
+  version: "1.0.0"
+  description: |
+    REST API for the Asphalt road anomaly detection platform.
+
+    Two surface areas:
+    - Ingestion: accepts event batches from the Android SDK
+    - Query: serves aggregated road quality data for map rendering
+
+    All coordinates use WGS84. All timestamps are Unix milliseconds UTC.
+
+servers:
+  - url: https://api.asphalt.io/v1
+    description: Production
+
+paths:
+  /ingest/batch:
+    post:
+      operationId: ingestBatch
+      summary: Submit a batch of road anomaly events
+      description: |
+        Accepts a JSON batch from the SDK. Idempotent: re-submitting a batch
+        with the same batch_id will be accepted with 200 but no duplicate
+        events will be stored.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventBatch"
+      responses:
+        "200":
+          description: Batch accepted (including duplicate batch_id re-submissions)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IngestResponse"
+        "400":
+          description: Malformed request body or schema validation failure
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "413":
+          description: Batch exceeds maximum allowed size (500 events or 2MB)
+        "429":
+          description: Rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+              description: Seconds to wait before retrying
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /map/tiles/{z}/{x}/{y}:
+    get:
+      operationId: getMapTile
+      summary: Get road quality data for a map tile
+      description: |
+        Returns aggregated anomaly clusters for the given slippy map tile.
+        Intended for use with map SDKs such as Mapbox or Google Maps.
+      parameters:
+        - name: z
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 18
+          description: Zoom level
+        - name: x
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Tile X coordinate
+        - name: y
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Tile Y coordinate
+        - name: min_confidence
+          in: query
+          schema:
+            type: number
+            minimum: 0
+            maximum: 1
+            default: 0.3
+          description: Minimum cluster confidence score to include
+        - name: anomaly_type
+          in: query
+          schema:
+            type: string
+            enum: [pothole, bump, rough_patch, unknown]
+          description: Filter by anomaly type. Omit for all types.
+      responses:
+        "200":
+          description: Tile data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TileResponse"
+        "404":
+          description: No data for this tile
+
+  /map/clusters:
+    get:
+      operationId: getClusters
+      summary: Get anomaly clusters within a bounding box
+      parameters:
+        - name: min_lat
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: min_lon
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: max_lat
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: max_lon
+          in: query
+          required: true
+          schema:
+            type: number
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 200
+            maximum: 1000
+      responses:
+        "200":
+          description: List of clusters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  clusters:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AnomalyCluster"
+
+  /health:
+    get:
+      operationId: healthCheck
+      summary: Service health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [ok]
+
+components:
+  schemas:
+    EventBatch:
+      $ref: "batch.schema.json"
+
+    IngestResponse:
+      type: object
+      required: [batch_id, accepted_count, duplicate]
+      properties:
+        batch_id:
+          type: string
+          format: uuid
+        accepted_count:
+          type: integer
+          description: Number of events accepted for processing
+        duplicate:
+          type: boolean
+          description: True if this batch_id was already processed
+
+    AnomalyCluster:
+      type: object
+      required: [cluster_id, latitude, longitude, anomaly_type, confidence, event_count, avg_intensity, last_seen_ms]
+      properties:
+        cluster_id:
+          type: string
+          format: uuid
+        latitude:
+          type: number
+        longitude:
+          type: number
+        anomaly_type:
+          type: string
+          enum: [pothole, bump, rough_patch, unknown]
+        confidence:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Confidence that this cluster represents a real anomaly, based on event count, consistency of reports, and recency.
+        event_count:
+          type: integer
+          description: Total number of raw events that contributed to this cluster
+        avg_intensity:
+          type: number
+          minimum: 0
+          maximum: 1
+        last_seen_ms:
+          type: integer
+          description: Timestamp of most recent contributing event
+        radius_m:
+          type: number
+          description: Approximate radius of the cluster in metres
+
+    TileResponse:
+      type: object
+      properties:
+        clusters:
+          type: array
+          items:
+            $ref: "#/components/schemas/AnomalyCluster"
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+        details:
+          type: string
