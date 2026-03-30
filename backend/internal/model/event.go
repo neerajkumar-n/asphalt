@@ -11,6 +11,7 @@ type Event struct {
 	Intensity    float32 `json:"intensity"`
 	SpeedKmh     float32 `json:"speed_kmh"`
 	AnomalyType  string  `json:"anomaly_type"`
+	VehicleType  string  `json:"vehicle_type"`
 	SDKVersion   string  `json:"sdk_version"`
 	SessionID    string  `json:"session_id"`
 	SensorSummary SensorSummary `json:"sensor_summary"`
@@ -60,6 +61,10 @@ const (
 	AnomalyTypeBump       = "bump"
 	AnomalyTypeRoughPatch = "rough_patch"
 	AnomalyTypeUnknown    = "unknown"
+
+	VehicleTypeTwoWheeler   = "two_wheeler"
+	VehicleTypeThreeWheeler = "three_wheeler"
+	VehicleTypeFourWheeler  = "four_wheeler"
 )
 
 var validAnomalyTypes = map[string]bool{
@@ -67,6 +72,34 @@ var validAnomalyTypes = map[string]bool{
 	AnomalyTypeBump:       true,
 	AnomalyTypeRoughPatch: true,
 	AnomalyTypeUnknown:    true,
+}
+
+var validVehicleTypes = map[string]bool{
+	VehicleTypeTwoWheeler:   true,
+	VehicleTypeThreeWheeler: true,
+	VehicleTypeFourWheeler:  true,
+}
+
+// VehicleSignalWeight returns the normalisation weight for a vehicle type.
+// Used by the clustering pipeline to adjust per-event intensity.
+//
+// Four-wheelers have the most stable, well-characterised signal (1.0).
+// Two-wheelers are noisier due to lean dynamics (0.8).
+// Three-wheelers are noisiest: engine vibration, lateral wobble (0.7).
+//
+// These weights were set to reflect empirical noise floor differences.
+// They should be validated and refined once real-world data is available.
+func VehicleSignalWeight(vehicleType string) float32 {
+	switch vehicleType {
+	case VehicleTypeFourWheeler:
+		return 1.0
+	case VehicleTypeTwoWheeler:
+		return 0.8
+	case VehicleTypeThreeWheeler:
+		return 0.7
+	default:
+		return 0.85 // unknown types treated conservatively
+	}
 }
 
 // Validate performs basic sanity checks on an event.
@@ -89,6 +122,10 @@ func (e *Event) Validate() string {
 	}
 	if !validAnomalyTypes[e.AnomalyType] {
 		return "invalid anomaly_type"
+	}
+	// vehicle_type is optional for backwards compatibility; default to four_wheeler
+	if e.VehicleType != "" && !validVehicleTypes[e.VehicleType] {
+		return "invalid vehicle_type"
 	}
 	return ""
 }

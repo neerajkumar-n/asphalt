@@ -15,26 +15,18 @@ import io.asphalt.sdk.model.AnomalyType
 import io.asphalt.sdk.model.DeviceMeta
 import io.asphalt.sdk.model.RoadEvent
 import io.asphalt.sdk.model.SensorSummary
+import io.asphalt.sdk.model.VehicleType
 
 /**
  * Room database for offline-first event storage.
  *
- * ## Offline-first design
- *
- * Events are always written to the local database first. Upload is a
- * background operation managed by WorkManager. If upload fails, events
- * remain in the database and are retried on the next flush cycle.
- *
- * Events are marked [uploaded = true] after a confirmed server response
- * and are pruned in a subsequent cleanup pass. This approach means we
- * never lose an event due to a network failure at the moment of detection.
- *
  * ## Schema versioning
  *
- * Version 1 is the initial schema. Migrations should be added as
- * AutoMigration annotations or explicit Migration objects in future versions.
+ * Version 2 adds the vehicle_type column. The schema version was bumped from
+ * 1 to 2. fallbackToDestructiveMigration() is used during development.
+ * Production deployments should replace this with an explicit Migration.
  */
-@Database(entities = [RoadEventEntity::class], version = 1, exportSchema = true)
+@Database(entities = [RoadEventEntity::class], version = 2, exportSchema = true)
 abstract class EventDatabase : RoomDatabase() {
 
     abstract fun eventDao(): EventDao
@@ -67,6 +59,7 @@ data class RoadEventEntity(
     val intensity: Float,
     val speedKmh: Float,
     val anomalyType: String,
+    val vehicleType: String,
     // SensorSummary fields flattened for simpler schema
     val accelPeakZ: Float,
     val accelBaselineZ: Float,
@@ -108,7 +101,6 @@ interface EventDao {
     @Transaction
     suspend fun markUploadedAndPrune(ids: List<String>) {
         markUploaded(ids)
-        // Prune events uploaded more than 24 hours ago to keep the DB small
         val cutoff = System.currentTimeMillis() - 24 * 60 * 60 * 1000L
         pruneUploaded(cutoff)
     }
@@ -125,6 +117,7 @@ fun RoadEvent.toEntity(): RoadEventEntity = RoadEventEntity(
     intensity = intensity,
     speedKmh = speedKmh,
     anomalyType = anomalyType.value,
+    vehicleType = vehicleType.value,
     accelPeakZ = sensorSummary.accelPeakZ,
     accelBaselineZ = sensorSummary.accelBaselineZ,
     accelDeltaZ = sensorSummary.accelDeltaZ,
@@ -149,6 +142,7 @@ fun RoadEventEntity.toModel(): RoadEvent = RoadEvent(
     intensity = intensity,
     speedKmh = speedKmh,
     anomalyType = AnomalyType.values().firstOrNull { it.value == anomalyType } ?: AnomalyType.UNKNOWN,
+    vehicleType = VehicleType.values().firstOrNull { it.value == vehicleType } ?: VehicleType.FOUR_WHEELER,
     sensorSummary = SensorSummary(accelPeakZ, accelBaselineZ, accelDeltaZ, gyroPeakMagnitude, sampleCount, windowDurationMs),
     deviceMeta = DeviceMeta(platform, sdkInt, manufacturer, model, sensorVendor),
     sdkVersion = sdkVersion,

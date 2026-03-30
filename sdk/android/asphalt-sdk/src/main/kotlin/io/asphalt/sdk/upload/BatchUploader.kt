@@ -1,9 +1,6 @@
 package io.asphalt.sdk.upload
 
 import io.asphalt.sdk.model.RoadEvent
-import io.asphalt.sdk.model.AnomalyType
-import io.asphalt.sdk.model.SensorSummary
-import io.asphalt.sdk.model.DeviceMeta
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -116,6 +113,7 @@ class BatchUploader(private val ingestUrl: String) {
         put("intensity", event.intensity)
         put("speed_kmh", event.speedKmh)
         put("anomaly_type", event.anomalyType.value)
+        put("vehicle_type", event.vehicleType.value)
         put("sensor_summary", JSONObject().apply {
             put("accel_peak_z", event.sensorSummary.accelPeakZ)
             put("accel_baseline_z", event.sensorSummary.accelBaselineZ)

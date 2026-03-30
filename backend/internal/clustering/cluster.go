@@ -204,40 +204,78 @@ func regionQuery(pts []point, i int, epsMetres float64) []int {
 
 // scoreCluster computes a model.AnomalyCluster from a group of raw events.
 //
-// Confidence scoring:
+// ## Confidence scoring
 //
-//   - Base confidence from event count (saturates at ~20 events)
-//   - Boosted by consistency of anomaly type across events
-//   - Boosted by recency (events older than 90 days decay)
-//   - Capped at 1.0
+// Five components contribute to the final confidence score:
 //
-// This is a heuristic. Real-world tuning should be driven by ground-truth
-// labelled data.
+//  1. Weighted event count: log scale, saturates near 1.0 at ~20 events.
+//     Each event's contribution is scaled by its vehicle type signal weight
+//     (cars = 1.0, two-wheelers = 0.8, three-wheelers = 0.7). This means
+//     20 auto-only events carry less weight than 20 car events.
+//
+//  2. Type consistency: fraction of events with the dominant anomaly type.
+//     A cluster where all events agree on "pothole" is more trustworthy
+//     than a mixed cluster where some say "bump" and others say "pothole".
+//
+//  3. Recency: events older than MaxAgeMs decay their contribution.
+//     Road conditions change; old data matters less.
+//
+//  4. Vehicle diversity bonus: if events come from multiple vehicle types,
+//     confidence receives a bonus of 0.08 per additional vehicle type.
+//     Rationale: a pothole that both auto drivers and car drivers report
+//     is much more likely to be real. A cluster reported only by
+//     three-wheelers could be their normal vibration level. A cluster
+//     confirmed by both three-wheelers and cars is almost certainly real.
+//     Maximum bonus: 0.16 (two additional types beyond the first).
+//
+//  5. Three-wheeler-only penalty: if ALL events are from three-wheelers and
+//     the cluster has fewer than 4 events, apply a small penalty (-0.08).
+//     This is because three-wheelers have a higher false-positive rate
+//     even after on-device filtering.
+//
+// Weights (0.5 / 0.25 / 0.15 / diversity / penalty) sum to 1.0 at baseline.
+// All adjustments are capped so the final confidence stays within [0, 1].
 func scoreCluster(events []model.Event, nowMs int64) model.AnomalyCluster {
 	if len(events) == 0 {
 		return model.AnomalyCluster{}
 	}
 
-	// Centroid (simple mean - acceptable for small clusters)
 	var sumLat, sumLon float64
-	var sumIntensity float32
+	var weightedIntensitySum float32
+	var totalWeight float32
 	var maxTimestampMs int64
 	typeCounts := make(map[string]int)
+	vehicleTypeCounts := make(map[string]int)
 
 	for _, e := range events {
+		weight := model.VehicleSignalWeight(e.VehicleType)
 		sumLat += e.Latitude
 		sumLon += e.Longitude
-		sumIntensity += e.Intensity
+		// Weighted intensity: three-wheeler events contribute 0.7x to avg intensity
+		weightedIntensitySum += e.Intensity * weight
+		totalWeight += weight
+
 		if e.TimestampMs > maxTimestampMs {
 			maxTimestampMs = e.TimestampMs
 		}
 		typeCounts[e.AnomalyType]++
+
+		vt := e.VehicleType
+		if vt == "" {
+			vt = model.VehicleTypeFourWheeler
+		}
+		vehicleTypeCounts[vt]++
 	}
 
 	n := len(events)
 	centLat := sumLat / float64(n)
 	centLon := sumLon / float64(n)
-	avgIntensity := sumIntensity / float32(n)
+
+	// Weighted average intensity
+	avgIntensity := float32(0)
+	if totalWeight > 0 {
+		avgIntensity = weightedIntensitySum / totalWeight
+	}
 
 	// Dominant anomaly type
 	dominantType := ""
@@ -249,7 +287,7 @@ func scoreCluster(events []model.Event, nowMs int64) model.AnomalyCluster {
 		}
 	}
 
-	// Cluster radius = max distance from centroid to any member
+	// Cluster radius
 	var radiusM float64
 	for _, e := range events {
 		d := haversineMetres(centLat, centLon, e.Latitude, e.Longitude)
@@ -258,32 +296,52 @@ func scoreCluster(events []model.Event, nowMs int64) model.AnomalyCluster {
 		}
 	}
 
-	// Confidence components
-	// 1. Event count contribution: log scale, saturates near 1.0 at ~20 events
-	countScore := math.Log10(float64(n)+1) / math.Log10(21)
+	// --- Confidence calculation ---
 
-	// 2. Type consistency: fraction of events with the dominant type
+	// 1. Weighted count score
+	// Use total signal weight (not raw event count) as the effective count.
+	// A cluster of 10 three-wheeler events has total weight 7.0, equivalent
+	// to 7 car events. This normalises for vehicle type reliability.
+	effectiveCount := float64(totalWeight)
+	countScore := math.Log10(effectiveCount+1) / math.Log10(21)
+
+	// 2. Type consistency
 	consistencyScore := float64(maxCount) / float64(n)
 
-	// 3. Recency: events older than MaxAgeMs get a reduced weight
+	// 3. Recency
 	ageMs := nowMs - maxTimestampMs
 	recencyScore := 1.0
 	if ageMs > 0 {
 		recencyScore = math.Max(0, 1.0-float64(ageMs)/float64(MaxAgeMs))
 	}
 
-	confidence := float32(math.Min(1.0, countScore*0.5+consistencyScore*0.3+recencyScore*0.2))
+	// 4. Vehicle diversity bonus
+	diversity := len(vehicleTypeCounts)
+	diversityBonus := 0.08 * float64(diversity-1) // 0 for 1 type, 0.08 for 2, 0.16 for 3
+
+	// 5. Three-wheeler-only penalty for sparse clusters
+	threeWheelerPenalty := 0.0
+	if len(vehicleTypeCounts) == 1 {
+		if _, onlyAuto := vehicleTypeCounts[model.VehicleTypeThreeWheeler]; onlyAuto && n < 4 {
+			threeWheelerPenalty = 0.08
+		}
+	}
+
+	rawConfidence := countScore*0.50 + consistencyScore*0.25 + recencyScore*0.15 + diversityBonus - threeWheelerPenalty
+	confidence := float32(math.Min(1.0, math.Max(0.0, rawConfidence)))
 
 	return model.AnomalyCluster{
-		ClusterID:    uuid.New().String(),
-		Latitude:     centLat,
-		Longitude:    centLon,
-		AnomalyType:  dominantType,
-		Confidence:   confidence,
-		EventCount:   n,
-		AvgIntensity: avgIntensity,
-		LastSeenMs:   maxTimestampMs,
-		RadiusM:      math.Max(radiusM, 5.0), // minimum 5m radius
+		ClusterID:            uuid.New().String(),
+		Latitude:             centLat,
+		Longitude:            centLon,
+		AnomalyType:          dominantType,
+		Confidence:           confidence,
+		EventCount:           n,
+		AvgIntensity:         avgIntensity,
+		LastSeenMs:           maxTimestampMs,
+		RadiusM:              math.Max(radiusM, 5.0),
+		VehicleTypeCounts:    vehicleTypeCounts,
+		VehicleTypeDiversity: diversity,
 	}
 }
 

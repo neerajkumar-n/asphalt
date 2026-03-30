@@ -219,6 +219,7 @@ object Asphalt {
             intensity = result.intensity,
             speedKmh = speedKmh,
             anomalyType = result.anomalyType,
+            vehicleType = cfg.vehicleType,
             sensorSummary = result.sensorSummary,
             deviceMeta = deviceMeta,
             sdkVersion = SDK_VERSION,

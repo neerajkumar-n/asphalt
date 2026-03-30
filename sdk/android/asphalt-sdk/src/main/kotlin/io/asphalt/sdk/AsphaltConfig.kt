@@ -105,6 +105,34 @@ data class AsphaltConfig(
     val requireUnmeteredNetwork: Boolean = false,
 
     /**
+     * Vehicle type operating the SDK.
+     *
+     * This determines the signal processing profile applied during detection.
+     * It is set by the integrating application at initialisation time and
+     * does not change dynamically.
+     *
+     * - [VehicleType.FOUR_WHEELER]: cars and SUVs. Default. Lowest ambient
+     *   noise floor. Standard 4.0 m/s^2 detection threshold.
+     *
+     * - [VehicleType.THREE_WHEELER]: auto rickshaws, tuk-tuks. Higher
+     *   structural vibration from engine and frame. Elevated lateral motion
+     *   from single-front-wheel geometry. Applies:
+     *     - Raised detection threshold (5.5 m/s^2)
+     *     - Engine vibration filter (zero-crossing rate suppression)
+     *     - Turn and lateral wobble suppression
+     *     - Longer baseline window (96 samples vs 64)
+     *
+     * - [VehicleType.TWO_WHEELER]: motorcycles and scooters. More sensitive
+     *   to rider lean angle and road surface. Raised threshold (5.0 m/s^2)
+     *   and wider baseline window.
+     *
+     * An auto rickshaw fleet app should explicitly set THREE_WHEELER.
+     * A generic driving app for India should offer a vehicle selection prompt
+     * rather than defaulting silently to FOUR_WHEELER.
+     */
+    val vehicleType: io.asphalt.sdk.model.VehicleType = io.asphalt.sdk.model.VehicleType.FOUR_WHEELER,
+
+    /**
      * Enable verbose logging. Should be false in production builds.
      */
     val debugLogging: Boolean = false
