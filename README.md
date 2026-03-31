@@ -103,7 +103,7 @@ Asphalt.init(this, AsphaltConfig(
     vehicleType = VehicleType.THREE_WHEELER  // or TWO_WHEELER, FOUR_WHEELER
 ))
 
-// Start detection
+// Start detection (call after location permission is granted)
 Asphalt.start()
 
 // Stop detection
@@ -113,6 +113,66 @@ Asphalt.stop()
 Full SDK documentation: [docs/sdk-integration.md](docs/sdk-integration.md)
 
 Vehicle profile documentation: [docs/vehicle-profiles.md](docs/vehicle-profiles.md)
+
+### Demo APK (real-device testing)
+
+The demo app at `demo-app/android/` is a self-contained APK you can install on
+a physical Android device to test detection end-to-end.
+
+**Prerequisites**
+
+- Android Studio Hedgehog (2023.1) or later, or Android SDK command-line tools
+- A physical Android device running Android 7.0+ (API 24) with Google Play
+  Services installed (standard on all non-China devices)
+- USB debugging enabled on the device
+- The backend running and reachable from the device (see Backend section above)
+
+> **No `google-services.json` needed.** The app only uses the Fused Location
+> Provider (`play-services-location`), which is part of Google Play Services
+> already installed on the device. Firebase and the `google-services` Gradle
+> plugin are not used and do not need to be configured.
+
+**Steps**
+
+1. Create `demo-app/android/local.properties` pointing at your Android SDK:
+   ```
+   sdk.dir=/path/to/your/Android/sdk
+   ```
+   On macOS this is typically `~/Library/Android/sdk`.
+   On Linux, `~/Android/Sdk`. On Windows, `C:\Users\<you>\AppData\Local\Android\Sdk`.
+
+2. Set the backend URL for your device.
+
+   If testing on an **emulator**, the default `http://10.0.2.2:8080` (emulator
+   alias for host localhost) already works.
+
+   If testing on a **physical device** over Wi-Fi, edit the `debug` block in
+   `demo-app/android/app/build.gradle.kts` and replace `10.0.2.2` with your
+   development machine's local IP address:
+   ```kotlin
+   buildConfigField("String", "INGEST_URL",
+       "\"http://192.168.1.42:8080/v1/ingest/batch\"")
+   ```
+
+3. Build and install the debug APK:
+   ```bash
+   cd demo-app/android
+   ./gradlew installDebug
+   ```
+
+4. Open the app, grant location permission when prompted, then press **Start**.
+
+**Debug vs release behaviour**
+
+| Behaviour | Debug build | Release build |
+|-----------|-------------|---------------|
+| Speed gate | 5 km/h | 15 km/h |
+| Logging | Verbose (Logcat tag: `Asphalt`) | Silent |
+| Backend URL | `http://10.0.2.2:8080` | Set in `build.gradle.kts` |
+| Obfuscation | Off | R8 + ProGuard |
+
+The lower speed gate in debug builds means you can trigger real detections while
+walking slowly, without needing to drive.
 
 ---
 
@@ -231,6 +291,13 @@ Go was chosen over Node.js for the backend:
   drivers report the same location.
 - GPS spoofing is not prevented in v1; multi-report confidence scoring
   limits but does not eliminate its impact.
+- Background collection stops when the screen locks on Android 10+ unless the
+  integrating app runs a Foreground Service with `foregroundServiceType="location"`.
+  The demo app does not include a Foreground Service; it is intended for
+  screen-on testing only.
+- `DeviceMeta` (manufacturer, model, SDK version) is populated correctly in the
+  demo app's simulated events but defaults to empty strings in real detections
+  in v1. This limits device-level analysis on the backend.
 
 Full limitations: [docs/limitations.md](docs/limitations.md)
 
