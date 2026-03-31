@@ -311,4 +311,16 @@ Asphalt.init(this, AsphaltConfig(
 ```
 
 The vehicle type cannot be changed after `Asphalt.start()` is called in a
-session. Call `Asphalt.stop()` and re-initialise with a new config to change it.
+session. Call `Asphalt.stop()`, update the config via `Asphalt.setConfig()`,
+then call `Asphalt.start()` again:
+
+```kotlin
+Asphalt.stop()
+Asphalt.setConfig(currentConfig.copy(vehicleType = VehicleType.TWO_WHEELER))
+Asphalt.start()
+```
+
+Do not call `Asphalt.init()` again after initial setup -- `setConfig()` is
+the correct runtime API for config updates. Re-calling `init()` from an
+activity would set `appContext` again unnecessarily and could produce
+unexpected behaviour if the Application class has already configured the SDK.

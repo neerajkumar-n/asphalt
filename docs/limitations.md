@@ -74,10 +74,15 @@ Samsung Galaxy A series or a Xiaomi device.
   depending on the SoC and sensor driver
 
 **Mitigations in v1**:
-- `device_meta.manufacturer` and `device_meta.model` in event payload: allows
-  backend analysis to identify per-model calibration offsets from crowd data
-- `device_meta.sensor_vendor`: accelerometer vendor (e.g. InvenSense, Bosch)
-  correlates with noise characteristics
+- `device_meta.manufacturer`, `device_meta.model`, and `device_meta.sensor_vendor`
+  fields exist in the event schema and are designed for backend per-model analysis.
+
+**Known gap in v1**: The SDK's `handleDetection()` constructs `DeviceMeta()`
+with empty defaults in real detections. The fields are only populated correctly
+in the demo app's simulated events (`DemoViewModel.simulateBump()`), not in
+genuine sensor-triggered events. Populating `DeviceMeta` from `android.os.Build`
+at detection time is a planned fix. Until then, all real events arrive with
+empty `device_meta` fields and per-model analysis is not possible.
 
 **Remaining constraint**: v1 does not dynamically calibrate per device.
 A future version should compute per-device baseline noise floor over the first

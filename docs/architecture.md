@@ -180,10 +180,15 @@ DBSCAN was chosen because:
 - No need to specify the number of clusters.
 - Noise points (isolated false positives) are naturally excluded.
 
-Confidence scoring uses three components:
-1. Event count (log scale, saturates at ~20 independent reports)
+Confidence scoring uses five components:
+1. Weighted event count (log scale, saturates near 1.0 at ~20 events; each event
+   is weighted by vehicle signal reliability: car=1.0, two-wheeler=0.8, three-wheeler=0.7)
 2. Type consistency (fraction with the dominant anomaly type)
 3. Recency (decay over 90 days)
+4. Vehicle diversity bonus (+0.08 per additional vehicle type beyond the first;
+   a pothole confirmed by both autos and cars is treated as significantly more reliable)
+5. Three-wheeler-only penalty (-0.08 if all events are from three-wheelers AND the
+   cluster has fewer than 4 events, to account for their higher residual false-positive rate)
 
 A single report from one device never exceeds confidence ~0.3. Two or more
 independent reports at the same location push confidence above 0.5, at which
