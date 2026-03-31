@@ -276,16 +276,24 @@ to the confidence of the mixed cluster.
 
 ### Display threshold recommendation
 
+The tile API (`GET /v1/map/tiles/{z}/{x}/{y}`) defaults to `min_confidence=0.3`
+if the parameter is not supplied. The bbox query (`GET /v1/map/clusters`) returns
+all clusters regardless of confidence and leaves filtering to the client.
+
+Recommended values by use case:
+
 | Use case | Recommended min_confidence |
 |----------|---------------------------|
-| Default consumer map | 0.40 |
+| Consumer map (API default) | 0.30 |
+| Consumer map (noise-reduced) | 0.40 |
 | Municipal road authority | 0.30 (more inclusive) |
 | Fleet routing (high precision) | 0.60 |
 | Emergency pothole alert | 0.25 (maximise recall) |
 
 For deployments in dense Indian urban areas where three-wheelers are the primary
-vehicle type, lowering the threshold to 0.30 is recommended to avoid excessive
-data sparsity from the three-wheeler penalty.
+vehicle type, staying at the default 0.30 is recommended. Raising to 0.40 may
+hide genuine clusters that only have three-wheeler reports, especially in early
+deployment when cross-vehicle corroboration is sparse.
 
 ---
 

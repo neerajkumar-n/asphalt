@@ -12,7 +12,6 @@
     "intensity",
     "speed_kmh",
     "anomaly_type",
-    "vehicle_type",
     "sensor_summary",
     "device_meta",
     "sdk_version"
@@ -63,7 +62,7 @@
     "vehicle_type": {
       "type": "string",
       "enum": ["two_wheeler", "three_wheeler", "four_wheeler"],
-      "description": "Vehicle category operating the SDK. Set by the integrating application at initialisation time. Drives on-device signal processing thresholds and backend confidence normalisation. 'three_wheeler' enables the engine vibration and lateral wobble filters for auto rickshaws."
+      "description": "Vehicle category operating the SDK. Set by the integrating application at initialisation time. Drives on-device signal processing thresholds and backend confidence normalisation. 'three_wheeler' enables the engine vibration and lateral wobble filters for auto rickshaws. Optional for backwards compatibility with SDK versions before v1; omitting it defaults to 'four_wheeler' on the backend."
     },
     "sensor_summary": {
       "type": "object",
