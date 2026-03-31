@@ -41,8 +41,9 @@ adds 5-10% battery drain per hour of driving compared to a phone sitting idle.
 - Rolling median baseline instead of instantaneous comparison
 - Gyroscope confirmation threshold: most vibration noise has near-zero angular
   momentum and fails the gyro check
-- 1500ms cooldown between detected events: reduces double-counting of a single
-  anomaly
+- Per-vehicle cooldown between detected events: 1500ms for four-wheelers and
+  two-wheelers, 2000ms for three-wheelers (whose frame rings longer after an
+  impact). Reduces double-counting of a single anomaly.
 
 **Remaining constraints**:
 - The detection threshold (4.0 m/s^2 default) was set empirically. It is a

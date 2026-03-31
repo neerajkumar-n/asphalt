@@ -171,11 +171,11 @@ val config = AsphaltConfig(
 
 **How vehicle type affects detection:**
 
-| Vehicle | Detection threshold | Baseline window | Special filtering |
-|---------|-------------------|-----------------|-------------------|
-| `FOUR_WHEELER` | 4.0 m/s^2 | 30 samples | None |
-| `TWO_WHEELER` | 4.5 m/s^2 | 35 samples | None |
-| `THREE_WHEELER` | 5.5 m/s^2 | 40 samples | Engine vibration, turn, and wobble suppression |
+| Vehicle | Detection threshold | Gyro confirmation | Baseline window | Cooldown | Special filtering |
+|---------|-------------------|-------------------|-----------------|----------|-------------------|
+| `FOUR_WHEELER` | 4.0 m/s^2 | 0.30 rad/s | 64 samples (~1.3 s) | 1500 ms | None |
+| `TWO_WHEELER` | 5.0 m/s^2 | 0.45 rad/s | 80 samples (~1.6 s) | 1500 ms | None |
+| `THREE_WHEELER` | 5.5 m/s^2 | 0.55 rad/s | 96 samples (~1.9 s) | 2000 ms | Engine vibration, turn, and wobble suppression |
 
 The higher threshold and larger baseline window for three-wheelers compensate for
 their characteristic engine vibration (typically 15-25 Hz at idle) and lateral
