@@ -105,6 +105,7 @@ curl -X POST http://localhost:8080/v1/ingest/batch \
       "intensity": 0.65,
       "speed_kmh": 48.5,
       "anomaly_type": "pothole",
+      "vehicle_type": "four_wheeler",
       "sensor_summary": {
         "accel_peak_z": 15.2,
         "accel_baseline_z": 9.81,

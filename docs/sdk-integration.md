@@ -58,6 +58,21 @@ Declare the following in your `AndroidManifest.xml`:
 
 Request `ACCESS_FINE_LOCATION` at runtime before calling `Asphalt.start()`.
 
+**Background collection (Android 10+):** On API 29+, Android stops delivering
+location updates to `FusedLocationProviderClient` once the app leaves the
+foreground, even if the app has a running foreground service, unless
+`ACCESS_BACKGROUND_LOCATION` is also declared and granted.
+
+If your app needs to collect while the screen is locked:
+
+```xml
+<uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+```
+
+This permission requires a separate runtime prompt (it cannot be bundled with
+`ACCESS_FINE_LOCATION`) and a Google Play policy disclosure explaining the
+use case. For demo or screen-on-only apps, it can be omitted.
+
 ---
 
 ## Initialisation
@@ -214,13 +229,14 @@ Add to your `proguard-rules.pro`:
 The SDK does not require a Foreground Service for normal operation. WorkManager
 handles uploads in the background without keeping the process alive.
 
-For continuous collection while the app is fully backgrounded (foreground
-service required on Android 8+), you must:
+For continuous collection while the app is fully backgrounded (required on
+Android 10+ for uninterrupted location access), you must:
 
-1. Create a foreground service that calls `Asphalt.start()`
-2. Add `ACCESS_BACKGROUND_LOCATION` permission and justify it in your Play
-   Store submission
-3. Display a persistent notification as required by Android policy
+1. Declare `ACCESS_BACKGROUND_LOCATION` in the manifest (see Permissions above)
+2. Create a foreground service with `android:foregroundServiceType="location"`
+   that calls `Asphalt.start()`
+3. Display a persistent notification as required by Android policy (API 26+)
+4. Justify background location use in your Google Play policy disclosure
 
 This is outside the scope of the demo app but follows standard Android
 foreground service patterns.
