@@ -183,6 +183,103 @@ the scope of v1.
 
 ---
 
+## 9. Three-Wheeler Signal Complexity
+
+**What happens**: Auto rickshaws produce a significantly higher noise floor than
+cars due to engine vibration, lightweight frame resonance, and tricycle lateral
+dynamics. The on-device filters (`ThreeWheelerFilter`) suppress three specific
+false-positive patterns: engine vibration, turns, and lateral wobble. However,
+the filters are heuristic and edge cases exist.
+
+**Known residual false positives**:
+
+- **CNG vs petrol engines**: The engine vibration zero-crossing filter is
+  calibrated for a dominant felt frequency of 15-30 Hz. Compressed natural gas
+  (CNG) autos, which are now the majority in many Indian cities, have slightly
+  smoother combustion than older petrol 2-strokes. Their vibration profile may
+  have a different dominant frequency. The 25 zero-crossings/sec threshold was
+  set for older auto profiles; CNG autos may benefit from a lower threshold.
+
+- **Load variation**: An empty auto has a much softer effective suspension than
+  a fully loaded one (driver + 3 passengers = ~200kg additional mass). The same
+  pothole produces a materially larger Z delta in an empty auto. The threshold
+  of 5.5 m/s^2 is calibrated for a loaded auto. An empty auto may report
+  intensities that are 20-30% inflated.
+
+- **Pillion passengers on bikes**: Similarly for two-wheelers, a scooter with a
+  pillion rider has different suspension compression and body dynamics.
+
+- **Turning on rough roads**: If an auto is both turning AND traversing a rough
+  road surface simultaneously (a common scenario at any Indian intersection),
+  the turn suppression window may mask a genuine pothole during the turn.
+  This is a known missed detection case with no clean solution in v1.
+
+- **Auto with CNG cylinder vibration**: Some autos carry large rear-mounted CNG
+  cylinders that add mechanical noise at a different frequency from the engine.
+  This can increase the zero-crossing rate even without engine vibration.
+
+**Mitigations in v1**:
+- Higher detection threshold (5.5 vs 4.0 m/s^2) reduces false positives
+- Backend three-wheeler-only penalty reduces unverified auto clusters
+- Cross-vehicle diversity bonus ensures car/bike confirmation compensates
+
+**Planned improvements**:
+- Per-operator threshold calibration (fleet operators could run a calibration
+  drive on a known smooth road to measure their auto's baseline noise floor)
+- Frequency domain analysis (FFT) on the detection window to identify and
+  subtract the engine harmonic before applying the threshold
+- Load estimation using sustained Z-axis reading as a proxy for suspension
+  compression, adjusting the threshold dynamically
+
+---
+
+## 10. Dense Urban Environment Noise
+
+**What happens**: Indian urban road environments combine multiple noise sources
+that do not appear in the test conditions where most road detection research
+is conducted:
+
+- **Speed breakers without signage**: Unofficial speed bumps built by residents
+  are common in Indian cities. They vary in height (5cm to 20cm) and profile.
+  Many are not in any map database, so there is no way to pre-filter known bumps.
+  These are detected as genuine anomalies, which is correct behaviour, but they
+  can dominate the map in some localities.
+
+- **Railway crossings**: Level crossings create a distinctive double-impact
+  signature (two rails, spaced ~1.4m apart). At 30 km/h, the two impacts
+  arrive ~170ms apart. The detector may report this as a single pothole event
+  or two separate events depending on cooldown timing.
+
+- **Speed humps in series**: Traffic calming installations often use 3-4 speed
+  bumps in quick succession (every 20-30m). At 30 km/h, these arrive every
+  ~2.4 seconds. The 2-second cooldown for three-wheelers means the first bump
+  suppresses detection of subsequent ones. Not all bumps in a series will be
+  reported.
+
+- **Congested traffic**: Stop-and-go traffic at speeds of 5-15 km/h is common
+  in Indian cities during peak hours. The speed gate (15 km/h minimum) means no
+  detection occurs during this time, even if the vehicle is traversing severe
+  road damage. This is by design (avoiding walking false positives) but means
+  that damage at bottlenecks in congested areas is underreported.
+
+- **Dust and road patches**: Indian roads are frequently patched with tar,
+  gravel, or concrete infill. These patches create surface irregularities
+  that produce Z deltas of 2-4 m/s^2, below the detection threshold for all
+  vehicle types, but which accumulate to a rough-ride experience. The ROUGH_PATCH
+  type is intended to capture this, but the current classifier requires at least
+  one exceedance of the threshold in the window to register anything.
+
+**Mitigation in v1**: None specific beyond the general noise filters. These are
+acknowledged gaps.
+
+**Planned improvements**:
+- Low-threshold "background roughness score" computed from Z-axis variance
+  during normal driving, aggregated per road segment
+- Map integration to distinguish known infrastructure (railway crossings,
+  official speed bumps) from anomalies
+
+---
+
 ## Summary Table
 
 | Limitation | Severity | Workaround in v1 | Planned Fix |
@@ -195,3 +292,9 @@ the scope of v1.
 | GPS spoofing | Low | Multi-report confidence | Ingestion anomaly detection |
 | Urban GPS accuracy | Medium | `accuracy_m` field | Dead reckoning fusion |
 | Long offline gaps | Low | 7-day retention window | Extended retention policy |
+| Three-wheeler engine vibration | Medium | Zero-crossing filter | FFT harmonic removal |
+| Three-wheeler load variation | Medium | Raised threshold (5.5 m/s^2) | Dynamic threshold tuning |
+| Turn masking genuine potholes | Low | Turn suppression duration tuning | Directional turn model |
+| Dense urban speed bumps | Low | BUMP classification | Map integration for known humps |
+| Congested traffic (<15 km/h) | Medium | Acknowledged gap | Lower threshold mode for autos |
+| Background roughness scoring | Medium | Acknowledged gap | Per-segment variance aggregation |

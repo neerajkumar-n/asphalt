@@ -209,7 +209,12 @@ components:
           type: number
           minimum: 0
           maximum: 1
-          description: Confidence that this cluster represents a real anomaly, based on event count, consistency of reports, and recency.
+          description: |
+            Confidence that this cluster represents a real anomaly.
+            Incorporates event count, anomaly type consistency, recency,
+            vehicle type signal weights, and a cross-vehicle diversity bonus.
+            Three-wheeler-only clusters with fewer than 4 events receive
+            a small penalty due to higher per-event false-positive rate.
         event_count:
           type: integer
           description: Total number of raw events that contributed to this cluster
@@ -217,12 +222,29 @@ components:
           type: number
           minimum: 0
           maximum: 1
+          description: Signal-weight-normalised average intensity across contributing events.
         last_seen_ms:
           type: integer
           description: Timestamp of most recent contributing event
         radius_m:
           type: number
           description: Approximate radius of the cluster in metres
+        vehicle_type_counts:
+          type: object
+          additionalProperties:
+            type: integer
+          description: |
+            Map of vehicle_type -> event count for events in this cluster.
+            Example: {"four_wheeler": 3, "three_wheeler": 7}.
+            Use this to assess cross-vehicle corroboration.
+        vehicle_type_diversity:
+          type: integer
+          minimum: 1
+          maximum: 3
+          description: |
+            Number of distinct vehicle types that contributed to this cluster.
+            1 = single vehicle type (less cross-validated).
+            3 = all three types reported this location (highly corroborated).
 
     TileResponse:
       type: object

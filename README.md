@@ -11,23 +11,28 @@ device hardware.
 
 ## How It Works
 
-A driver installs an app that includes the Asphalt SDK. While driving above
-15 km/h, the SDK samples the accelerometer at 50Hz. When the Z-axis reading
-deviates sharply from the rolling baseline (the pothole spike-dip signature),
-and the gyroscope confirms actual physical motion, the SDK records the event
-with a GPS coordinate and intensity score.
+A driver installs an app that includes the Asphalt SDK. The app declares the
+vehicle type (two-wheeler, three-wheeler, or four-wheeler) at initialisation
+time. While driving above 15 km/h, the SDK samples the accelerometer at 50Hz.
+When the Z-axis reading deviates sharply from the rolling baseline (the pothole
+spike-dip signature), and the gyroscope confirms actual physical motion, the SDK
+records the event with a GPS coordinate and intensity score.
+
+For three-wheelers (auto rickshaws), additional on-device filters suppress
+false positives from engine vibration, turn dynamics, and lateral wobble before
+any event is recorded.
 
 Events are batched locally and uploaded to the backend when connectivity is
 available. The backend clusters nearby events, scores cluster confidence based
-on how many independent reports agree, and exposes the results via a map query
-API.
+on how many independent reports agree, normalises signal strength across vehicle
+types, and exposes the results via a map query API.
 
 No raw sensor data leaves the device. No user accounts or identifiers are
 collected. Location data is attached only to detected anomaly events, not
 tracked continuously.
 
-See [docs/sensor-model.md](docs/sensor-model.md) for a full explanation of the
-physics and signal patterns.
+See [docs/sensor-model.md](docs/sensor-model.md) and
+[docs/vehicle-profiles.md](docs/vehicle-profiles.md) for detailed explanations.
 
 ---
 
@@ -94,7 +99,8 @@ Full backend documentation: [docs/backend-setup.md](docs/backend-setup.md)
 ```kotlin
 // In Application.onCreate()
 Asphalt.init(this, AsphaltConfig(
-    ingestUrl = "https://your-backend.example.com/v1/ingest/batch"
+    ingestUrl = "https://your-backend.example.com/v1/ingest/batch",
+    vehicleType = VehicleType.THREE_WHEELER  // or TWO_WHEELER, FOUR_WHEELER
 ))
 
 // Start detection
@@ -105,6 +111,8 @@ Asphalt.stop()
 ```
 
 Full SDK documentation: [docs/sdk-integration.md](docs/sdk-integration.md)
+
+Vehicle profile documentation: [docs/vehicle-profiles.md](docs/vehicle-profiles.md)
 
 ---
 
@@ -118,6 +126,69 @@ to activate only during vehicle travel above 15 km/h.
 
 See [docs/sensor-model.md](docs/sensor-model.md) for sample signal patterns
 and full explanation.
+
+---
+
+## Vehicle Support
+
+Asphalt explicitly models three vehicle categories:
+
+| Vehicle | Examples | Detection Threshold | Special Handling |
+|---------|---------|---------------------|-----------------|
+| Four-wheeler | Cars, SUVs, taxis | 4.0 m/s^2 | Standard |
+| Three-wheeler | Auto rickshaws, tuk-tuks | 5.5 m/s^2 | Engine vibration filter, turn suppression, lateral wobble suppression |
+| Two-wheeler | Motorcycles, scooters | 5.0 m/s^2 | Turn suppression, wider baseline window |
+
+### Why Indian traffic makes this problem harder
+
+Indian urban roads present a combination of conditions not found in most road
+detection research:
+
+- **Mixed fleet**: The same road segment is used simultaneously by two-wheelers,
+  three-wheelers, cars, trucks, and cycle rickshaws. Road damage affects each
+  vehicle type differently. A pothole that barely registers in a car may be
+  severe for a scooter.
+
+- **Auto rickshaws as dominant mode**: In cities like Mumbai, Delhi, and
+  Bengaluru, autos account for a large fraction of road kilometres driven.
+  Any road quality system that cannot handle auto data is blind to a significant
+  portion of the fleet. At the same time, autos have higher sensor noise floors
+  than cars, making them harder to process correctly.
+
+- **Unofficial road modifications**: Speed bumps built by resident welfare
+  associations, road patches of varying quality, and temporary diversions are
+  common. These are not in any map database and must be detected from sensor
+  data alone.
+
+- **Dense, slow traffic**: Congested corridors operate at 5-15 km/h for hours
+  daily. The speed gate (minimum 15 km/h for activation) means these segments
+  are harder to survey during peak hours.
+
+- **GPS degradation**: Tall buildings, flyovers, and narrow lanes cause GPS
+  multipath errors. Urban canyon GPS in Indian cities can degrade to 30-50m
+  accuracy, which is above the 30m cluster radius.
+
+### How Asphalt accounts for this diversity
+
+- **Per-vehicle signal profiles**: Each vehicle type has its own detection
+  threshold, gyro confirmation threshold, baseline window size, and suppression
+  parameters derived from real-world auto and bike vibration characteristics.
+
+- **On-device three-wheeler filtering**: Engine vibration (zero-crossing rate),
+  turns (sustained lateral gyro), and wobble (sustained roll) are suppressed
+  before any event reaches the database. This happens on the phone, so no
+  false-positive events are uploaded.
+
+- **Cross-vehicle confidence bonus**: A cluster confirmed by both autos and cars
+  receives a confidence boost of +0.08 per additional vehicle type. This rewards
+  the most reliable signal: multiple vehicle categories independently reporting
+  the same location.
+
+- **Vehicle type signal weights**: Backend intensity normalisation weights
+  three-wheeler events at 0.7x and two-wheeler events at 0.8x relative to
+  cars, reflecting their higher per-event uncertainty. A cluster dominated by
+  auto reports but also confirmed by one car will have substantially higher
+  confidence than an auto-only cluster.
 
 ---
 

@@ -47,11 +47,6 @@ import java.util.UUID
  * <uses-permission android:name="android.permission.INTERNET" />
  * <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
  * ```
- *
- * Optional for background collection:
- * ```xml
- * <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
- * ```
  */
 object Asphalt {
 
@@ -73,16 +68,13 @@ object Asphalt {
     /**
      * Initialises the SDK. Must be called once before [start], typically in
      * Application.onCreate().
-     *
-     * Calling [init] multiple times replaces the configuration but does not
-     * restart active collection.
      */
     @JvmStatic
     fun init(context: Context, config: AsphaltConfig) {
         appContext = context.applicationContext
         this.config = config
         AsphaltLog.enabled = config.debugLogging
-        AsphaltLog.d("Asphalt", "SDK initialised. Version: $SDK_VERSION")
+        AsphaltLog.d("Asphalt", "SDK initialised. Version: $SDK_VERSION, vehicle: ${config.vehicleType.value}")
     }
 
     /**
@@ -122,14 +114,11 @@ object Asphalt {
             context = ctx,
             config = cfg,
             onSpeedChanged = ::handleSpeedChanged,
-            onLocationUpdate = { location ->
-                currentLocation = location
-            }
+            onLocationUpdate = { location -> currentLocation = location }
         )
 
         locationTracker!!.start()
 
-        // Schedule periodic background upload
         UploadWorker.schedulePeriodicUpload(
             ctx,
             cfg.ingestUrl,
@@ -138,7 +127,7 @@ object Asphalt {
         )
 
         AsphaltLog.d("Asphalt", "Session started. ID: $sessionId")
-        callback?.onStateChanged(false)  // Starts inactive until speed threshold is met
+        callback?.onStateChanged(false)
     }
 
     /**
@@ -164,9 +153,9 @@ object Asphalt {
     /**
      * Updates the SDK configuration at runtime.
      *
-     * Changes to [AsphaltConfig.ingestUrl] or network constraints take effect
-     * on the next scheduled upload. Detection threshold changes take effect
-     * on the next sensor event.
+     * Note: [AsphaltConfig.vehicleType] changes require calling [stop] then [start]
+     * to take effect, since the vehicle profile is baked into [AnomalyDetector] at
+     * session start.
      */
     @JvmStatic
     fun setConfig(newConfig: AsphaltConfig) {
@@ -191,10 +180,20 @@ object Asphalt {
         }
     }
 
-    private fun handleDetection(timestampMs: Long, speedKmh: Float) {
+    /**
+     * Receives a confirmed detection from [SensorCollector].
+     *
+     * The [result] is passed directly from the [AnomalyDetector.evaluate] call
+     * that triggered detection. We do not re-evaluate the detector here because
+     * the cooldown guard would make the second call return no-event.
+     */
+    private fun handleDetection(
+        timestampMs: Long,
+        speedKmh: Float,
+        result: AnomalyDetector.DetectionResult
+    ) {
         val ctx = appContext ?: return
         val cfg = config ?: return
-        val det = detector ?: return
         val loc = currentLocation
 
         if (loc == null) {
@@ -203,14 +202,9 @@ object Asphalt {
         }
 
         if (loc.accuracy > cfg.maxGpsAccuracyMeters) {
-            AsphaltLog.d("Asphalt", "GPS accuracy ${loc.accuracy}m exceeds threshold. Event marked low confidence.")
+            AsphaltLog.d("Asphalt", "GPS accuracy ${loc.accuracy}m exceeds threshold. Storing as low-confidence.")
         }
 
-        // Re-evaluate to get the full DetectionResult for this event
-        val result = det.evaluate(timestampMs, speedKmh)
-        if (!result.detected) return
-
-        val deviceMeta = DeviceMeta()
         val event = RoadEvent(
             timestampMs = timestampMs,
             latitude = loc.latitude,
@@ -219,8 +213,9 @@ object Asphalt {
             intensity = result.intensity,
             speedKmh = speedKmh,
             anomalyType = result.anomalyType,
+            vehicleType = cfg.vehicleType,
             sensorSummary = result.sensorSummary,
-            deviceMeta = deviceMeta,
+            deviceMeta = DeviceMeta(),
             sdkVersion = SDK_VERSION,
             sessionId = sessionId
         )
@@ -233,7 +228,7 @@ object Asphalt {
 
         scope.launch(Dispatchers.IO) {
             EventDatabase.getInstance(ctx).eventDao().insert(event.toEntity())
-            AsphaltLog.d("Asphalt", "Event stored: ${event.anomalyType.value} intensity=${event.intensity}")
+            AsphaltLog.d("Asphalt", "Event stored: ${event.anomalyType.value} intensity=${"%.2f".format(event.intensity)}")
 
             val pendingCount = EventDatabase.getInstance(ctx).eventDao().pendingCount()
             if (pendingCount >= cfg.maxBufferSize) {

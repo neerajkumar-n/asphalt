@@ -12,6 +12,7 @@
     "intensity",
     "speed_kmh",
     "anomaly_type",
+    "vehicle_type",
     "sensor_summary",
     "device_meta",
     "sdk_version"
@@ -58,6 +59,11 @@
       "type": "string",
       "enum": ["pothole", "bump", "rough_patch", "unknown"],
       "description": "Classification of the anomaly. 'unknown' when the signal pattern does not clearly match a known type."
+    },
+    "vehicle_type": {
+      "type": "string",
+      "enum": ["two_wheeler", "three_wheeler", "four_wheeler"],
+      "description": "Vehicle category operating the SDK. Set by the integrating application at initialisation time. Drives on-device signal processing thresholds and backend confidence normalisation. 'three_wheeler' enables the engine vibration and lateral wobble filters for auto rickshaws."
     },
     "sensor_summary": {
       "type": "object",

@@ -128,11 +128,63 @@ Asphalt.setCallback(object : AsphaltCallback {
 
 ---
 
+## Vehicle Type Configuration
+
+The SDK supports three vehicle profiles that affect detection thresholds and
+false-positive filtering. Set `vehicleType` in `AsphaltConfig` based on the
+vehicle your app will be deployed in.
+
+```kotlin
+// Four-wheeler (car, taxi, SUV) — default
+val config = AsphaltConfig(
+    ingestUrl = "https://your-backend.example.com/v1/ingest/batch",
+    vehicleType = VehicleType.FOUR_WHEELER
+)
+
+// Three-wheeler (auto rickshaw, tuk-tuk)
+val config = AsphaltConfig(
+    ingestUrl = "https://your-backend.example.com/v1/ingest/batch",
+    vehicleType = VehicleType.THREE_WHEELER
+)
+
+// Two-wheeler (motorcycle, scooter)
+val config = AsphaltConfig(
+    ingestUrl = "https://your-backend.example.com/v1/ingest/batch",
+    vehicleType = VehicleType.TWO_WHEELER
+)
+```
+
+**How vehicle type affects detection:**
+
+| Vehicle | Detection threshold | Baseline window | Special filtering |
+|---------|-------------------|-----------------|-------------------|
+| `FOUR_WHEELER` | 4.0 m/s^2 | 30 samples | None |
+| `TWO_WHEELER` | 4.5 m/s^2 | 35 samples | None |
+| `THREE_WHEELER` | 5.5 m/s^2 | 40 samples | Engine vibration, turn, and wobble suppression |
+
+The higher threshold and larger baseline window for three-wheelers compensate for
+their characteristic engine vibration (typically 15-25 Hz at idle) and lateral
+body sway, which would otherwise generate false-positive detections on smooth roads.
+
+**Important: vehicle type is fixed per session.**
+`vehicleType` is baked into `AnomalyDetector` when `Asphalt.start()` is called.
+To change vehicle type mid-trip, call `Asphalt.stop()`, update the config, then
+call `Asphalt.start()` again:
+
+```kotlin
+Asphalt.stop()
+Asphalt.setConfig(config.copy(vehicleType = VehicleType.THREE_WHEELER))
+Asphalt.start()
+```
+
+---
+
 ## Configuration Reference
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `ingestUrl` | (required) | Backend ingestion endpoint URL |
+| `vehicleType` | `FOUR_WHEELER` | Vehicle profile for detection tuning |
 | `minSpeedKmh` | 15.0 | Minimum speed to activate sensors |
 | `detectionThresholdMs2` | 4.0 | Minimum Z-axis delta to flag a candidate |
 | `detectionWindowMs` | 500 | Detection window width in ms |

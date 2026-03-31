@@ -34,12 +34,19 @@ import io.asphalt.sdk.internal.AsphaltLog
  * and gravity reads approximately +9.81 m/s^2 on Z. This is the orientation
  * assumed by the detector. Phone orientation changes are a known limitation
  * (see docs/limitations.md).
+ *
+ * ## Callback design
+ *
+ * [onEventDetected] receives the full [AnomalyDetector.DetectionResult] from the
+ * same evaluation that triggered detection. This avoids a second [AnomalyDetector.evaluate]
+ * call in the caller, which would always return no-event due to the cooldown guard
+ * that was just set by the first call.
  */
 class SensorCollector(
     context: Context,
     private val config: AsphaltConfig,
     private val detector: AnomalyDetector,
-    private val onEventDetected: (timestampMs: Long, speedKmh: Float) -> Unit
+    private val onEventDetected: (timestampMs: Long, speedKmh: Float, result: AnomalyDetector.DetectionResult) -> Unit
 ) : SensorEventListener {
 
     private val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
@@ -89,29 +96,29 @@ class SensorCollector(
 
         when (event.sensor.type) {
             Sensor.TYPE_ACCELEROMETER -> {
-                // event.values[2] = Z axis
-                detector.feedAccelerometer(timestampMs, event.values[2])
+                detector.feedAccelerometer(timestampMs, event.values[2])  // Z axis
 
                 val result = detector.evaluate(timestampMs, currentSpeedKmh)
                 if (result.detected) {
-                    onEventDetected(timestampMs, currentSpeedKmh)
+                    // Pass the result directly. Do NOT call detector.evaluate() again in the
+                    // callback -- the cooldown guard was just set, so a second call always
+                    // returns no-event.
+                    onEventDetected(timestampMs, currentSpeedKmh, result)
                 }
             }
 
             Sensor.TYPE_GYROSCOPE -> {
                 detector.feedGyroscope(
                     timestampMs,
-                    event.values[0],  // X
-                    event.values[1],  // Y
-                    event.values[2]   // Z
+                    event.values[0],  // X (roll)
+                    event.values[1],  // Y (pitch)
+                    event.values[2]   // Z (yaw)
                 )
             }
         }
     }
 
     override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {
-        // Accelerometer accuracy rarely changes during a drive session.
-        // SENSOR_STATUS_UNRELIABLE could indicate physical shock to the device.
         if (accuracy == SensorManager.SENSOR_STATUS_UNRELIABLE) {
             AsphaltLog.w("SensorCollector", "Sensor accuracy dropped to UNRELIABLE for ${sensor.name}")
         }

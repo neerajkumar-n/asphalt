@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -67,6 +68,10 @@ func (d *DB) InsertEvents(ctx context.Context, events []model.Event) error {
 
 	for i := range events {
 		e := &events[i]
+		vehicleType := e.VehicleType
+		if vehicleType == "" {
+			vehicleType = model.VehicleTypeFourWheeler
+		}
 		_, err := stmt.ExecContext(ctx,
 			e.EventID,
 			e.TimestampMs,
@@ -76,6 +81,7 @@ func (d *DB) InsertEvents(ctx context.Context, events []model.Event) error {
 			e.Intensity,
 			e.SpeedKmh,
 			e.AnomalyType,
+			vehicleType,
 			e.SensorSummary.AccelPeakZ,
 			e.SensorSummary.AccelBaselineZ,
 			e.SensorSummary.AccelDeltaZ,
@@ -130,18 +136,8 @@ func (d *DB) GetClusters(ctx context.Context, minLat, minLon, maxLat, maxLon flo
 
 	var clusters []model.AnomalyCluster
 	for rows.Next() {
-		var c model.AnomalyCluster
-		if err := rows.Scan(
-			&c.ClusterID,
-			&c.Latitude,
-			&c.Longitude,
-			&c.AnomalyType,
-			&c.Confidence,
-			&c.EventCount,
-			&c.AvgIntensity,
-			&c.LastSeenMs,
-			&c.RadiusM,
-		); err != nil {
+		c, err := scanCluster(rows)
+		if err != nil {
 			return nil, err
 		}
 		clusters = append(clusters, c)
@@ -159,18 +155,8 @@ func (d *DB) GetClustersForTile(ctx context.Context, minLat, minLon, maxLat, max
 
 	var clusters []model.AnomalyCluster
 	for rows.Next() {
-		var c model.AnomalyCluster
-		if err := rows.Scan(
-			&c.ClusterID,
-			&c.Latitude,
-			&c.Longitude,
-			&c.AnomalyType,
-			&c.Confidence,
-			&c.EventCount,
-			&c.AvgIntensity,
-			&c.LastSeenMs,
-			&c.RadiusM,
-		); err != nil {
+		c, err := scanCluster(rows)
+		if err != nil {
 			return nil, err
 		}
 		clusters = append(clusters, c)
@@ -178,9 +164,40 @@ func (d *DB) GetClustersForTile(ctx context.Context, minLat, minLon, maxLat, max
 	return clusters, rows.Err()
 }
 
+// scanCluster scans one row from the clusters SELECT queries.
+func scanCluster(rows *sql.Rows) (model.AnomalyCluster, error) {
+	var c model.AnomalyCluster
+	var vtCountsJSON []byte
+	err := rows.Scan(
+		&c.ClusterID,
+		&c.Latitude,
+		&c.Longitude,
+		&c.AnomalyType,
+		&c.Confidence,
+		&c.EventCount,
+		&c.AvgIntensity,
+		&c.LastSeenMs,
+		&c.RadiusM,
+		&vtCountsJSON,
+		&c.VehicleTypeDiversity,
+	)
+	if err != nil {
+		return c, err
+	}
+	if len(vtCountsJSON) > 0 {
+		// Parse the JSONB vehicle_type_counts column
+		_ = json.Unmarshal(vtCountsJSON, &c.VehicleTypeCounts)
+	}
+	return c, nil
+}
+
 // UpsertCluster inserts or updates a cluster record.
 func (d *DB) UpsertCluster(ctx context.Context, c model.AnomalyCluster) error {
-	_, err := d.db.ExecContext(ctx, upsertClusterSQL,
+	vtJSON, err := json.Marshal(c.VehicleTypeCounts)
+	if err != nil {
+		vtJSON = []byte("{}")
+	}
+	_, err = d.db.ExecContext(ctx, upsertClusterSQL,
 		c.ClusterID,
 		c.Latitude,
 		c.Longitude,
@@ -190,6 +207,8 @@ func (d *DB) UpsertCluster(ctx context.Context, c model.AnomalyCluster) error {
 		c.AvgIntensity,
 		c.LastSeenMs,
 		c.RadiusM,
+		vtJSON,
+		c.VehicleTypeDiversity,
 	)
 	return err
 }
@@ -212,6 +231,7 @@ func (d *DB) GetUnclusteredEvents(ctx context.Context, limit int) ([]model.Event
 			&e.Longitude,
 			&e.Intensity,
 			&e.AnomalyType,
+			&e.VehicleType,
 		); err != nil {
 			return nil, err
 		}

@@ -13,6 +13,16 @@ type AnomalyCluster struct {
 	AvgIntensity float32 `json:"avg_intensity"`
 	LastSeenMs   int64   `json:"last_seen_ms"`
 	RadiusM      float64 `json:"radius_m"`
+
+	// VehicleTypeCounts tracks how many events came from each vehicle category.
+	// Cross-vehicle confirmation is a strong signal: a pothole reported by both
+	// three-wheelers and cars is much more likely to be real than a cluster
+	// of reports only from autos (which may be their normal vibration level).
+	VehicleTypeCounts map[string]int `json:"vehicle_type_counts,omitempty"`
+
+	// VehicleTypeDiversity is the number of distinct vehicle types that
+	// contributed to this cluster. Range: 1 to 3. Higher = more cross-validated.
+	VehicleTypeDiversity int `json:"vehicle_type_diversity"`
 }
 
 // TileResponse is returned by the map tile endpoint.
