@@ -50,14 +50,29 @@ class LocationTracker(
     private var lastLocation: Location? = null
     private var active = false
 
-    private val locationRequest = LocationRequest.Builder(
+    // Dual-mode GPS: lower accuracy/frequency when idle saves battery while waiting
+    // for the vehicle to reach detection speed. High accuracy activates once moving.
+
+    private val idleLocationRequest = LocationRequest.Builder(
+        Priority.PRIORITY_BALANCED_POWER_ACCURACY,
+        2_000L  // 2 second interval when idle (speed < minSpeedKmh)
+    ).apply {
+        setMinUpdateIntervalMillis(1_000L)
+        setMinUpdateDistanceMeters(10f)
+        setWaitForAccurateLocation(false)
+    }.build()
+
+    private val activeLocationRequest = LocationRequest.Builder(
         Priority.PRIORITY_HIGH_ACCURACY,
-        1_000L  // 1 second interval
+        1_000L  // 1 second interval during active anomaly detection
     ).apply {
         setMinUpdateIntervalMillis(500L)
         setMinUpdateDistanceMeters(5f)
         setWaitForAccurateLocation(false)
     }.build()
+
+    // Tracks which request is currently registered so we only swap when state changes.
+    private var currentRequest = idleLocationRequest
 
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
@@ -71,6 +86,10 @@ class LocationTracker(
 
             if (shouldBeActive != active) {
                 active = shouldBeActive
+                // Switch GPS accuracy mode to match detection state.
+                // Idle → BALANCED_POWER_ACCURACY saves battery while waiting for speed.
+                // Active → HIGH_ACCURACY for precise anomaly coordinates.
+                switchLocationMode(shouldBeActive)
                 AsphaltLog.d("LocationTracker", "Speed: ${"%.1f".format(speedKmh)} km/h. Sensors active: $active")
                 onSpeedChanged(active, speedKmh)
             } else {
@@ -82,18 +101,35 @@ class LocationTracker(
 
     @SuppressLint("MissingPermission")
     fun start() {
+        currentRequest = idleLocationRequest  // always begin in idle mode
         fusedClient.requestLocationUpdates(
-            locationRequest,
+            currentRequest,
             locationCallback,
             Looper.getMainLooper()
         )
-        AsphaltLog.d("LocationTracker", "Location updates started.")
+        AsphaltLog.d("LocationTracker", "Location updates started (idle mode).")
     }
 
     fun stop() {
         fusedClient.removeLocationUpdates(locationCallback)
         active = false
+        currentRequest = idleLocationRequest  // reset so next start() begins idle
         AsphaltLog.d("LocationTracker", "Location updates stopped.")
+    }
+
+    /**
+     * Switches the active location request between idle (balanced power) and
+     * active (high accuracy) modes. Removes the current registration and
+     * re-registers with the new request. No-op if the mode has not changed.
+     */
+    @SuppressLint("MissingPermission")
+    private fun switchLocationMode(useHighAccuracy: Boolean) {
+        val newRequest = if (useHighAccuracy) activeLocationRequest else idleLocationRequest
+        if (currentRequest === newRequest) return
+        currentRequest = newRequest
+        fusedClient.removeLocationUpdates(locationCallback)
+        fusedClient.requestLocationUpdates(newRequest, locationCallback, Looper.getMainLooper())
+        AsphaltLog.d("LocationTracker", "GPS mode: ${if (useHighAccuracy) "HIGH_ACCURACY" else "BALANCED_POWER"}")
     }
 
     fun getLastLocation(): Location? = lastLocation
