@@ -78,12 +78,11 @@ Samsung Galaxy A series or a Xiaomi device.
 - `device_meta.manufacturer`, `device_meta.model`, and `device_meta.sensor_vendor`
   fields exist in the event schema and are designed for backend per-model analysis.
 
-**Known gap in v1**: The SDK's `handleDetection()` constructs `DeviceMeta()`
-with empty defaults in real detections. The fields are only populated correctly
-in the demo app's simulated events (`DemoViewModel.simulateBump()`), not in
-genuine sensor-triggered events. Populating `DeviceMeta` from `android.os.Build`
-at detection time is a planned fix. Until then, all real events arrive with
-empty `device_meta` fields and per-model analysis is not possible.
+**DeviceMeta population**: `DeviceMeta.platform`, `.manufacturer`, `.model`,
+and `.sdkInt` are populated automatically from `android.os.Build.*` for every
+real detection. `DeviceMeta.sensor_vendor` is populated from the accelerometer's
+`Sensor.vendor` string via `SensorCollector.getSensorVendor()`. All five fields
+arrive correctly in production events and are available for per-model backend analysis.
 
 **Remaining constraint**: v1 does not dynamically calibrate per device.
 A future version should compute per-device baseline noise floor over the first

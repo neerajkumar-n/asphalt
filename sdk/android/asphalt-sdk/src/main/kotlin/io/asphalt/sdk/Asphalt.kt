@@ -215,7 +215,7 @@ object Asphalt {
             anomalyType = result.anomalyType,
             vehicleType = cfg.vehicleType,
             sensorSummary = result.sensorSummary,
-            deviceMeta = DeviceMeta(),
+            deviceMeta = DeviceMeta(sensorVendor = sensorCollector?.getSensorVendor() ?: ""),
             sdkVersion = SDK_VERSION,
             sessionId = sessionId
         )

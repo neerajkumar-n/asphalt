@@ -12,14 +12,19 @@
         apps. Without it, Android stops delivering GPS updates to the
         FusedLocationProviderClient once the app leaves the foreground.
 
-        For a demo app that only collects while the screen is on, you can
-        remove this permission. For a production continuous-collection app,
-        keep it and add a Foreground Service (see docs/sdk-integration.md).
-
         Google Play requires a separate runtime prompt for this permission
-        and a policy disclosure explaining why background location is needed.
+        (requested in MainActivity after ACCESS_FINE_LOCATION is granted) and a
+        policy disclosure explaining why background location is needed.
     -->
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+
+    <!--
+        FOREGROUND_SERVICE is required to call startForeground() on API 28+.
+        FOREGROUND_SERVICE_LOCATION is additionally required on Android 14+ (API 34)
+        for any foreground service that accesses location.
+    -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
 
     <application
         android:name=".AsphaltDemoApplication"
@@ -31,6 +36,16 @@
             uses http). For production, use network_security_config.xml to restrict
             cleartext to localhost only, or remove this attribute and use HTTPS.
         -->
+
+        <!--
+            foregroundServiceType="location" is required on Android 10+ for any
+            foreground service that requests location updates. The system will
+            throw a SecurityException at runtime if this attribute is missing.
+        -->
+        <service
+            android:name=".DetectionForegroundService"
+            android:foregroundServiceType="location"
+            android:exported="false" />
 
         <activity
             android:name=".MainActivity"

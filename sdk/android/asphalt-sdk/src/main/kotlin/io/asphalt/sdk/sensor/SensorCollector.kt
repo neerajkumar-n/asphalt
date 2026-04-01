@@ -91,6 +91,15 @@ class SensorCollector(
 
     fun isRunning() = running
 
+    /**
+     * Returns the hardware vendor string of the accelerometer sensor.
+     *
+     * Used to populate [DeviceMeta.sensorVendor] so the backend can account for
+     * known per-manufacturer sensor calibration differences. Returns an empty
+     * string if no accelerometer is present or the vendor string is unavailable.
+     */
+    fun getSensorVendor(): String = accelerometer?.vendor ?: ""
+
     override fun onSensorChanged(event: SensorEvent) {
         val timestampMs = System.currentTimeMillis()
 

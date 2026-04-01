@@ -291,13 +291,10 @@ Go was chosen over Node.js for the backend:
   drivers report the same location.
 - GPS spoofing is not prevented in v1; multi-report confidence scoring
   limits but does not eliminate its impact.
-- Background collection stops when the screen locks on Android 10+ unless the
-  integrating app runs a Foreground Service with `foregroundServiceType="location"`.
-  The demo app does not include a Foreground Service; it is intended for
-  screen-on testing only.
-- `DeviceMeta` (manufacturer, model, SDK version) is populated correctly in the
-  demo app's simulated events but defaults to empty strings in real detections
-  in v1. This limits device-level analysis on the backend.
+- Background collection requires a Foreground Service with
+  `foregroundServiceType="location"` on Android 10+. The demo app includes
+  `DetectionForegroundService` that handles this automatically when the user
+  taps Start.
 
 Full limitations: [docs/limitations.md](docs/limitations.md)
 
