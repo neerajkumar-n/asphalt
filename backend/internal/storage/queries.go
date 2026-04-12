@@ -4,10 +4,6 @@ package storage
 // Events are partitioned by ingested_at for efficient archival.
 // PostGIS is used for spatial indexing of event coordinates.
 const schema = `
--- Enable PostGIS for spatial operations
-CREATE EXTENSION IF NOT EXISTS postgis;
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
 -- Raw road anomaly events as received from SDK batches
 CREATE TABLE IF NOT EXISTS road_events (
     event_id        TEXT PRIMARY KEY,
@@ -37,15 +33,12 @@ CREATE TABLE IF NOT EXISTS road_events (
     -- Clustering state
     cluster_id      TEXT,
     -- Ingestion metadata
-    ingested_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    -- PostGIS geometry column for spatial indexing
-    geom            GEOMETRY(Point, 4326)
-        GENERATED ALWAYS AS (ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)) STORED
+    ingested_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Spatial index on event geometry
-CREATE INDEX IF NOT EXISTS idx_road_events_geom
-    ON road_events USING GIST (geom);
+-- Composite index for bounding-box queries (replaces PostGIS spatial index for local use)
+CREATE INDEX IF NOT EXISTS idx_road_events_lat_lon
+    ON road_events (latitude, longitude);
 
 CREATE INDEX IF NOT EXISTS idx_road_events_timestamp
     ON road_events (timestamp_ms DESC);
@@ -70,13 +63,11 @@ CREATE TABLE IF NOT EXISTS anomaly_clusters (
     radius_m             DOUBLE PRECISION NOT NULL,
     vehicle_type_counts  JSONB NOT NULL DEFAULT '{}',
     vehicle_diversity    INTEGER NOT NULL DEFAULT 1,
-    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    geom            GEOMETRY(Point, 4326)
-        GENERATED ALWAYS AS (ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)) STORED
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_clusters_geom
-    ON anomaly_clusters USING GIST (geom);
+CREATE INDEX IF NOT EXISTS idx_clusters_lat_lon
+    ON anomaly_clusters (latitude, longitude);
 
 CREATE INDEX IF NOT EXISTS idx_clusters_confidence
     ON anomaly_clusters (confidence DESC);
