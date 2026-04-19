@@ -130,6 +130,21 @@ func (h *Handler) handleGetTile(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, model.TileResponse{Clusters: clusters})
 }
 
+// handleGetStats handles GET /v1/stats
+func (h *Handler) handleGetStats(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeError(w, http.StatusMethodNotAllowed, "method not allowed")
+		return
+	}
+	stats, err := h.db.GetDashboardStats(r.Context())
+	if err != nil {
+		log.Printf("api: stats error: %v", err)
+		writeError(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+	writeJSON(w, http.StatusOK, stats)
+}
+
 // handleHealth handles GET /v1/health
 func (h *Handler) handleHealth(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})

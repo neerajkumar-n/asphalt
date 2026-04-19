@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"embed"
+	"io/fs"
 	"log"
 	"net/http"
 	"os"
@@ -14,6 +16,9 @@ import (
 	"github.com/asphalt-maps/asphalt/backend/internal/ingestion"
 	"github.com/asphalt-maps/asphalt/backend/internal/storage"
 )
+
+//go:embed web
+var webFiles embed.FS
 
 func main() {
 	// -------------------------------------------------------------------------
@@ -49,8 +54,13 @@ func main() {
 	processor := ingestion.New(db)
 	handler := api.NewHandler(processor, db)
 
+	webFS, err := fs.Sub(webFiles, "web")
+	if err != nil {
+		log.Fatalf("embed web sub: %v", err)
+	}
+
 	mux := http.NewServeMux()
-	api.RegisterRoutes(mux, handler)
+	api.RegisterRoutes(mux, handler, http.FS(webFS))
 
 	server := &http.Server{
 		Addr:         addr,
