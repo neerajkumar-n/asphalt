@@ -240,6 +240,19 @@ func (d *DB) GetUnclusteredEvents(ctx context.Context, limit int) ([]model.Event
 	return events, rows.Err()
 }
 
+// GetDashboardStats returns aggregate counts for the dashboard overview cards.
+func (d *DB) GetDashboardStats(ctx context.Context) (model.DashboardStats, error) {
+	var s model.DashboardStats
+	err := d.db.QueryRowContext(ctx, `
+		SELECT
+			(SELECT COUNT(*) FROM road_events)                                                 AS total_events,
+			(SELECT COUNT(*) FROM anomaly_clusters)                                            AS total_clusters,
+			(SELECT COUNT(*) FROM road_events WHERE ingested_at > NOW() - INTERVAL '24 hours') AS events_24h,
+			(SELECT COALESCE(AVG(confidence), 0) FROM anomaly_clusters)                        AS avg_confidence
+	`).Scan(&s.TotalEvents, &s.TotalClusters, &s.Events24h, &s.AvgConfidence)
+	return s, err
+}
+
 // MarkEventsClustered marks a set of event IDs as clustered.
 func (d *DB) MarkEventsClustered(ctx context.Context, eventIDs []string, clusterID string) error {
 	// Use ANY for bulk update

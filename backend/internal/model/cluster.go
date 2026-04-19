@@ -25,12 +25,21 @@ type AnomalyCluster struct {
 	VehicleTypeDiversity int `json:"vehicle_type_diversity"`
 }
 
+// ClusterListResponse is returned by the clusters query endpoint.
+type ClusterListResponse struct {
+	Clusters []AnomalyCluster `json:"clusters"`
+}
+
 // TileResponse is returned by the map tile endpoint.
 type TileResponse struct {
 	Clusters []AnomalyCluster `json:"clusters"`
 }
 
-// ClusterListResponse wraps a list of clusters for the bbox query endpoint.
-type ClusterListResponse struct {
-	Clusters []AnomalyCluster `json:"clusters"`
+// DashboardStats holds aggregate counts for the dashboard overview cards.
+type DashboardStats struct {
+	TotalEvents   int     `json:"total_events"`
+	TotalClusters int     `json:"total_clusters"`
+	Events24h     int     `json:"events_24h"`
+	AvgConfidence float32 `json:"avg_confidence"`
 }
+

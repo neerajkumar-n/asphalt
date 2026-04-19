@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Asphalt — Live Map</title>
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #20243a;
+      --border: #2a2d3a;
+      --accent: #f59e0b;
+      --accent2: #10b981;
+      --danger: #ef4444;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --radius: 10px;
+    }
+
+    html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); }
+
+    /* LAYOUT */
+    .app { display: flex; flex-direction: column; height: 100vh; }
+
+    /* TOP BAR */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1.25rem;
+      height: 52px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      gap: 1rem;
+    }
+    .logo { font-size: 1.1rem; font-weight: 700; color: var(--accent); white-space: nowrap; }
+    .logo span { color: var(--text); }
+    .topbar-actions { display: flex; align-items: center; gap: 0.75rem; }
+    .btn-icon {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 6px;
+      padding: 0.35rem 0.75rem;
+      font-size: 0.82rem;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-icon:hover { background: var(--border); }
+    .live-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent2);
+      display: inline-block;
+      margin-right: 0.35rem;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.35; }
+    }
+    .back-link { color: var(--muted); text-decoration: none; font-size: 0.82rem; }
+    .back-link:hover { color: var(--text); }
+
+    /* BODY ROW */
+    .body-row { display: flex; flex: 1; overflow: hidden; }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 300px;
+      flex-shrink: 0;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+    .sidebar-section { padding: 1rem 1.1rem; border-bottom: 1px solid var(--border); }
+    .sidebar-section:last-child { border-bottom: none; }
+    .sidebar-heading {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.75rem;
+    }
+
+    /* STAT CARDS */
+    .stat-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+    .stat-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.75rem;
+    }
+    .stat-val { font-size: 1.4rem; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; line-height: 1; }
+    .stat-lbl { font-size: 0.68rem; color: var(--muted); margin-top: 0.3rem; text-transform: uppercase; letter-spacing: 0.04em; }
+
+    /* FILTERS */
+    label.filter-label { font-size: 0.78rem; color: var(--muted); display: block; margin-bottom: 0.3rem; }
+    input[type=range] { width: 100%; accent-color: var(--accent); }
+    .range-row { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--muted); margin-top: 0.2rem; }
+    select.filter-select {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 6px;
+      padding: 0.4rem 0.5rem;
+      font-size: 0.82rem;
+      margin-top: 0.4rem;
+    }
+    .filter-row { margin-bottom: 0.75rem; }
+    .apply-btn {
+      width: 100%;
+      background: var(--accent);
+      color: #000;
+      font-weight: 700;
+      font-size: 0.85rem;
+      border: none;
+      border-radius: 6px;
+      padding: 0.55rem;
+      cursor: pointer;
+      margin-top: 0.25rem;
+    }
+    .apply-btn:hover { background: #fbbf24; }
+
+    /* CLUSTER LIST */
+    .cluster-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .cluster-item {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.75rem;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .cluster-item:hover, .cluster-item.active { border-color: var(--accent); }
+    .cluster-top { display: flex; justify-content: space-between; align-items: center; }
+    .cluster-type { font-size: 0.8rem; font-weight: 600; text-transform: capitalize; }
+    .conf-badge {
+      font-size: 0.68rem; font-weight: 700;
+      padding: 0.15rem 0.45rem; border-radius: 4px;
+    }
+    .conf-high { background: rgba(16,185,129,0.15); color: var(--accent2); }
+    .conf-med  { background: rgba(245,158,11,0.15); color: var(--accent); }
+    .conf-low  { background: rgba(148,163,184,0.1); color: var(--muted); }
+    .cluster-meta { font-size: 0.74rem; color: var(--muted); margin-top: 0.3rem; }
+    .diversity-icons { margin-top: 0.3rem; font-size: 0.9rem; letter-spacing: -2px; }
+
+    /* MAP */
+    #map { flex: 1; }
+
+    /* POPUP overrides */
+    .leaflet-popup-content-wrapper {
+      background: var(--surface) !important;
+      color: var(--text) !important;
+      border: 1px solid var(--border) !important;
+      border-radius: 10px !important;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important;
+    }
+    .leaflet-popup-tip { background: var(--surface) !important; }
+    .popup-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.5rem; text-transform: capitalize; }
+    .popup-row { font-size: 0.82rem; color: var(--muted); margin-bottom: 0.2rem; }
+    .popup-row span { color: var(--text); }
+
+    /* STATUS BAR */
+    .statusbar {
+      height: 26px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 1rem;
+      gap: 1.5rem;
+      font-size: 0.72rem;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+    #status-msg { flex: 1; }
+
+    @media (max-width: 700px) {
+      .sidebar { display: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:1rem">
+      <div class="logo">asphalt<span>.</span></div>
+      <a href="/" class="back-link">← Home</a>
+    </div>
+    <div class="topbar-actions">
+      <span style="font-size:0.78rem;color:var(--muted)"><span class="live-dot"></span>Live</span>
+      <button class="btn-icon" onclick="refreshData()">↻ Refresh</button>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div class="body-row">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+
+      <!-- Stats -->
+      <div class="sidebar-section">
+        <div class="sidebar-heading">Overview</div>
+        <div class="stat-cards">
+          <div class="stat-card">
+            <div class="stat-val" id="sc-events">—</div>
+            <div class="stat-lbl">Total Events</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" id="sc-clusters">—</div>
+            <div class="stat-lbl">Clusters</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" id="sc-24h">—</div>
+            <div class="stat-lbl">Last 24h</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-val" id="sc-conf">—</div>
+            <div class="stat-lbl">Avg Confidence</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="sidebar-section">
+        <div class="sidebar-heading">Filters</div>
+        <div class="filter-row">
+          <label class="filter-label">Min confidence: <strong id="conf-val">30%</strong></label>
+          <input type="range" id="conf-range" min="0" max="100" value="30" step="5"
+                 oninput="document.getElementById('conf-val').textContent = this.value + '%'">
+          <div class="range-row"><span>0%</span><span>100%</span></div>
+        </div>
+        <div class="filter-row">
+          <label class="filter-label">Anomaly type</label>
+          <select class="filter-select" id="type-filter">
+            <option value="">All types</option>
+            <option value="pothole">Pothole</option>
+            <option value="speed_breaker">Speed Breaker</option>
+            <option value="rough_patch">Rough Patch</option>
+          </select>
+        </div>
+        <button class="apply-btn" onclick="applyFilters()">Apply Filters</button>
+      </div>
+
+      <!-- Cluster list -->
+      <div class="sidebar-section" style="flex:1">
+        <div class="sidebar-heading">Clusters in view <span id="cluster-count" style="color:var(--text)"></span></div>
+        <div class="cluster-list" id="cluster-list">
+          <div style="color:var(--muted);font-size:0.82rem">Loading clusters…</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- MAP -->
+    <div id="map"></div>
+
+  </div>
+
+  <!-- STATUS BAR -->
+  <div class="statusbar">
+    <span id="status-msg">Initialising…</span>
+    <span id="status-bounds" style="color:var(--muted)"></span>
+    <span id="status-time" style="color:var(--muted)"></span>
+  </div>
+
+</div>
+
+<script>
+// ── Map init ──────────────────────────────────────────────────────────────────
+const map = L.map('map', { zoomControl: true }).setView([20.5937, 78.9629], 5);
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>',
+  subdomains: 'abcd',
+  maxZoom: 19
+}).addTo(map);
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let allClusters = [];
+let markers = {};
+let activeClusterID = null;
+
+// ── Colour helpers ────────────────────────────────────────────────────────────
+function confColor(conf) {
+  if (conf >= 0.75) return '#10b981';
+  if (conf >= 0.45) return '#f59e0b';
+  return '#94a3b8';
+}
+
+function typeEmoji(type) {
+  if (!type) return '⚠️';
+  if (type.includes('pothole')) return '🕳️';
+  if (type.includes('speed')) return '🚦';
+  return '⚠️';
+}
+
+function vehicleIcons(counts) {
+  if (!counts) return '';
+  const parts = [];
+  if (counts.three_wheeler) parts.push('🛺');
+  if (counts.four_wheeler)  parts.push('🚗');
+  if (counts.two_wheeler)   parts.push('🏍️');
+  return parts.join('');
+}
+
+// ── Marker factory ────────────────────────────────────────────────────────────
+function makeMarker(c) {
+  const color = confColor(c.confidence);
+  const r = Math.max(8, Math.min(22, 8 + c.event_count * 1.5));
+  const icon = L.divIcon({
+    className: '',
+    html: `<svg width="${r*2}" height="${r*2}" viewBox="0 0 ${r*2} ${r*2}" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="${r}" cy="${r}" r="${r-1}" fill="${color}" fill-opacity="0.25" stroke="${color}" stroke-width="1.5"/>
+      <circle cx="${r}" cy="${r}" r="${r*0.45}" fill="${color}"/>
+    </svg>`,
+    iconSize: [r*2, r*2],
+    iconAnchor: [r, r],
+    popupAnchor: [0, -r]
+  });
+
+  const m = L.marker([c.latitude, c.longitude], { icon });
+  m.bindPopup(buildPopup(c));
+  m.on('click', () => highlightCluster(c.cluster_id));
+  return m;
+}
+
+function buildPopup(c) {
+  const ts = new Date(c.last_seen_ms).toLocaleString();
+  return `<div>
+    <div class="popup-title">${typeEmoji(c.anomaly_type)} ${(c.anomaly_type || 'anomaly').replace(/_/g,' ')}</div>
+    <div class="popup-row">Confidence: <span>${(c.confidence*100).toFixed(1)}%</span></div>
+    <div class="popup-row">Events: <span>${c.event_count}</span></div>
+    <div class="popup-row">Avg intensity: <span>${(c.avg_intensity).toFixed(2)}</span></div>
+    <div class="popup-row">Radius: <span>${c.radius_m.toFixed(1)} m</span></div>
+    <div class="popup-row">Vehicles: <span>${vehicleIcons(c.vehicle_type_counts) || '—'}</span></div>
+    <div class="popup-row">Last seen: <span>${ts}</span></div>
+    <div class="popup-row" style="font-size:0.72rem;margin-top:0.4rem;color:#4a5568">${c.cluster_id}</div>
+  </div>`;
+}
+
+// ── Render markers ────────────────────────────────────────────────────────────
+const markerLayer = L.layerGroup().addTo(map);
+
+function renderMarkers(clusters) {
+  markerLayer.clearLayers();
+  markers = {};
+  clusters.forEach(c => {
+    const m = makeMarker(c);
+    m.addTo(markerLayer);
+    markers[c.cluster_id] = m;
+  });
+}
+
+// ── Sidebar cluster list ──────────────────────────────────────────────────────
+function renderClusterList(clusters) {
+  const el = document.getElementById('cluster-list');
+  document.getElementById('cluster-count').textContent = `(${clusters.length})`;
+
+  if (!clusters.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:0.82rem">No clusters match current filters.</div>';
+    return;
+  }
+
+  const sorted = [...clusters].sort((a,b) => b.confidence - a.confidence).slice(0, 60);
+  el.innerHTML = sorted.map(c => {
+    const confPct = (c.confidence * 100).toFixed(0);
+    const confClass = c.confidence >= 0.75 ? 'conf-high' : c.confidence >= 0.45 ? 'conf-med' : 'conf-low';
+    return `<div class="cluster-item" id="li-${c.cluster_id}" onclick="highlightCluster('${c.cluster_id}')">
+      <div class="cluster-top">
+        <div class="cluster-type">${typeEmoji(c.anomaly_type)} ${(c.anomaly_type||'anomaly').replace(/_/g,' ')}</div>
+        <span class="conf-badge ${confClass}">${confPct}%</span>
+      </div>
+      <div class="cluster-meta">${c.event_count} events · ${c.radius_m.toFixed(0)} m radius</div>
+      <div class="diversity-icons">${vehicleIcons(c.vehicle_type_counts)}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Highlight cluster ─────────────────────────────────────────────────────────
+function highlightCluster(id) {
+  if (activeClusterID) {
+    document.getElementById('li-' + activeClusterID)?.classList.remove('active');
+  }
+  activeClusterID = id;
+  document.getElementById('li-' + id)?.classList.add('active');
+  document.getElementById('li-' + id)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  if (markers[id]) {
+    markers[id].openPopup();
+    map.panTo(markers[id].getLatLng());
+  }
+}
+
+// ── Data fetching ─────────────────────────────────────────────────────────────
+async function fetchStats() {
+  try {
+    const res = await fetch('/v1/stats');
+    if (!res.ok) return;
+    const s = await res.json();
+    document.getElementById('sc-events').textContent   = s.total_events.toLocaleString();
+    document.getElementById('sc-clusters').textContent = s.total_clusters.toLocaleString();
+    document.getElementById('sc-24h').textContent      = s.events_24h.toLocaleString();
+    document.getElementById('sc-conf').textContent     = s.avg_confidence > 0
+      ? (s.avg_confidence * 100).toFixed(1) + '%' : '—';
+  } catch(_) {}
+}
+
+async function fetchClusters() {
+  const b = map.getBounds();
+  const minLat = b.getSouth().toFixed(6);
+  const maxLat = b.getNorth().toFixed(6);
+  const minLon = b.getWest().toFixed(6);
+  const maxLon = b.getEast().toFixed(6);
+  const minConf = (document.getElementById('conf-range').value / 100).toFixed(2);
+
+  setStatus('Fetching clusters…');
+  try {
+    const url = `/v1/map/clusters?min_lat=${minLat}&min_lon=${minLon}&max_lat=${maxLat}&max_lon=${maxLon}&limit=500`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(res.statusText);
+    const data = await res.json();
+
+    const typeFilter = document.getElementById('type-filter').value;
+    const confThreshold = parseFloat(minConf);
+    allClusters = (data.clusters || []).filter(c => {
+      if (c.confidence < confThreshold) return false;
+      if (typeFilter && c.anomaly_type !== typeFilter) return false;
+      return true;
+    });
+
+    renderMarkers(allClusters);
+    renderClusterList(allClusters);
+    setStatus(`Loaded ${allClusters.length} cluster${allClusters.length !== 1 ? 's' : ''}`);
+
+    const bStr = `${parseFloat(minLat).toFixed(2)},${parseFloat(minLon).toFixed(2)} → ${parseFloat(maxLat).toFixed(2)},${parseFloat(maxLon).toFixed(2)}`;
+    document.getElementById('status-bounds').textContent = `Bounds: ${bStr}`;
+    document.getElementById('status-time').textContent = new Date().toLocaleTimeString();
+  } catch(e) {
+    setStatus('Error: ' + e.message);
+  }
+}
+
+function setStatus(msg) {
+  document.getElementById('status-msg').textContent = msg;
+}
+
+function applyFilters() {
+  fetchClusters();
+}
+
+function refreshData() {
+  fetchStats();
+  fetchClusters();
+}
+
+// ── Map events ────────────────────────────────────────────────────────────────
+let fetchTimeout = null;
+map.on('moveend zoomend', () => {
+  clearTimeout(fetchTimeout);
+  fetchTimeout = setTimeout(fetchClusters, 400);
+});
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+fetchStats();
+fetchClusters();
+setInterval(fetchStats, 30000);
+
+// Try to centre on user
+if (navigator.geolocation) {
+  navigator.geolocation.getCurrentPosition(pos => {
+    map.setView([pos.coords.latitude, pos.coords.longitude], 13);
+  }, () => {});
+}
+</script>
+</body>
+</html>

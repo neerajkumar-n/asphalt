@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Asphalt — Crowd-sourced Road Anomaly Detection</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --border: #2a2d3a;
+      --accent: #f59e0b;
+      --accent2: #10b981;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    /* NAV */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 2rem;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: rgba(15, 17, 23, 0.92);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+    }
+    .logo { font-size: 1.3rem; font-weight: 700; color: var(--accent); letter-spacing: -0.5px; }
+    .logo span { color: var(--text); }
+    nav a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      margin-left: 1.5rem;
+      transition: color 0.2s;
+    }
+    nav a:hover { color: var(--text); }
+    .nav-cta {
+      background: var(--accent);
+      color: #000 !important;
+      padding: 0.45rem 1rem;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+    .nav-cta:hover { background: #fbbf24; }
+
+    /* HERO */
+    .hero {
+      text-align: center;
+      padding: 6rem 2rem 4rem;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(245,158,11,0.12);
+      border: 1px solid rgba(245,158,11,0.35);
+      color: var(--accent);
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 0.35rem 0.85rem;
+      border-radius: 999px;
+      margin-bottom: 1.5rem;
+    }
+    h1 {
+      font-size: clamp(2.2rem, 5vw, 3.6rem);
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -1px;
+      margin-bottom: 1.25rem;
+    }
+    h1 .highlight { color: var(--accent); }
+    .hero-sub {
+      font-size: 1.15rem;
+      color: var(--muted);
+      max-width: 600px;
+      margin: 0 auto 2.5rem;
+    }
+    .hero-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: opacity 0.2s, transform 0.15s;
+    }
+    .btn:hover { opacity: 0.88; transform: translateY(-1px); }
+    .btn-primary { background: var(--accent); color: #000; }
+    .btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+
+    /* STATS STRIP */
+    .stats-strip {
+      display: flex;
+      justify-content: center;
+      gap: 3rem;
+      padding: 2.5rem 2rem;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .stat-item { text-align: center; }
+    .stat-number {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--accent);
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+    .stat-label { font-size: 0.8rem; color: var(--muted); margin-top: 0.3rem; text-transform: uppercase; letter-spacing: 0.05em; }
+
+    /* SECTIONS */
+    section { padding: 5rem 2rem; }
+    .section-inner { max-width: 1100px; margin: 0 auto; }
+    .section-tag {
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.75rem;
+    }
+    h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 700; margin-bottom: 1rem; }
+    .section-sub { color: var(--muted); font-size: 1rem; max-width: 600px; margin-bottom: 3rem; }
+
+    /* HOW IT WORKS */
+    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; }
+    .step {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+      position: relative;
+    }
+    .step-num {
+      width: 36px; height: 36px;
+      background: rgba(245,158,11,0.15);
+      border: 1px solid rgba(245,158,11,0.4);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.9rem; color: var(--accent);
+      margin-bottom: 1rem;
+    }
+    .step h3 { font-size: 1rem; margin-bottom: 0.5rem; }
+    .step p { font-size: 0.88rem; color: var(--muted); }
+
+    /* VEHICLES */
+    .vehicles { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; }
+    .vehicle-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+    }
+    .vehicle-icon { font-size: 2rem; margin-bottom: 0.75rem; }
+    .vehicle-card h3 { font-size: 1rem; margin-bottom: 0.4rem; }
+    .vehicle-card p { font-size: 0.85rem; color: var(--muted); }
+    .badge-new {
+      display: inline-block;
+      background: rgba(16,185,129,0.15);
+      color: var(--accent2);
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      margin-left: 0.4rem;
+      vertical-align: middle;
+    }
+
+    /* ROADMAP */
+    .roadmap { display: flex; flex-direction: column; gap: 1rem; max-width: 760px; }
+    .roadmap-item {
+      display: flex;
+      gap: 1.25rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      align-items: flex-start;
+    }
+    .roadmap-dot {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      margin-top: 0.35rem;
+      flex-shrink: 0;
+    }
+    .dot-done { background: var(--accent2); }
+    .dot-active { background: var(--accent); }
+    .dot-future { background: var(--border); }
+    .roadmap-content h3 { font-size: 0.95rem; margin-bottom: 0.3rem; }
+    .roadmap-content p { font-size: 0.84rem; color: var(--muted); }
+    .roadmap-label {
+      font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+      padding: 0.2rem 0.5rem; border-radius: 4px; margin-left: auto; white-space: nowrap; align-self: center;
+    }
+    .label-done { background: rgba(16,185,129,0.12); color: var(--accent2); }
+    .label-active { background: rgba(245,158,11,0.12); color: var(--accent); }
+    .label-future { background: rgba(255,255,255,0.05); color: var(--muted); }
+
+    /* PRIVACY */
+    .privacy-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; }
+    .privacy-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+    }
+    .privacy-card .icon { font-size: 1.5rem; margin-bottom: 0.75rem; }
+    .privacy-card h3 { font-size: 0.95rem; margin-bottom: 0.4rem; }
+    .privacy-card p { font-size: 0.84rem; color: var(--muted); }
+
+    /* OSS */
+    .oss-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2.5rem;
+      text-align: center;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .oss-box h2 { margin-bottom: 1rem; }
+    .oss-box p { color: var(--muted); margin-bottom: 2rem; }
+    .oss-links { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem;
+      text-align: center;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--text); }
+
+    @media (max-width: 600px) {
+      nav .nav-links { display: none; }
+      .stats-strip { gap: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">asphalt<span>.</span></div>
+  <div class="nav-links">
+    <a href="#how-it-works">How it works</a>
+    <a href="#roadmap">Roadmap</a>
+    <a href="#privacy">Privacy</a>
+    <a href="https://github.com/asphalt-maps/asphalt">GitHub</a>
+    <a href="/dashboard" class="nav-cta">Live Map →</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">Open Source · Android SDK · REST API</div>
+  <h1>Turn every pothole into<br><span class="highlight">shared knowledge</span></h1>
+  <p class="hero-sub">
+    Asphalt is a crowd-sourced road anomaly detection platform. Phones silently detect
+    potholes, speed-breakers and rough patches using only their onboard sensors —
+    no cameras, no photos, no personal data.
+  </p>
+  <div class="hero-actions">
+    <a href="/dashboard" class="btn btn-primary">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 16l4.553-2.276A1 1 0 0021 19.382V8.618a1 1 0 00-.553-.894L15 5m0 18V5m0 0L9 7"/></svg>
+      View Live Map
+    </a>
+    <a href="https://github.com/asphalt-maps/asphalt" class="btn btn-secondary">
+      <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.92.359.31.678.921.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+      Star on GitHub
+    </a>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-strip" id="live-stats">
+  <div class="stat-item">
+    <div class="stat-number" id="stat-events">—</div>
+    <div class="stat-label">Events Collected</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-number" id="stat-clusters">—</div>
+    <div class="stat-label">Anomaly Clusters</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-number" id="stat-24h">—</div>
+    <div class="stat-label">Reports (24h)</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-number" id="stat-conf">—</div>
+    <div class="stat-label">Avg Confidence</div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section id="how-it-works">
+  <div class="section-inner">
+    <div class="section-tag">How it works</div>
+    <h2>Passive sensing, zero friction</h2>
+    <p class="section-sub">
+      Asphalt runs silently in the background. Riders and drivers don't have to do anything —
+      the SDK detects anomalies automatically and batches them for upload.
+    </p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h3>Sensor sampling</h3>
+        <p>The SDK samples the accelerometer and gyroscope at 100 Hz, buffering data in a sliding window.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h3>On-device detection</h3>
+        <p>A lightweight algorithm looks for characteristic impulse signatures: sharp Z-axis peaks with gyro confirmation, vehicle-type-adjusted thresholds.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h3>GPS tagging</h3>
+        <p>Each detection is stamped with the device location. GPS switches to high-accuracy mode only when motion is detected, preserving battery.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <h3>Batch upload</h3>
+        <p>Events are queued locally and uploaded as signed batches. Duplicate batches are idempotently ignored by the backend.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <h3>Spatial clustering</h3>
+        <p>The backend runs DBSCAN every few minutes to group nearby events into anomaly clusters with a confidence score.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">6</div>
+        <h3>Open map</h3>
+        <p>Clusters are served via a tile API and visualised on the live map — cross-validated by multiple vehicle types for higher confidence.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VEHICLE TYPES -->
+<section style="background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+  <div class="section-inner">
+    <div class="section-tag">Vehicle types</div>
+    <h2>Built for Indian roads</h2>
+    <p class="section-sub">
+      Different vehicles experience road anomalies very differently. Asphalt profiles each
+      vehicle type with separate thresholds and uses cross-vehicle agreement as a confidence booster.
+    </p>
+    <div class="vehicles">
+      <div class="vehicle-card">
+        <div class="vehicle-icon">🛺</div>
+        <h3>Three-wheelers (Autos)</h3>
+        <p>Lower suspension stiffness means more baseline vibration. The SDK applies a three-wheeler filter to suppress false positives from engine vibration and tight turns.</p>
+      </div>
+      <div class="vehicle-card">
+        <div class="vehicle-icon">🚗</div>
+        <h3>Four-wheelers (Cars)</h3>
+        <p>Standard detection profile. Reports from cars carry high confidence on their own, especially on urban roads.</p>
+      </div>
+      <div class="vehicle-card">
+        <div class="vehicle-icon">🏍️</div>
+        <h3>Two-wheelers <span class="badge-new">Planned</span></h3>
+        <p>Motorcycles and scooters have their own vibration profile. A two-wheeler filter is planned to reduce noise from road buzz and chassis resonance.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ROADMAP -->
+<section id="roadmap">
+  <div class="section-inner">
+    <div class="section-tag">Roadmap</div>
+    <h2>What's built, what's next</h2>
+    <p class="section-sub">Asphalt is actively developed. Here's the current state and planned work.</p>
+    <div class="roadmap">
+      <div class="roadmap-item">
+        <div class="roadmap-dot dot-done"></div>
+        <div class="roadmap-content">
+          <h3>Android SDK with on-device detection</h3>
+          <p>Accelerometer + gyroscope fusion, vehicle-type thresholds, three-wheeler filter, GPS dual-mode.</p>
+        </div>
+        <span class="roadmap-label label-done">Done</span>
+      </div>
+      <div class="roadmap-item">
+        <div class="roadmap-dot dot-done"></div>
+        <div class="roadmap-content">
+          <h3>Backend ingest &amp; DBSCAN clustering pipeline</h3>
+          <p>Go server with idempotent batch ingestion, spatial DBSCAN, confidence scoring, vehicle-diversity boosting.</p>
+        </div>
+        <span class="roadmap-label label-done">Done</span>
+      </div>
+      <div class="roadmap-item">
+        <div class="roadmap-dot dot-done"></div>
+        <div class="roadmap-content">
+          <h3>Live map dashboard</h3>
+          <p>Leaflet-based map with cluster markers, confidence filter, stats cards, and tile API.</p>
+        </div>
+        <span class="roadmap-label label-done">Done</span>
+      </div>
+      <div class="roadmap-item">
+        <div class="roadmap-dot dot-active"></div>
+        <div class="roadmap-content">
+          <h3>iOS SDK</h3>
+          <p>Swift implementation of the same detection pipeline, targeting iOS 14+.</p>
+        </div>
+        <span class="roadmap-label label-active">In progress</span>
+      </div>
+      <div class="roadmap-item">
+        <div class="roadmap-dot dot-future"></div>
+        <div class="roadmap-content">
+          <h3>Two-wheeler vehicle profile</h3>
+          <p>Dedicated threshold tuning and a vibration filter for motorbikes and scooters.</p>
+        </div>
+        <span class="roadmap-label label-future">Planned</span>
+      </div>
+      <div class="roadmap-item">
+        <div class="roadmap-dot dot-future"></div>
+        <div class="roadmap-content">
+          <h3>Anomaly classification (ML)</h3>
+          <p>On-device TFLite model to classify pothole vs speed-breaker vs rough patch from the raw sensor window.</p>
+        </div>
+        <span class="roadmap-label label-future">Planned</span>
+      </div>
+      <div class="roadmap-item">
+        <div class="roadmap-dot dot-future"></div>
+        <div class="roadmap-content">
+          <h3>Municipality export API</h3>
+          <p>GeoJSON / CSV export for local authorities and city planners to consume cluster data programmatically.</p>
+        </div>
+        <span class="roadmap-label label-future">Planned</span>
+      </div>
+      <div class="roadmap-item">
+        <div class="roadmap-dot dot-future"></div>
+        <div class="roadmap-content">
+          <h3>Severity heatmap layer</h3>
+          <p>Colour-coded road segments by aggregate anomaly density — useful for route planning apps.</p>
+        </div>
+        <span class="roadmap-label label-future">Planned</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRIVACY -->
+<section id="privacy" style="background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+  <div class="section-inner">
+    <div class="section-tag">Privacy first</div>
+    <h2>No personal data, ever</h2>
+    <p class="section-sub">
+      Asphalt was designed from day one to be privacy-preserving. Every architectural
+      decision reflects this commitment.
+    </p>
+    <div class="privacy-grid">
+      <div class="privacy-card">
+        <div class="icon">🚫</div>
+        <h3>No account required</h3>
+        <p>There is no user registration. Sessions are ephemeral random UUIDs that are never associated with any identity.</p>
+      </div>
+      <div class="privacy-card">
+        <div class="icon">📍</div>
+        <h3>Coarse coordinates only</h3>
+        <p>Event coordinates are truncated to ~11 m precision before storage. Exact device paths are never reconstructed.</p>
+      </div>
+      <div class="privacy-card">
+        <div class="icon">📷</div>
+        <h3>No camera, no microphone</h3>
+        <p>Detection is purely sensor-based — accelerometer and gyroscope. No camera permission is ever requested.</p>
+      </div>
+      <div class="privacy-card">
+        <div class="icon">🇮🇳</div>
+        <h3>DPDP Act compliant</h3>
+        <p>The demo app shows an explicit consent dialog before any data collection starts, aligned with India's Digital Personal Data Protection Act 2023.</p>
+      </div>
+      <div class="privacy-card">
+        <div class="icon">🔓</div>
+        <h3>Open source</h3>
+        <p>The SDK, backend, and this website are fully open source. You can audit exactly what data is collected and how it is stored.</p>
+      </div>
+      <div class="privacy-card">
+        <div class="icon">🗑️</div>
+        <h3>No PII in database</h3>
+        <p>The backend schema stores event_id, timestamp, truncated coordinates, intensity, and sensor summary. Nothing that can identify a person.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- OPEN SOURCE -->
+<section>
+  <div class="section-inner">
+    <div class="oss-box">
+      <h2>Built in the open</h2>
+      <p>
+        Asphalt is MIT-licensed and welcomes contributions. Whether you want to tune
+        detection thresholds, add a new vehicle profile, or improve the map UI — all
+        development happens publicly on GitHub.
+      </p>
+      <div class="oss-links">
+        <a href="https://github.com/asphalt-maps/asphalt" class="btn btn-primary">
+          View on GitHub
+        </a>
+        <a href="https://github.com/asphalt-maps/asphalt/blob/main/CONTRIBUTING.md" class="btn btn-secondary">
+          Contributing Guide
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>
+    &copy; 2025 Asphalt contributors &nbsp;·&nbsp;
+    <a href="https://github.com/asphalt-maps/asphalt/blob/main/LICENSE">MIT License</a> &nbsp;·&nbsp;
+    <a href="/dashboard">Live Map</a> &nbsp;·&nbsp;
+    <a href="https://github.com/asphalt-maps/asphalt">GitHub</a>
+  </p>
+</footer>
+
+<script>
+  // Load live stats into the strip
+  async function loadStats() {
+    try {
+      const res = await fetch('/v1/stats');
+      if (!res.ok) return;
+      const s = await res.json();
+      document.getElementById('stat-events').textContent = s.total_events.toLocaleString();
+      document.getElementById('stat-clusters').textContent = s.total_clusters.toLocaleString();
+      document.getElementById('stat-24h').textContent = s.events_24h.toLocaleString();
+      document.getElementById('stat-conf').textContent =
+        s.avg_confidence > 0 ? (s.avg_confidence * 100).toFixed(1) + '%' : '—';
+    } catch (_) {}
+  }
+  loadStats();
+</script>
+</body>
+</html>
