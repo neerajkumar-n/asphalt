@@ -1,0 +1,65 @@
+name: Android Debug APK
+
+on:
+  push:
+    branches: ["**"]
+    paths:
+      - "sdk/android/**"
+      - "demo-app/android/**"
+      - ".github/workflows/android-debug-apk.yml"
+  pull_request:
+    paths:
+      - "sdk/android/**"
+      - "demo-app/android/**"
+
+  # Allow triggering manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build debug APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+
+      # The demo app's settings.gradle.kts references the SDK via a relative
+      # path (../../sdk/android/asphalt-sdk), so both modules are available
+      # from the single checkout above — no extra step needed.
+
+      - name: Generate Gradle wrapper
+        working-directory: demo-app/android
+        run: gradle wrapper --gradle-version 8.7 --distribution-type bin
+
+      - name: Make gradlew executable
+        working-directory: demo-app/android
+        run: chmod +x gradlew
+
+      # Build the debug APK.
+      # INGEST_URL is overridden here so CI builds always point at a safe
+      # placeholder rather than whatever is hardcoded in build.gradle.kts.
+      # Override with your actual backend URL to get a testable APK.
+      - name: Build debug APK
+        working-directory: demo-app/android
+        env:
+          INGEST_URL: ${{ secrets.INGEST_URL || 'http://localhost:8080/v1/ingest/batch' }}
+        run: ./gradlew assembleDebug
+              -PingestUrl="$INGEST_URL"
+              --no-daemon
+              --stacktrace
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: asphalt-demo-debug-${{ github.sha }}
+          path: demo-app/android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14
+          if-no-files-found: error

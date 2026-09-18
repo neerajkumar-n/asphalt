@@ -98,9 +98,16 @@ class ThreeWheelerFilter(private val profile: VehicleProfile) {
         LATERAL_WOBBLE
     }
 
-    fun feedLateralGyro(timestampMs: Long, rollRadS: Float, yawRadS: Float) {
-        rollBuffer.add(timestampMs, rollRadS)
-        yawBuffer.add(timestampMs, yawRadS)
+    /**
+     * Feed world-frame gyroscope components from [AnomalyDetector.feedGyroscope].
+     *
+     * [verticalRadS] is the rotation around the vertical / gravity axis (vehicle turning).
+     * [lateralMagRadS] is the magnitude of rotation in the horizontal plane (body roll / wobble).
+     * Both are orientation-agnostic — see [SensorCollector] for the projection derivation.
+     */
+    fun feedGyro(timestampMs: Long, verticalRadS: Float, lateralMagRadS: Float) {
+        rollBuffer.add(timestampMs, lateralMagRadS)
+        yawBuffer.add(timestampMs, verticalRadS)
     }
 
     fun feedAccelZ(timestampMs: Long, z: Float) {

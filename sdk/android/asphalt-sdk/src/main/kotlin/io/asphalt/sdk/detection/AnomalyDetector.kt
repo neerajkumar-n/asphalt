@@ -86,34 +86,46 @@ class AnomalyDetector(private val config: AsphaltConfig) {
     )
 
     /**
-     * Feed a new accelerometer Z-axis sample into the detector.
+     * Feed a new road-normal acceleration sample into the detector.
+     *
+     * The value is the component of linear acceleration (gravity already removed)
+     * projected onto the road-normal direction using the current gravity vector.
+     * It hovers near 0 on smooth road and spikes during impacts, regardless of
+     * how the phone is mounted.
      *
      * @param timestampMs System uptime in milliseconds
-     * @param z Raw Z-axis value in m/s^2 (includes gravity)
+     * @param roadNormal Road-normal linear acceleration in m/s^2 (gravity removed)
      */
-    fun feedAccelerometer(timestampMs: Long, z: Float) {
-        accelBuffer.add(timestampMs, z)
-        threeWheelerFilter?.feedAccelZ(timestampMs, z)
+    fun feedAccelerometer(timestampMs: Long, roadNormal: Float) {
+        accelBuffer.add(timestampMs, roadNormal)
+        threeWheelerFilter?.feedAccelZ(timestampMs, roadNormal)
     }
 
     /**
-     * Feed a new gyroscope sample into the detector.
+     * Feed world-frame gyroscope components into the detector.
      *
-     * All three axes are accepted. The magnitude is used for the standard
-     * gyro confirmation check. Lateral axes (X = roll, Z = yaw) are used
-     * by the three-wheeler filter for turn and wobble suppression.
+     * The two components partition the full angular velocity vector:
+     *   |total|² = verticalRadS² + lateralMagRadS²
+     *
+     * [verticalRadS] is the component along the gravity direction (world-frame
+     * yaw — rotation of the vehicle around the vertical axis, i.e. turning).
+     *
+     * [lateralMagRadS] is the magnitude of the component perpendicular to
+     * gravity (vehicle roll and body wobble in the horizontal plane).
+     *
+     * Both values are orientation-agnostic: a phone mounted at any angle
+     * produces the same values for the same physical vehicle motion.
      *
      * @param timestampMs System uptime in milliseconds
-     * @param x Angular velocity around X axis (roll, rad/s)
-     * @param y Angular velocity around Y axis (pitch, rad/s)
-     * @param z Angular velocity around Z axis (yaw, rad/s)
+     * @param verticalRadS Rotation around the vertical / gravity axis (rad/s)
+     * @param lateralMagRadS Magnitude of rotation in the horizontal plane (rad/s)
      */
-    fun feedGyroscope(timestampMs: Long, x: Float, y: Float, z: Float) {
-        val magnitude = sqrt(x * x + y * y + z * z)
+    fun feedGyroscope(timestampMs: Long, verticalRadS: Float, lateralMagRadS: Float) {
+        val magnitude = sqrt(verticalRadS * verticalRadS + lateralMagRadS * lateralMagRadS)
         gyroMagBuffer.add(timestampMs, magnitude)
-        gyroRollBuffer.add(timestampMs, x)
-        gyroYawBuffer.add(timestampMs, z)
-        threeWheelerFilter?.feedLateralGyro(timestampMs, rollRadS = x, yawRadS = z)
+        gyroRollBuffer.add(timestampMs, lateralMagRadS)
+        gyroYawBuffer.add(timestampMs, verticalRadS)
+        threeWheelerFilter?.feedGyro(timestampMs, verticalRadS = verticalRadS, lateralMagRadS = lateralMagRadS)
     }
 
     /**
