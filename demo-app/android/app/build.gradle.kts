@@ -15,18 +15,24 @@ android {
         versionName = "1.0.0"
     }
 
+    // Allow the ingest URL to be supplied at build time:
+    //   ./gradlew assembleDebug -PingestUrl="http://192.168.1.42:8080/v1/ingest/batch"
+    // Falls back to the defaults below when the property is not set.
+    val ingestUrlOverride: String? = findProperty("ingestUrl") as String?
+
     buildTypes {
         debug {
-            // 10.0.2.2 is the Android emulator's alias for the host machine's localhost.
-            // For a real device on the same Wi-Fi as your dev machine, replace with your
-            // machine's local IP (e.g. "http://192.168.1.42:8080/v1/ingest/batch").
-            buildConfigField("String", "INGEST_URL", "\"http://10.0.2.2:8080/v1/ingest/batch\"")
+            // 10.0.2.2 = Android emulator alias for host localhost.
+            // On a real device connected to the same Wi-Fi as your dev machine,
+            // pass -PingestUrl="http://<your-machine-ip>:8080/v1/ingest/batch"
+            val url = ingestUrlOverride ?: "http://10.0.2.2:8080/v1/ingest/batch"
+            buildConfigField("String", "INGEST_URL", "\"$url\"")
         }
         release {
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            // Replace with your production backend URL before building a release APK.
-            buildConfigField("String", "INGEST_URL", "\"https://your-backend.example.com/v1/ingest/batch\"")
+            val url = ingestUrlOverride ?: "https://your-backend.example.com/v1/ingest/batch"
+            buildConfigField("String", "INGEST_URL", "\"$url\"")
         }
     }
 
