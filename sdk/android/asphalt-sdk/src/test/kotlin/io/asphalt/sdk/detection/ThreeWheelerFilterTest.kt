@@ -110,9 +110,9 @@ class ThreeWheelerFilterTest {
     fun `sustained roll and yaw above threshold triggers TURNING`() {
         feedFlatAccelAndLateralForTurnSetup()
 
-        // 20 samples of elevated roll + yaw: 0.70 > threshold 0.55
+        // 20 samples of elevated lateral + vertical: 0.70 > threshold 0.55
         for (i in 0 until 20) {
-            filter.feedLateralGyro(baseTime + i * stepMs, rollRadS = 0.7f, yawRadS = 0.65f)
+            filter.feedGyro(baseTime + i * stepMs, verticalRadS = 0.65f, lateralMagRadS = 0.7f)
             filter.feedAccelZ(baseTime + i * stepMs, 9.81f)
         }
 
@@ -127,9 +127,9 @@ class ThreeWheelerFilterTest {
     fun `sustained roll without yaw triggers LATERAL_WOBBLE`() {
         feedFlatAccelAndLateralForTurnSetup()
 
-        // High roll, low yaw (well below threshold 0.55)
+        // High lateral, low vertical (well below threshold 0.55)
         for (i in 0 until 20) {
-            filter.feedLateralGyro(baseTime + i * stepMs, rollRadS = 0.70f, yawRadS = 0.10f)
+            filter.feedGyro(baseTime + i * stepMs, verticalRadS = 0.10f, lateralMagRadS = 0.70f)
             filter.feedAccelZ(baseTime + i * stepMs, 9.81f)
         }
 
@@ -144,9 +144,9 @@ class ThreeWheelerFilterTest {
 
         // 20 samples with only a single elevated spike at index 10
         for (i in 0 until 20) {
-            val roll = if (i == 10) 0.70f else 0.05f
-            val yaw  = if (i == 10) 0.65f else 0.03f
-            filter.feedLateralGyro(baseTime + i * stepMs, rollRadS = roll, yawRadS = yaw)
+            val lateral  = if (i == 10) 0.70f else 0.05f
+            val vertical = if (i == 10) 0.65f else 0.03f
+            filter.feedGyro(baseTime + i * stepMs, verticalRadS = vertical, lateralMagRadS = lateral)
             filter.feedAccelZ(baseTime + i * stepMs, 9.81f)
         }
 
@@ -177,7 +177,7 @@ class ThreeWheelerFilterTest {
         // Feed calm data starting at turnDetectedAt + 1300 ms (window ends at +1200)
         val afterWindowStart = turnDetectedAt + 1300L
         for (i in 0 until 30) {
-            filter.feedLateralGyro(afterWindowStart + i * stepMs, rollRadS = 0.04f, yawRadS = 0.03f)
+            filter.feedGyro(afterWindowStart + i * stepMs, verticalRadS = 0.03f, lateralMagRadS = 0.04f)
             filter.feedAccelZ(afterWindowStart + i * stepMs, 9.81f)
         }
 
@@ -246,7 +246,7 @@ class ThreeWheelerFilterTest {
     private fun triggerTurnSuppression(): Long {
         feedFlatAccelAndLateralForTurnSetup()
         for (i in 0 until 20) {
-            filter.feedLateralGyro(baseTime + i * stepMs, rollRadS = 0.70f, yawRadS = 0.65f)
+            filter.feedGyro(baseTime + i * stepMs, verticalRadS = 0.65f, lateralMagRadS = 0.70f)
             filter.feedAccelZ(baseTime + i * stepMs, 9.81f)
         }
         val turnDetectedAt = baseTime + 19 * stepMs
