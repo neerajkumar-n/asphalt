@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	_ "github.com/lib/pq"
+	"github.com/lib/pq"
 
 	"github.com/asphalt-maps/asphalt/backend/internal/model"
 )
@@ -258,7 +258,7 @@ func (d *DB) MarkEventsClustered(ctx context.Context, eventIDs []string, cluster
 	// Use ANY for bulk update
 	_, err := d.db.ExecContext(ctx,
 		`UPDATE road_events SET cluster_id = $1 WHERE event_id = ANY($2)`,
-		clusterID, eventIDs,
+		clusterID, pq.Array(eventIDs),
 	)
 	return err
 }

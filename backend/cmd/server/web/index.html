@@ -327,7 +327,7 @@
       <div class="step">
         <div class="step-num">1</div>
         <h3>Sensor sampling</h3>
-        <p>The SDK samples the accelerometer and gyroscope at 100 Hz, buffering data in a sliding window.</p>
+        <p>The SDK samples the accelerometer and gyroscope at ~50 Hz (SENSOR_DELAY_GAME), buffering data in a sliding window.</p>
       </div>
       <div class="step">
         <div class="step-num">2</div>
@@ -380,8 +380,8 @@
       </div>
       <div class="vehicle-card">
         <div class="vehicle-icon">🏍️</div>
-        <h3>Two-wheelers <span class="badge-new">Planned</span></h3>
-        <p>Motorcycles and scooters have their own vibration profile. A two-wheeler filter is planned to reduce noise from road buzz and chassis resonance.</p>
+        <h3>Two-wheelers</h3>
+        <p>Motorcycles and scooters have their own detection profile with a raised threshold to handle road buzz and chassis resonance.</p>
       </div>
     </div>
   </div>
@@ -531,7 +531,7 @@
 <footer>
   <p>
     &copy; 2025 Asphalt contributors &nbsp;·&nbsp;
-    <a href="https://github.com/asphalt-maps/asphalt/blob/main/LICENSE">MIT License</a> &nbsp;·&nbsp;
+    <a href="https://github.com/asphalt-maps/asphalt/blob/main/LICENSE">Apache 2.0 License</a> &nbsp;·&nbsp;
     <a href="/dashboard">Live Map</a> &nbsp;·&nbsp;
     <a href="https://github.com/asphalt-maps/asphalt">GitHub</a>
   </p>

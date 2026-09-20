@@ -40,35 +40,12 @@ data class AsphaltConfig(
     val sensorSamplingRateUs: Int = android.hardware.SensorManager.SENSOR_DELAY_GAME,
 
     /**
-     * Z-axis acceleration delta required to flag a candidate event, in m/s^2.
-     *
-     * This is the absolute deviation from the rolling baseline.
-     * A value of 4.0 m/s^2 corresponds to roughly 0.4g, which is a moderate
-     * pothole at highway speed. Rough patches may be closer to 2.5 m/s^2.
-     *
-     * Reduce to increase sensitivity (more false positives).
-     * Increase to reduce noise (may miss minor anomalies).
-     */
-    val detectionThresholdMs2: Float = 4.0f,
-
-    /**
      * Width of the sliding detection window in milliseconds.
      *
      * A pothole at 50 km/h occupies roughly 100-300ms of sensor time.
      * 500ms captures the full spike-dip-recovery signature with margin.
      */
     val detectionWindowMs: Long = 500L,
-
-    /**
-     * Minimum gyroscope magnitude (rad/s) required to confirm an event.
-     *
-     * Pure vertical jolts (real potholes) cause measurable pitch and roll.
-     * Pure accelerometer spikes with near-zero gyroscope activity suggest
-     * sensor noise or a stationary bump (e.g. cargo sliding inside the car).
-     *
-     * Set to 0.0 to disable gyroscope confirmation (not recommended).
-     */
-    val gyroConfirmationThresholdRadS: Float = 0.3f,
 
     /**
      * Maximum GPS accuracy in metres required to attach location to an event.

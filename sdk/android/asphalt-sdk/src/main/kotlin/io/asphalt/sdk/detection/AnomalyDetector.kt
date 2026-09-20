@@ -68,10 +68,6 @@ class AnomalyDetector(private val config: AsphaltConfig) {
     private val accelBuffer = SlidingWindowBuffer(capacitySamples = 256)
     private val gyroMagBuffer = SlidingWindowBuffer(capacitySamples = 256)
 
-    // Lateral components stored separately for three-wheeler turn/wobble detection
-    private val gyroRollBuffer = SlidingWindowBuffer(capacitySamples = 256)  // gyro X
-    private val gyroYawBuffer = SlidingWindowBuffer(capacitySamples = 256)   // gyro Z
-
     // Three-wheeler specific filter; null for other vehicle types
     private val threeWheelerFilter: ThreeWheelerFilter? =
         if (config.vehicleType == VehicleType.THREE_WHEELER) ThreeWheelerFilter(profile) else null
@@ -123,8 +119,6 @@ class AnomalyDetector(private val config: AsphaltConfig) {
     fun feedGyroscope(timestampMs: Long, verticalRadS: Float, lateralMagRadS: Float) {
         val magnitude = sqrt(verticalRadS * verticalRadS + lateralMagRadS * lateralMagRadS)
         gyroMagBuffer.add(timestampMs, magnitude)
-        gyroRollBuffer.add(timestampMs, lateralMagRadS)
-        gyroYawBuffer.add(timestampMs, verticalRadS)
         threeWheelerFilter?.feedGyro(timestampMs, verticalRadS = verticalRadS, lateralMagRadS = lateralMagRadS)
     }
 
@@ -255,8 +249,6 @@ class AnomalyDetector(private val config: AsphaltConfig) {
     fun reset() {
         accelBuffer.clear()
         gyroMagBuffer.clear()
-        gyroRollBuffer.clear()
-        gyroYawBuffer.clear()
         threeWheelerFilter?.reset()
         lastEventTimestampMs = 0L
     }
