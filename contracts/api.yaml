@@ -96,12 +96,6 @@ paths:
             maximum: 1
             default: 0.3
           description: Minimum cluster confidence score to include
-        - name: anomaly_type
-          in: query
-          schema:
-            type: string
-            enum: [pothole, bump, rough_patch, unknown]
-          description: Filter by anomaly type. Omit for all types.
       responses:
         "200":
           description: Tile data
@@ -156,6 +150,21 @@ paths:
                     items:
                       $ref: "#/components/schemas/AnomalyCluster"
 
+  /stats:
+    get:
+      operationId: getDashboardStats
+      summary: Get aggregate dashboard statistics
+      description: |
+        Returns aggregate counts used by the web dashboard overview cards.
+        Values are computed live from the database at request time.
+      responses:
+        "200":
+          description: Dashboard statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
   /health:
     get:
       operationId: healthCheck
@@ -176,6 +185,24 @@ components:
   schemas:
     EventBatch:
       $ref: "batch.schema.json"
+
+    DashboardStats:
+      type: object
+      required: [total_events, total_clusters, events_24h, avg_confidence]
+      properties:
+        total_events:
+          type: integer
+          description: Total raw events in the database
+        total_clusters:
+          type: integer
+          description: Total anomaly clusters
+        events_24h:
+          type: integer
+          description: Events ingested in the last 24 hours
+        avg_confidence:
+          type: number
+          format: float
+          description: Average confidence score across all clusters
 
     IngestResponse:
       type: object

@@ -93,21 +93,26 @@ than a fixed 4.0 m/s^2.
 
 ## 4. Phone Orientation
 
-**What happens**: The spike-dip detection uses only the Z-axis accelerometer
-value. This assumes the phone is lying flat (face up or down) with Z pointing
-vertically. In a phone holder attached to the dashboard or windshield, Z may be
-the horizontal axis (along the direction of travel), which means the pothole
-signal is primarily on X or Y.
+**What happens**: Road anomaly detection requires measuring acceleration along
+the road-normal (vertical) axis. If only the raw Z-axis of the device were used,
+the phone would need to lie flat to work correctly. In a dashboard holder or
+windshield mount, the device Z-axis is horizontal, and pothole signals would
+land on X or Y instead.
 
-**Impact**: In a portrait-orientation phone holder, potholes may not trigger
-the Z-axis threshold at all, leading to missed detections. False positives are
-less likely because the gyro confirmation still applies.
+**Mitigation implemented in v1**: The SDK uses `TYPE_LINEAR_ACCELERATION` (raw
+accelerometer minus gravity, as computed by the OS sensor fusion) and
+`TYPE_GRAVITY` (continuous gravity vector from the low-pass accelerometer). At
+each sample, the linear acceleration vector is projected onto the gravity unit
+vector via a dot product. This yields the road-normal component regardless of
+how the phone is mounted — flat on a seat, upright in a holder, or angled in a
+cupholder. See `SensorCollector.projectOntoGravity()`.
 
-**Mitigation in v1**: None. The documentation advises laying the phone flat.
-
-**Planned improvement**: Use the gravity vector from the accelerometer (low-pass
-filtered) to determine device orientation and project the anomaly signal onto
-the correct axis regardless of how the phone is mounted.
+**Remaining constraint**: The gravity vector requires a stable reading to
+initialise. In the first ~0.5–1 second after sensors register, the gravity
+vector defaults to `[0, 0, 9.81]` (phone-flat assumption). Any event detected
+in that brief window may carry a small orientation error. In practice, sensors
+do not activate until speed exceeds the threshold (~1–2 seconds after the
+vehicle starts moving), so this window is rarely a problem.
 
 ---
 
@@ -292,7 +297,7 @@ acknowledged gaps.
 | Battery on long trips | Medium | Speed gate | Activity recognition |
 | Sensor noise / false positives | Medium | Gyro confirmation | Per-device calibration |
 | Device variability | Medium | `device_meta` collection | Dynamic threshold tuning |
-| Phone orientation | High | Documentation | Gravity vector projection |
+| Phone orientation | Resolved | Gravity vector projection (TYPE_GRAVITY) | N/A |
 | Data sparsity in rural areas | Medium | Configurable confidence threshold | Incentive mechanisms |
 | GPS spoofing | Low | Multi-report confidence | Ingestion anomaly detection |
 | Urban GPS accuracy | Medium | `accuracy_m` field | Dead reckoning fusion |

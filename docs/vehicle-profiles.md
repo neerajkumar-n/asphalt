@@ -197,6 +197,7 @@ handlebars and seat more directly than in cars.
 
 **Profile settings**:
 - Threshold: 5.0 m/s^2
+- Gyro confirmation threshold: 0.45 rad/s
 - Baseline window: 80 samples (~1.6 seconds)
 - Turn suppression: >0.5 rad/s sustained for >200ms
 

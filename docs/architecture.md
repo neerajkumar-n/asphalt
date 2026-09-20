@@ -20,7 +20,7 @@ flowchart TD
         direction TB
 
         subgraph Sensors["Sensor Layer"]
-            ACCEL["Accelerometer\n50Hz, Z-axis primary"]
+            ACCEL["Linear Accel + Gravity\n~50Hz, orientation-agnostic\nTYPE_LINEAR_ACCELERATION\n+ TYPE_GRAVITY"]
             GYRO["Gyroscope\n50Hz, confirmation"]
             GPS["FusedLocationProvider\n1Hz, speed + coordinates"]
         end
@@ -118,7 +118,7 @@ Three sensors are used in combination:
 
 | Sensor | Purpose | Sample Rate |
 |--------|---------|-------------|
-| Accelerometer | Primary anomaly signal (Z-axis vertical displacement) | 50Hz |
+| Linear Acceleration + Gravity (`TYPE_LINEAR_ACCELERATION` / `TYPE_GRAVITY`) | Road-normal anomaly signal — linear accel projected onto gravity unit vector, orientation-agnostic | ~50Hz |
 | Gyroscope | Motion validation, filters sensor noise | 50Hz |
 | GPS (FLP) | Speed gate, event geolocation | 1Hz |
 

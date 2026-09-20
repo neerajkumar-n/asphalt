@@ -140,8 +140,14 @@ Sensor noise does NOT produce gyroscope response. Specifically:
 - Cargo moving inside the car: gyro may spike but accelerometer pattern
   does not match spike-dip
 
-The SDK requires `gyro_peak_magnitude > 0.3 rad/s` (configurable) during
-the detection window before reporting an event. This single check eliminates
+The SDK requires `gyro_peak_magnitude` to exceed a per-vehicle threshold
+during the detection window before reporting an event:
+- Four-wheeler: 0.30 rad/s
+- Two-wheeler: 0.45 rad/s
+- Three-wheeler: 0.55 rad/s
+
+These thresholds are part of the internal `VehicleProfile` and are selected
+automatically based on `AsphaltConfig.vehicleType`. This single check eliminates
 a large fraction of false positives in practice.
 
 ---
@@ -221,11 +227,11 @@ AnomalyDetector output:
 
 ## Known Signal Limitations
 
-- **Phone orientation**: The Z-axis reading assumes the phone is lying flat
-  (face up) or in a consistent orientation. If the phone is vertical (portrait
-  in a holder), the X or Y axis carries the gravity component. Version 1 does
-  not compensate for arbitrary orientation. A gravity-subtracted resultant
-  vector approach would generalise better, at the cost of complexity.
+- **Phone orientation**: Orientation is handled. The SDK uses `TYPE_LINEAR_ACCELERATION`
+  projected onto the `TYPE_GRAVITY` unit vector, giving the road-normal component
+  regardless of how the phone is mounted. See `SensorCollector.projectOntoGravity()`.
+  The only residual edge case is the ~0.5 s gravity initialisation window when
+  sensors first register, which is described in `docs/limitations.md §4`.
 
 - **Phone mounting rigidity**: A loose phone mount attenuates the signal.
   A phone bouncing in a cupholder may record every bump with exaggerated

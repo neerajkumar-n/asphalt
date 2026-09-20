@@ -148,6 +148,33 @@ Slippy map tile query (zoom 0-18):
 curl "http://localhost:8080/v1/map/tiles/14/2620/6338"
 ```
 
+### GET /v1/stats
+
+Aggregate counts for the dashboard overview cards:
+
+```bash
+curl "http://localhost:8080/v1/stats"
+```
+
+Response:
+```json
+{
+  "total_events": 1423,
+  "total_clusters": 87,
+  "events_24h": 34,
+  "avg_confidence": 0.62
+}
+```
+
+### Web Dashboard and Landing Page
+
+The server also serves a built-in web UI from the embedded `backend/cmd/server/web/` directory:
+
+- `http://localhost:8080/` — landing page with live stats, how-it-works, and vehicle type overview
+- `http://localhost:8080/dashboard.html` — live Leaflet map dashboard with cluster visualisation, confidence filter, and anomaly type filter
+
+No additional setup is needed; the HTML is embedded in the Go binary at compile time.
+
 ---
 
 ## Database Schema
