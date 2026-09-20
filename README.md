@@ -13,8 +13,11 @@ device hardware.
 
 A driver installs an app that includes the Asphalt SDK. The app declares the
 vehicle type (two-wheeler, three-wheeler, or four-wheeler) at initialisation
-time. While driving above 15 km/h, the SDK samples the accelerometer at 50Hz.
-When the Z-axis reading deviates sharply from the rolling baseline (the pothole
+time. While driving above 15 km/h, the SDK samples `TYPE_LINEAR_ACCELERATION` and
+`TYPE_GRAVITY` at ~50Hz. The linear acceleration is projected onto the gravity
+unit vector to extract the road-normal force component — this works regardless
+of how the phone is mounted (flat, upright, angled in a holder). When the
+road-normal reading deviates sharply from the rolling baseline (the pothole
 spike-dip signature), and the gyroscope confirms actual physical motion, the SDK
 records the event with a GPS coordinate and intensity score.
 
@@ -53,8 +56,8 @@ asphalt/
 
 ```mermaid
 flowchart LR
-    A[Accelerometer 50Hz] --> D[Spike-Dip Detector]
-    B[Gyroscope 50Hz] --> D
+    A[Linear Accel + Gravity\n~50Hz, orientation-agnostic] --> D[Spike-Dip Detector]
+    B[Gyroscope ~50Hz] --> D
     C[GPS 1Hz] --> G[Speed Gate\n>15 km/h]
     G --> D
     D --> E[Local SQLite Buffer]
@@ -284,8 +287,9 @@ Go was chosen over Node.js for the backend:
 
 ## Known Limitations
 
-- Phone must be in a flat orientation (face up) for optimal Z-axis detection.
-  Vertical phone holders degrade detection quality.
+- Phone orientation does not affect detection accuracy. The SDK projects sensor
+  readings onto the gravity vector, so a dashboard holder, windshield mount, or
+  cupholder all work correctly.
 - No per-device sensor calibration in v1. Threshold is global (4.0 m/s^2).
 - Rural roads with sparse users will have low confidence scores until more
   drivers report the same location.

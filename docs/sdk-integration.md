@@ -87,7 +87,6 @@ class MyApplication : Application() {
         val config = AsphaltConfig(
             ingestUrl = "https://your-backend.example.com/v1/ingest/batch",
             minSpeedKmh = 15f,
-            detectionThresholdMs2 = 4.0f,
             uploadIntervalSeconds = 300L
         )
         Asphalt.init(this, config)
@@ -201,14 +200,16 @@ Asphalt.start()
 | `ingestUrl` | (required) | Backend ingestion endpoint URL |
 | `vehicleType` | `FOUR_WHEELER` | Vehicle profile for detection tuning |
 | `minSpeedKmh` | 15.0 | Minimum speed to activate sensors |
-| `detectionThresholdMs2` | 4.0 | Minimum Z-axis delta to flag a candidate |
 | `detectionWindowMs` | 500 | Detection window width in ms |
-| `gyroConfirmationThresholdRadS` | 0.3 | Minimum gyro magnitude to confirm event |
 | `maxGpsAccuracyMeters` | 50.0 | GPS accuracy threshold for event tagging |
 | `uploadIntervalSeconds` | 300 | Seconds between background upload attempts |
 | `maxBufferSize` | 200 | Max events before forcing an upload |
 | `requireUnmeteredNetwork` | false | Only upload on Wi-Fi |
 | `debugLogging` | false | Enable verbose SDK logs |
+
+> **Detection thresholds** (`detectionThresholdMs2`, `gyroConfirmationThresholdRadS`) are
+> not in `AsphaltConfig`. They are internal to `VehicleProfile` and are automatically
+> selected based on `vehicleType`. See the vehicle type table above for the per-vehicle values.
 
 ---
 
@@ -263,7 +264,9 @@ for (i in 0..50) {
         else -> 9.81f
     }
     detector.feedAccelerometer(i * 20L, z)
-    detector.feedGyroscope(i * 20L, 0.1f, 0.7f, 0.1f)
+    // verticalRadS = yaw component (rotation around gravity axis)
+    // lateralMagRadS = magnitude of roll/pitch component (perpendicular to gravity)
+    detector.feedGyroscope(i * 20L, verticalRadS = 0.1f, lateralMagRadS = 0.7f)
 }
 
 val result = detector.evaluate(1000L, speedKmh = 50f)
