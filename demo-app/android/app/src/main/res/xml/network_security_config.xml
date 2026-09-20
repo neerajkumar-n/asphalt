@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Network security configuration for Asphalt Demo.
+
+    Cleartext (http://) traffic is restricted to specific local/testing
+    hosts so release builds can talk to a staging server over plain HTTP
+    without opening cleartext to the entire internet.
+
+    For production, replace these domains with your HTTPS backend and
+    remove this file (the default policy blocks all cleartext).
+
+    Hosts allowed for cleartext:
+      10.0.2.2   — Android emulator alias for host-machine localhost
+      10.*       — RFC 1918 private ranges used by local Wi-Fi (LAN testing)
+      192.168.*  — same
+      localhost  — loopback for on-device testing
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">10.0.2.2</domain>
+        <domain includeSubdomains="false">localhost</domain>
+        <!-- Local network ranges for real-device LAN testing -->
+        <domain includeSubdomains="true">192.168.0.0</domain>
+        <domain includeSubdomains="true">10.0.0.0</domain>
+    </domain-config>
+</network-security-config>

@@ -50,7 +50,7 @@ import java.util.UUID
  */
 object Asphalt {
 
-    private const val SDK_VERSION = "1.0.0"
+    private val SDK_VERSION get() = io.asphalt.sdk.BuildConfig.SDK_VERSION
 
     private var config: AsphaltConfig? = null
     private var appContext: Context? = null
@@ -76,6 +76,13 @@ object Asphalt {
         AsphaltLog.enabled = config.debugLogging
         AsphaltLog.d("Asphalt", "SDK initialised. Version: $SDK_VERSION, vehicle: ${config.vehicleType.value}")
     }
+
+    /**
+     * Returns true if the SDK is currently started (location tracking active).
+     * Sensors may still be idle waiting for the speed threshold.
+     */
+    @JvmStatic
+    fun isRunning(): Boolean = locationTracker != null
 
     /**
      * Sets an optional callback for receiving real-time detection events.
@@ -127,7 +134,7 @@ object Asphalt {
         )
 
         AsphaltLog.d("Asphalt", "Session started. ID: $sessionId")
-        callback?.onStateChanged(false)
+        scope.launch { callback?.onStateChanged(false) }
     }
 
     /**

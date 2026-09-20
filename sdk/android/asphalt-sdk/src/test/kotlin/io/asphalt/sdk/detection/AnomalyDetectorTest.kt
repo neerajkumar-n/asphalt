@@ -3,6 +3,7 @@ package io.asphalt.sdk.detection
 import io.asphalt.sdk.AsphaltConfig
 import io.asphalt.sdk.model.AnomalyType
 import io.asphalt.sdk.model.VehicleType
+import kotlin.math.sqrt
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -16,7 +17,7 @@ import org.junit.Test
  * Android APIs. Each test verifies a specific aspect of the detection logic.
  *
  * Sensor stream helpers:
- * - [flatRoad]: flat-road baseline at 9.81 m/s^2 with near-zero gyro
+ * - [flatRoad]: flat-road baseline with near-zero road-normal linear accel and near-zero gyro
  * - [pothole]: dip-first then spike signature (wheel drops, then rebounds)
  * - [speedBump]: spike-first then dip signature (wheel climbs, then drops)
  * - [engineVibration]: periodic 20Hz oscillation as seen on a three-wheeler at idle
@@ -32,9 +33,7 @@ class AnomalyDetectorTest {
         carConfig = AsphaltConfig(
             ingestUrl = "http://localhost/",
             vehicleType = VehicleType.FOUR_WHEELER,
-            detectionThresholdMs2 = 4.0f,
-            detectionWindowMs = 500L,
-            gyroConfirmationThresholdRadS = 0.3f
+            detectionWindowMs = 500L
         )
         autoConfig = AsphaltConfig(
             ingestUrl = "http://localhost/",
@@ -146,7 +145,7 @@ class AnomalyDetectorTest {
             val t = baseTime + i * 20L
             val z = if (i in 5..10) 16.0f else 9.81f
             detector.feedAccelerometer(t, z)
-            detector.feedGyroscope(t, 0.02f, 0.01f, 0.02f)  // near-zero gyro
+            detector.feedGyroscope(t, 0.02f, 0.022f)  // near-zero gyro: verticalRadS=0.02, lateralMagRadS≈sqrt(0.02²+0.01²)
         }
 
         val result = detector.evaluate(baseTime + 500L, speedKmh = 50f)
@@ -263,7 +262,8 @@ class AnomalyDetectorTest {
         var t = startMs
         while (t < startMs + durationMs) {
             detector.feedAccelerometer(t, 9.81f + (Math.random() * 0.1 - 0.05).toFloat())
-            detector.feedGyroscope(t, 0.05f, 0.04f, 0.03f)
+            // verticalRadS=0.03 (yaw), lateralMagRadS≈sqrt(0.05²+0.04²)≈0.064 (roll/pitch)
+            detector.feedGyroscope(t, 0.03f, 0.064f)
             t += stepMs
         }
     }
@@ -289,7 +289,8 @@ class AnomalyDetectorTest {
             val gx = if (i in 4..10) gyroMag * 0.6f else 0.05f
             val gy = if (i in 4..10) gyroMag else 0.04f
             detector.feedAccelerometer(t, z)
-            detector.feedGyroscope(t, gx, gy, 0.03f)
+            // verticalRadS=0.03 (constant yaw), lateralMagRadS=sqrt(gx²+gy²)
+            detector.feedGyroscope(t, 0.03f, sqrt(gx * gx + gy * gy))
         }
     }
 
@@ -312,7 +313,7 @@ class AnomalyDetectorTest {
             }
             val gy = if (i in 3..12) gyroMag else 0.04f
             detector.feedAccelerometer(t, z)
-            detector.feedGyroscope(t, 0.1f, gy, 0.03f)
+            detector.feedGyroscope(t, 0.03f, sqrt(0.1f * 0.1f + gy * gy))
         }
     }
 }

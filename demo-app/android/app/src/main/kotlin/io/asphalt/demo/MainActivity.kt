@@ -5,15 +5,21 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.view.View
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.Button
+import android.widget.Spinner
+import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
-import android.widget.Button
-import android.widget.TextView
 import io.asphalt.sdk.Asphalt
+import io.asphalt.sdk.AsphaltConfig
+import io.asphalt.sdk.model.VehicleType
 
 /**
  * Demo application entry point.
@@ -52,6 +58,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var stopButton: Button
     private lateinit var simulateButton: Button
     private lateinit var eventLog: TextView
+    private lateinit var vehicleTypeSpinner: Spinner
 
     // -------------------------------------------------------------------------
     // Permission launchers
@@ -95,12 +102,34 @@ class MainActivity : AppCompatActivity() {
 
         viewModel = ViewModelProvider(this)[DemoViewModel::class.java]
 
-        statusText     = findViewById(R.id.statusText)
-        eventCountText = findViewById(R.id.eventCountText)
-        startButton    = findViewById(R.id.startButton)
-        stopButton     = findViewById(R.id.stopButton)
-        simulateButton = findViewById(R.id.simulateButton)
-        eventLog       = findViewById(R.id.eventLog)
+        statusText         = findViewById(R.id.statusText)
+        eventCountText     = findViewById(R.id.eventCountText)
+        startButton        = findViewById(R.id.startButton)
+        stopButton         = findViewById(R.id.stopButton)
+        simulateButton     = findViewById(R.id.simulateButton)
+        eventLog           = findViewById(R.id.eventLog)
+        vehicleTypeSpinner = findViewById(R.id.vehicleTypeSpinner)
+
+        // Vehicle type selector — reinitialises the SDK with the chosen profile.
+        val vehicleTypes = listOf(VehicleType.FOUR_WHEELER, VehicleType.THREE_WHEELER, VehicleType.TWO_WHEELER)
+        val labels = listOf("Car / SUV (4-wheeler)", "Auto Rickshaw (3-wheeler)", "Motorcycle / Scooter (2-wheeler)")
+        vehicleTypeSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, labels).also {
+            it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        }
+        vehicleTypeSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>, view: View?, pos: Int, id: Long) {
+                val selected = vehicleTypes[pos]
+                viewModel.selectedVehicleType = selected
+                // Re-init the SDK with the new vehicle type. If detection is active, stop first.
+                val wasRunning = Asphalt.isRunning()
+                if (wasRunning) Asphalt.stop()
+                Asphalt.setConfig(
+                    (application as AsphaltDemoApplication).baseConfig.copy(vehicleType = selected)
+                )
+                if (wasRunning) Asphalt.start()
+            }
+            override fun onNothingSelected(parent: AdapterView<*>) {}
+        }
 
         // Start / stop via DetectionForegroundService so detection survives backgrounding.
         startButton.setOnClickListener {

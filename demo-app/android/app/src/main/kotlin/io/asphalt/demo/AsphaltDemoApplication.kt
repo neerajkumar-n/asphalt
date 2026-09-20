@@ -23,19 +23,22 @@ import io.asphalt.sdk.model.VehicleType
  */
 class AsphaltDemoApplication : Application() {
 
+    /** Base config shared by the whole app. The vehicle type can be swapped at runtime. */
+    lateinit var baseConfig: AsphaltConfig
+        private set
+
     override fun onCreate() {
         super.onCreate()
 
-        val config = AsphaltConfig(
+        baseConfig = AsphaltConfig(
             ingestUrl = BuildConfig.INGEST_URL,
             vehicleType = VehicleType.FOUR_WHEELER,
             // Debug builds lower the speed gate to 5 km/h so detection can be
-            // verified indoors or while walking. Release builds use 15 km/h to
-            // avoid false positives from pedestrian movement.
+            // verified indoors or while walking. Release builds use 15 km/h.
             minSpeedKmh = if (BuildConfig.DEBUG) 5f else 15f,
             debugLogging = BuildConfig.DEBUG
         )
 
-        Asphalt.init(this, config)
+        Asphalt.init(this, baseConfig)
     }
 }

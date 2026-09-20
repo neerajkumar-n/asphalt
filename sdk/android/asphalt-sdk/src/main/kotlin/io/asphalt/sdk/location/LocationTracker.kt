@@ -132,6 +132,4 @@ class LocationTracker(
         AsphaltLog.d("LocationTracker", "GPS mode: ${if (useHighAccuracy) "HIGH_ACCURACY" else "BALANCED_POWER"}")
     }
 
-    fun getLastLocation(): Location? = lastLocation
-    fun isActive() = active
 }
