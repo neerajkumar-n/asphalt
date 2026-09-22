@@ -50,9 +50,11 @@ an individual is officially representing the community in public spaces.
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behaviour may be
-reported by opening a GitHub issue marked **[conduct]** or by contacting the
-project maintainers directly via GitHub. All complaints will be reviewed and
-investigated promptly and fairly.
+reported by sending a **private message to the project maintainers on GitHub**
+(use the "Send a message" option on their GitHub profile). Please do not open
+a public issue, as that would expose the reporter and the details of the report
+to the public. All complaints will be reviewed and investigated promptly and
+fairly, with the privacy of the reporter protected throughout.
 
 ## Attribution
 

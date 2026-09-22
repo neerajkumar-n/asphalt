@@ -77,12 +77,26 @@ go test ./...
 
 ### Android SDK unit tests
 
+The repo does not commit a Gradle wrapper. Generate it once before running
+any Gradle command (requires Gradle installed locally, or use the CI workflow):
+
 ```bash
 cd sdk/android
+gradle wrapper --gradle-version 8.7 --distribution-type bin
+chmod +x gradlew
 ./gradlew :asphalt-sdk:test
 ```
 
 This runs all JVM unit tests without an emulator.
+
+For the demo app, the same wrapper generation applies:
+
+```bash
+cd demo-app/android
+gradle wrapper --gradle-version 8.7 --distribution-type bin
+chmod +x gradlew
+./gradlew assembleDebug -PingestUrl="http://10.0.2.2:8080/v1/ingest/batch"
+```
 
 ---
 
@@ -141,8 +155,11 @@ Test reports land in `sdk/android/asphalt-sdk/build/reports/tests/`.
 
 - `gofmt` is mandatory — CI fails on unformatted code.
 - `go vet` must pass.
-- Standard library only by default. The backend has two dependencies (`pq`,
-  `uuid`); new dependencies require maintainer approval and a written justification.
+- Standard library only by default. The backend has two dependencies (`pq`
+  MIT-licensed, `uuid` BSD-3-licensed); new dependencies require maintainer
+  approval, a written justification, and a licence check — only Apache 2.0,
+  MIT, BSD-2, and BSD-3 licenced dependencies are acceptable without further
+  review (GPL and LGPL are not).
 - Error strings are lower-case and do not end with punctuation (Go convention).
 
 ### Kotlin
@@ -150,7 +167,9 @@ Test reports land in `sdk/android/asphalt-sdk/build/reports/tests/`.
 - Follow the [Android Kotlin style guide](https://developer.android.com/kotlin/style-guide).
 - Prefer `data class` for value types; Kotlin default parameter values over overloaded constructors.
 - No new Android dependencies without discussion — each transitive dependency
-  adds APK size for SDK integrators.
+  adds APK size for SDK integrators. New dependencies must use a compatible
+  open-source licence (Apache 2.0, MIT, or BSD). Update the NOTICE file with
+  the new dependency's copyright and licence text.
 - Avoid `!!`. Use `?.let`, `?:`, or early `return`.
 
 ### Documentation
@@ -195,6 +214,7 @@ Closes #42
 - [ ] All existing tests pass (`go test ./...` and `./gradlew :asphalt-sdk:test`)
 - [ ] New behaviour is covered by at least one test
 - [ ] No new dependencies added without prior discussion
+- [ ] `NOTICE` updated if a new third-party dependency was added
 - [ ] `contracts/event.schema.json` updated if the event payload changed
 - [ ] Docs updated if public API or behaviour changed
 - [ ] PR description explains *what* changed and *why*
