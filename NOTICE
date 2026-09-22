@@ -1,0 +1,105 @@
+Asphalt
+Copyright 2024-2026 Asphalt Contributors
+
+Licensed under the Apache License, Version 2.0 (the "License").
+A copy of the Apache License is included in the LICENSE file in this
+distribution and is also available at:
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+================================================================================
+
+THIRD-PARTY SOFTWARE NOTICES
+
+The following third-party software is used in this project. Each component is
+distributed under its own licence as noted below.
+
+--------------------------------------------------------------------------------
+Go backend dependencies
+--------------------------------------------------------------------------------
+
+github.com/google/uuid (v1.6.0)
+  URL: https://github.com/google/uuid
+  Copyright 2018 Google Inc.
+  Licence: BSD 3-Clause
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are met:
+  (1) Redistributions of source code must retain the above copyright notice,
+  this list of conditions and the following disclaimer.
+  (2) Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+  (3) Neither the name of Google Inc. nor the names of its contributors may be
+  used to endorse or promote products derived from this software without
+  specific prior written permission.
+  FULL LICENCE: https://github.com/google/uuid/blob/master/LICENSE
+
+github.com/lib/pq (v1.10.9)
+  URL: https://github.com/lib/pq
+  Copyright (c) 2011-2013, 'pq' Contributors
+  Derived from work Copyright (c) 2011 Blake Mizerany
+  Licence: MIT
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+  The above copyright notice and this permission notice shall be included in all
+  copies or substantial portions of the Software.
+  FULL LICENCE: https://github.com/lib/pq/blob/master/LICENSE.md
+
+--------------------------------------------------------------------------------
+Android SDK and demo app dependencies
+--------------------------------------------------------------------------------
+
+AndroidX libraries (androidx.appcompat, androidx.room, androidx.work,
+  androidx.lifecycle, androidx.core, and related)
+  URL: https://developer.android.com/jetpack
+  Copyright (c) The Android Open Source Project
+  Licence: Apache 2.0 — same as this project
+  https://android.googlesource.com/platform/frameworks/support/+/refs/heads/master/LICENSE
+
+Google Material Components for Android (com.google.android.material)
+  URL: https://github.com/material-components/material-components-android
+  Copyright (c) The Android Open Source Project
+  Licence: Apache 2.0
+  https://github.com/material-components/material-components-android/blob/master/LICENSE
+
+--------------------------------------------------------------------------------
+Google Play Services (runtime dependency, not in source distribution)
+--------------------------------------------------------------------------------
+
+com.google.android.gms:play-services-location
+  URL: https://developers.google.com/android/guides/overview
+  Licence: Google APIs Terms of Service (NOT open source)
+  https://developers.google.com/terms
+
+  This dependency provides the FusedLocationProviderClient API used by
+  LocationTracker.kt for GPS and speed data. It is a runtime-only dependency
+  that must be present on the end-user device via Google Play Services. It is
+  NOT included in or bundled with the Apache-licensed source code of this project.
+  Distributors must comply with the Google APIs Terms of Service when deploying
+  applications that use this functionality.
+
+--------------------------------------------------------------------------------
+Web dashboard
+--------------------------------------------------------------------------------
+
+Leaflet (v1.9.4)
+  URL: https://leafletjs.com
+  Copyright (c) 2010-2023 Vladimir Agafonkin
+  Licence: BSD 2-Clause
+  https://github.com/Leaflet/Leaflet/blob/main/LICENSE
+
+Map tiles (CartoDB Dark Matter)
+  URL: https://carto.com/basemaps
+  © OpenStreetMap contributors, © CARTO
+  Licence: Open Database Licence (ODbL) for OSM data
+  https://openstreetmap.org/copyright
