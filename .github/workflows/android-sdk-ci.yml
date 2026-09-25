@@ -1,0 +1,44 @@
+name: Android SDK CI
+
+on:
+  push:
+    branches: ["main", "claude/**", "feat/**", "fix/**"]
+    paths:
+      - "sdk/android/**"
+      - ".github/workflows/android-sdk-ci.yml"
+  pull_request:
+    paths:
+      - "sdk/android/**"
+      - ".github/workflows/android-sdk-ci.yml"
+
+jobs:
+  unit-test:
+    name: SDK Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: temurin
+
+      - name: Generate Gradle wrapper
+        working-directory: sdk/android
+        run: |
+          gradle wrapper --gradle-version 8.7 --distribution-type bin
+          chmod +x gradlew
+
+      - name: Run SDK unit tests
+        working-directory: sdk/android
+        run: ./gradlew :asphalt-sdk:test --no-daemon
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sdk-test-report
+          path: sdk/android/asphalt-sdk/build/reports/tests/
+          retention-days: 14

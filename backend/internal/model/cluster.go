@@ -42,4 +42,3 @@ type DashboardStats struct {
 	Events24h     int     `json:"events_24h"`
 	AvgConfidence float32 `json:"avg_confidence"`
 }
-

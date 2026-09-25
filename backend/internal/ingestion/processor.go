@@ -10,10 +10,18 @@ import (
 	"github.com/asphalt-maps/asphalt/backend/internal/storage"
 )
 
+// Store is the subset of storage.DB methods used by the ingestion pipeline.
+// Declared here so tests can inject a fake without a real database.
+type Store interface {
+	BatchExists(ctx context.Context, batchID string) (bool, error)
+	InsertEvents(ctx context.Context, events []model.Event) error
+	RecordBatch(ctx context.Context, batchID string, eventCount int) error
+}
+
 // Processor handles the ingestion pipeline for incoming event batches.
 // It validates events, checks for duplicates, and stores valid events.
 type Processor struct {
-	db *storage.DB
+	db Store
 }
 
 func New(db *storage.DB) *Processor {

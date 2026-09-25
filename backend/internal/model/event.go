@@ -3,19 +3,19 @@ package model
 // Event is the internal representation of a single road anomaly event
 // after ingestion and validation.
 type Event struct {
-	EventID      string  `json:"event_id"`
-	TimestampMs  int64   `json:"timestamp_ms"`
-	Latitude     float64 `json:"latitude"`
-	Longitude    float64 `json:"longitude"`
-	AccuracyM    float32 `json:"accuracy_m"`
-	Intensity    float32 `json:"intensity"`
-	SpeedKmh     float32 `json:"speed_kmh"`
-	AnomalyType  string  `json:"anomaly_type"`
-	VehicleType  string  `json:"vehicle_type"`
-	SDKVersion   string  `json:"sdk_version"`
-	SessionID    string  `json:"session_id"`
+	EventID       string        `json:"event_id"`
+	TimestampMs   int64         `json:"timestamp_ms"`
+	Latitude      float64       `json:"latitude"`
+	Longitude     float64       `json:"longitude"`
+	AccuracyM     float32       `json:"accuracy_m"`
+	Intensity     float32       `json:"intensity"`
+	SpeedKmh      float32       `json:"speed_kmh"`
+	AnomalyType   string        `json:"anomaly_type"`
+	VehicleType   string        `json:"vehicle_type"`
+	SDKVersion    string        `json:"sdk_version"`
+	SessionID     string        `json:"session_id"`
 	SensorSummary SensorSummary `json:"sensor_summary"`
-	DeviceMeta   DeviceMeta    `json:"device_meta"`
+	DeviceMeta    DeviceMeta    `json:"device_meta"`
 }
 
 // SensorSummary holds condensed sensor statistics for the detection window.
