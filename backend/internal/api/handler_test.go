@@ -5,6 +5,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/asphalt-maps/asphalt/backend/internal/ingestion"
 )
 
 // -------------------------------------------------------------------------
@@ -126,7 +128,7 @@ func TestTileToLatLon_latBoundsAlwaysOrdered(t *testing.T) {
 func TestTileToLatLon_longitudeSpanEqualsExpected(t *testing.T) {
 	// At zoom N, each tile covers 360 / 2^N degrees of longitude
 	cases := []struct {
-		z, x, y   int
+		z, x, y  int
 		wantSpan float64
 	}{
 		{0, 0, 0, 360.0},
@@ -259,6 +261,67 @@ func TestSplitPath_emptyAndRoot(t *testing.T) {
 		got := splitPath(path)
 		if len(got) != 0 {
 			t.Errorf("splitPath(%q): expected empty result, got %v", path, got)
+		}
+	}
+}
+
+// -------------------------------------------------------------------------
+// handleIngestBatch — JSON decode and processor validation paths
+// These cases are rejected before any database access, so a nil db is safe.
+// -------------------------------------------------------------------------
+
+func TestHandleIngestBatch_malformedJSON_returns400(t *testing.T) {
+	h := &Handler{}
+	req := httptest.NewRequest(http.MethodPost, "/v1/ingest/batch",
+		strings.NewReader(`{not valid json`))
+	w := httptest.NewRecorder()
+	h.handleIngestBatch(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("expected 400 for malformed JSON, got %d", w.Code)
+	}
+	if !strings.Contains(w.Body.String(), "invalid JSON") {
+		t.Errorf("expected 'invalid JSON' in response, got: %s", w.Body.String())
+	}
+}
+
+func TestHandleIngestBatch_emptyBatchID_returns400(t *testing.T) {
+	// ProcessBatch validates batch_id before touching the DB; nil DB is safe.
+	h := &Handler{processor: ingestion.New(nil)}
+	body := `{"batch_id":"","events":[{"event_id":"e1","timestamp_ms":1700000000000,"latitude":12.97,"longitude":77.59,"accuracy_m":8,"intensity":0.5,"speed_kmh":30,"anomaly_type":"pothole","vehicle_type":"FOUR_WHEELER"}]}`
+	req := httptest.NewRequest(http.MethodPost, "/v1/ingest/batch", strings.NewReader(body))
+	w := httptest.NewRecorder()
+	h.handleIngestBatch(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("expected 400 for empty batch_id, got %d", w.Code)
+	}
+}
+
+func TestHandleIngestBatch_emptyEventsArray_returns400(t *testing.T) {
+	h := &Handler{processor: ingestion.New(nil)}
+	body := `{"batch_id":"b1","events":[]}`
+	req := httptest.NewRequest(http.MethodPost, "/v1/ingest/batch", strings.NewReader(body))
+	w := httptest.NewRecorder()
+	h.handleIngestBatch(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("expected 400 for empty events array, got %d", w.Code)
+	}
+}
+
+// -------------------------------------------------------------------------
+// handleGetStats — method enforcement (no DB access)
+// -------------------------------------------------------------------------
+
+func TestHandleGetStats_wrongMethod_returns405(t *testing.T) {
+	h := &Handler{}
+	for _, method := range []string{http.MethodPost, http.MethodPut, http.MethodDelete} {
+		req := httptest.NewRequest(method, "/v1/stats", nil)
+		w := httptest.NewRecorder()
+		h.handleGetStats(w, req)
+		if w.Code != http.StatusMethodNotAllowed {
+			t.Errorf("method %s: expected 405, got %d", method, w.Code)
 		}
 	}
 }

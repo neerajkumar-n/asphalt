@@ -1,0 +1,49 @@
+name: Go CI
+
+on:
+  push:
+    branches: ["main", "claude/**", "feat/**", "fix/**"]
+    paths:
+      - "backend/**"
+      - ".github/workflows/go-ci.yml"
+  pull_request:
+    paths:
+      - "backend/**"
+      - ".github/workflows/go-ci.yml"
+
+defaults:
+  run:
+    working-directory: backend
+
+jobs:
+  test:
+    name: Format / Vet / Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+
+      - name: Check formatting
+        # Fail if gofmt would change any file
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "The following files are not gofmt-formatted:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test (with race detector)
+        run: go test -race -coverprofile=coverage.out ./...
+
+      - name: Coverage summary
+        run: go tool cover -func=coverage.out | tail -1

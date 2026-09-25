@@ -29,19 +29,15 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-          cache: gradle
+
+      - name: Set up Gradle 8.7
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.7"
 
       # The demo app's settings.gradle.kts references the SDK via a relative
       # path (../../sdk/android/asphalt-sdk), so both modules are available
       # from the single checkout above — no extra step needed.
-
-      - name: Generate Gradle wrapper
-        working-directory: demo-app/android
-        run: gradle wrapper --gradle-version 8.7 --distribution-type bin
-
-      - name: Make gradlew executable
-        working-directory: demo-app/android
-        run: chmod +x gradlew
 
       # Build the debug APK.
       # INGEST_URL is overridden here so CI builds always point at a safe
@@ -51,10 +47,11 @@ jobs:
         working-directory: demo-app/android
         env:
           INGEST_URL: ${{ secrets.INGEST_URL || 'http://localhost:8080/v1/ingest/batch' }}
-        run: ./gradlew assembleDebug
-              -PingestUrl="$INGEST_URL"
-              --no-daemon
-              --stacktrace
+        run: |
+          gradle assembleDebug \
+            -PingestUrl="$INGEST_URL" \
+            --no-daemon \
+            --stacktrace
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4

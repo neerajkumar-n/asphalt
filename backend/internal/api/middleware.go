@@ -39,7 +39,7 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 // In production, use a proper token-bucket implementation backed by Redis.
 // The contract (api.yaml) documents the 429 response, so callers must handle it.
 func RateLimitMiddleware(next http.Handler) http.Handler {
-	return next  // No-op in v1; add sliding window counter here
+	return next // No-op in v1; add sliding window counter here
 }
 
 // CORSMiddleware adds permissive CORS headers for the map query endpoints.
