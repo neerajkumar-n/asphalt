@@ -48,6 +48,9 @@ asphalt/
   demo-app/android/            Demo Android application
   contracts/                   JSON schemas and OpenAPI spec
   docs/                        Architecture, sensor model, setup guides
+  docs/demo/                   Static demo map with synthetic data (GitHub Pages)
+  tools/synthetic/             Synthetic data generator and loader
+  data/synthetic/              Generated synthetic event batches
 ```
 
 ---
@@ -96,6 +99,20 @@ curl -X POST http://localhost:8080/v1/ingest/batch \
 ```
 
 Full backend documentation: [docs/backend-setup.md](docs/backend-setup.md)
+
+### Demo with synthetic data
+
+A synthetic dataset (about 4,400 phone reports across Bengaluru, Delhi NCR and
+Mumbai) shows what a populated map looks like. View it without a backend by
+opening the static demo map in `docs/demo/`, or load it into a running backend
+so the live dashboard fills up:
+
+```bash
+python3 tools/synthetic/load.py --sql | psql "postgres://asphalt:asphalt@localhost:5432/asphalt"
+# then open http://localhost:8080/dashboard.html
+```
+
+See [tools/synthetic/README.md](tools/synthetic/README.md) for details.
 
 ### Android SDK
 
