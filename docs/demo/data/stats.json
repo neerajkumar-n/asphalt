@@ -1,43 +1,43 @@
 {
- "total_events": 4431,
+ "total_events": 4583,
  "total_clusters": 540,
- "events_24h": 238,
- "avg_confidence": 0.7573,
- "generated_at_ms": 1790481600000,
+ "events_24h": 198,
+ "avg_confidence": 0.7207,
+ "generated_at_ms": 1790704800000,
  "seed": 42,
  "cities": {
-  "bengaluru": {
-   "name": "Bengaluru",
+  "nyc": {
+   "name": "New York City",
    "center": [
-    12.96,
-    77.62
-   ],
-   "zoom": 12,
-   "events": 1652,
-   "clusters": 200,
-   "noise_events": 95
-  },
-  "delhi": {
-   "name": "Delhi NCR",
-   "center": [
-    28.58,
-    77.19
+    40.78,
+    -73.94
    ],
    "zoom": 11,
-   "events": 1496,
-   "clusters": 175,
-   "noise_events": 81
+   "events": 1640,
+   "clusters": 200,
+   "noise_events": 64
   },
-  "mumbai": {
-   "name": "Mumbai",
+  "chicago": {
+   "name": "Chicago",
    "center": [
-    19.11,
-    72.89
+    41.88,
+    -87.67
    ],
    "zoom": 12,
-   "events": 1283,
+   "events": 1590,
+   "clusters": 175,
+   "noise_events": 94
+  },
+  "la": {
+   "name": "Los Angeles",
+   "center": [
+    34.045,
+    -118.35
+   ],
+   "zoom": 11,
+   "events": 1353,
    "clusters": 165,
-   "noise_events": 81
+   "noise_events": 82
   }
  }
 }

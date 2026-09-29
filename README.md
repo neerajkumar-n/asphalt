@@ -102,8 +102,8 @@ Full backend documentation: [docs/backend-setup.md](docs/backend-setup.md)
 
 ### Demo with synthetic data
 
-A synthetic dataset (about 4,400 phone reports across Bengaluru, Delhi NCR and
-Mumbai) shows what a populated map looks like. View it without a backend by
+A synthetic dataset (about 4,400 phone reports across New York City, Chicago
+and Los Angeles) shows what a populated map looks like. View it without a backend by
 opening the static demo map in `docs/demo/`, or load it into a running backend
 so the live dashboard fills up:
 
