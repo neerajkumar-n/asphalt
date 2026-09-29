@@ -13,23 +13,28 @@ like once phones have been reporting for a while, before real data exists.
 
 ## What the data looks like
 
-- **Cities:** Bengaluru, Delhi NCR and Mumbai. Defects sit along real arterial
-  roads (Outer Ring Road, Hosur Road, Ring Road, NH-48, Western and Eastern
-  Express Highways, JVLR and others), traced by hand, so a point can be a few
-  tens of metres off the carriageway. Known bad stretches get more and stronger
-  defects.
+- **Cities:** New York City, Chicago and Los Angeles. Defects sit along real
+  arterial roads and freeways (Broadway, the BQE, Grand Concourse, Lake Shore
+  Drive, the Dan Ryan, Western Avenue, I-405, I-10, Crenshaw Boulevard and
+  others), traced by hand, so a point can be a few tens of metres off the
+  carriageway. Roads known for bad surfaces get more and stronger defects.
 - **Events:** about 4,400 phone reports over the last 90 days, weighted to
-  recent weeks and to the 8 to 11 am and 5 to 9 pm IST commute peaks. Each one
-  follows `contracts/event.schema.json`: GPS scatter of a few metres around the
-  true defect, speed and sensor values that clear the thresholds in
-  `VehicleProfile.kt` for that vehicle, Indian-market phone models, and one
-  anonymous session per drive.
-- **Vehicle mix:** two-wheelers, auto rickshaws and cars in city-specific
-  shares (Mumbai has more autos, Delhi more cars).
-- **Confidence spread:** weak single-vehicle defects (3 to 4 reports), auto-only
-  defects that trigger the three-wheeler penalty, typical mixed defects (4 to 9),
-  strong ones (10 to 16) and showcase craters (20 to 32) confirmed by all three
-  vehicle types. About 12% of defects have not been reported for two months, so
+  recent weeks and to local commute peaks (7 to 9:30 am and 4 to 7 pm in each
+  city's time zone). Each one follows `contracts/event.schema.json`: GPS
+  scatter of a few metres around the true defect, US urban and freeway speeds,
+  sensor values that clear the thresholds in `VehicleProfile.kt` for that
+  vehicle, and one anonymous session per drive. Device metadata carries only
+  the two required fields (`platform` and `sdk_int`); phone make, model and
+  sensor vendor are left out.
+- **Vehicle mix:** mostly cars, with two-wheelers (motorcycles and delivery
+  mopeds) making up 8 to 15% depending on the city. There are no
+  three-wheelers, as they are effectively absent from US roads, so
+  cross-vehicle confirmation is between cars and two-wheelers.
+- **Confidence spread:** weak single-vehicle defects (3 to 4 reports), typical
+  mixed defects (4 to 9), strong ones (10 to 16) and showcase craters (20 to 32)
+  confirmed by every vehicle type the city has. A city configured with
+  three-wheelers also gets auto-only defects that trigger the three-wheeler
+  penalty. About 12% of defects have not been reported for two months, so
   recency decay shows. About 8% of events are isolated noise that clustering
   discards.
 - **Disagreement:** about 14% of reports classify the defect differently (a bump
