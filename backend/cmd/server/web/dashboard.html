@@ -251,7 +251,7 @@
           <select class="filter-select" id="type-filter">
             <option value="">All types</option>
             <option value="pothole">Pothole</option>
-            <option value="bump">Speed Breaker</option>
+            <option value="bump">Speed Bump</option>
             <option value="rough_patch">Rough Patch</option>
           </select>
         </div>
@@ -314,7 +314,6 @@ function typeEmoji(type) {
 function vehicleIcons(counts) {
   if (!counts) return '';
   const parts = [];
-  if (counts.three_wheeler) parts.push('🛺');
   if (counts.four_wheeler)  parts.push('🚗');
   if (counts.two_wheeler)   parts.push('🏍️');
   return parts.join('');

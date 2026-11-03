@@ -3,7 +3,6 @@ package io.asphalt.sdk.detection
 import io.asphalt.sdk.AsphaltConfig
 import io.asphalt.sdk.model.AnomalyType
 import io.asphalt.sdk.model.SensorSummary
-import io.asphalt.sdk.model.VehicleType
 import kotlin.math.abs
 import kotlin.math.sqrt
 
@@ -47,12 +46,6 @@ import kotlin.math.sqrt
  * based on [AsphaltConfig.vehicleType]. See [VehicleProfile] for a detailed
  * explanation of why each vehicle class requires different thresholds.
  *
- * For three-wheelers, an additional [ThreeWheelerFilter] is applied before
- * reporting any event. The filter suppresses:
- * - Periodic engine vibration (zero-crossing rate check)
- * - Turn dynamics (sustained lateral gyro elevation)
- * - Structural lateral wobble (sustained roll without yaw)
- *
  * ### Speed filter
  *
  * At speeds below the configured threshold (default 15 km/h):
@@ -67,10 +60,6 @@ class AnomalyDetector(private val config: AsphaltConfig) {
 
     private val accelBuffer = SlidingWindowBuffer(capacitySamples = 256)
     private val gyroMagBuffer = SlidingWindowBuffer(capacitySamples = 256)
-
-    // Three-wheeler specific filter; null for other vehicle types
-    private val threeWheelerFilter: ThreeWheelerFilter? =
-        if (config.vehicleType == VehicleType.THREE_WHEELER) ThreeWheelerFilter(profile) else null
 
     private var lastEventTimestampMs: Long = 0L
 
@@ -94,7 +83,6 @@ class AnomalyDetector(private val config: AsphaltConfig) {
      */
     fun feedAccelerometer(timestampMs: Long, roadNormal: Float) {
         accelBuffer.add(timestampMs, roadNormal)
-        threeWheelerFilter?.feedAccelZ(timestampMs, roadNormal)
     }
 
     /**
@@ -119,7 +107,6 @@ class AnomalyDetector(private val config: AsphaltConfig) {
     fun feedGyroscope(timestampMs: Long, verticalRadS: Float, lateralMagRadS: Float) {
         val magnitude = sqrt(verticalRadS * verticalRadS + lateralMagRadS * lateralMagRadS)
         gyroMagBuffer.add(timestampMs, magnitude)
-        threeWheelerFilter?.feedGyro(timestampMs, verticalRadS = verticalRadS, lateralMagRadS = lateralMagRadS)
     }
 
     /**
@@ -150,8 +137,8 @@ class AnomalyDetector(private val config: AsphaltConfig) {
         }
 
         // Rolling baseline: use the vehicle-profile-specific window size.
-        // Noisier vehicles (three-wheelers) use a longer window so the
-        // median is stable against the periodic engine vibration.
+        // Noisier vehicles (two-wheelers) use a longer window so the
+        // median is stable against lean-induced drift.
         val baseline = accelBuffer.rollingMedian(lastN = profile.baselineWindowSamples)
 
         val peakZ = windowSamples.maxOf { it.value }
@@ -172,13 +159,6 @@ class AnomalyDetector(private val config: AsphaltConfig) {
         if (gyroPeak < profile.gyroConfirmationThresholdRadS) {
             // Accelerometer spiked but gyroscope shows no physical rotation.
             // Likely engine vibration, music, or a loose phone mount.
-            return noEvent
-        }
-
-        // Three-wheeler specific filter: checks for engine vibration, turns,
-        // and lateral wobble patterns before accepting the event.
-        val filterResult = threeWheelerFilter?.evaluate(currentTimeMs)
-        if (filterResult?.suppressed == true) {
             return noEvent
         }
 
@@ -249,7 +229,6 @@ class AnomalyDetector(private val config: AsphaltConfig) {
     fun reset() {
         accelBuffer.clear()
         gyroMagBuffer.clear()
-        threeWheelerFilter?.reset()
         lastEventTimestampMs = 0L
     }
 

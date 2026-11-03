@@ -144,24 +144,18 @@ Asphalt.setCallback(object : AsphaltCallback {
 
 ## Vehicle Type Configuration
 
-The SDK supports three vehicle profiles that affect detection thresholds and
+The SDK supports two vehicle profiles that affect detection thresholds and
 false-positive filtering. Set `vehicleType` in `AsphaltConfig` based on the
 vehicle your app will be deployed in.
 
 ```kotlin
-// Four-wheeler (car, taxi, SUV) — default
+// Four-wheeler (car, SUV, pickup, rideshare) — default
 val config = AsphaltConfig(
     ingestUrl = "https://your-backend.example.com/v1/ingest/batch",
     vehicleType = VehicleType.FOUR_WHEELER
 )
 
-// Three-wheeler (auto rickshaw, tuk-tuk)
-val config = AsphaltConfig(
-    ingestUrl = "https://your-backend.example.com/v1/ingest/batch",
-    vehicleType = VehicleType.THREE_WHEELER
-)
-
-// Two-wheeler (motorcycle, scooter)
+// Two-wheeler (motorcycle, scooter, delivery moped)
 val config = AsphaltConfig(
     ingestUrl = "https://your-backend.example.com/v1/ingest/batch",
     vehicleType = VehicleType.TWO_WHEELER
@@ -174,11 +168,10 @@ val config = AsphaltConfig(
 |---------|-------------------|-------------------|-----------------|----------|-------------------|
 | `FOUR_WHEELER` | 4.0 m/s^2 | 0.30 rad/s | 64 samples (~1.3 s) | 1500 ms | None |
 | `TWO_WHEELER` | 5.0 m/s^2 | 0.45 rad/s | 80 samples (~1.6 s) | 1500 ms | None |
-| `THREE_WHEELER` | 5.5 m/s^2 | 0.55 rad/s | 96 samples (~1.9 s) | 2000 ms | Engine vibration, turn, and wobble suppression |
 
-The higher threshold and larger baseline window for three-wheelers compensate for
-their characteristic engine vibration (typically 15-25 Hz at idle) and lateral
-body sway, which would otherwise generate false-positive detections on smooth roads.
+The higher thresholds and larger baseline window for two-wheelers compensate for
+rider lean and handlebar vibration, which would otherwise generate false-positive
+detections on smooth roads.
 
 **Important: vehicle type is fixed per session.**
 `vehicleType` is baked into `AnomalyDetector` when `Asphalt.start()` is called.
@@ -187,7 +180,7 @@ call `Asphalt.start()` again:
 
 ```kotlin
 Asphalt.stop()
-Asphalt.setConfig(config.copy(vehicleType = VehicleType.THREE_WHEELER))
+Asphalt.setConfig(config.copy(vehicleType = VehicleType.TWO_WHEELER))
 Asphalt.start()
 ```
 
@@ -199,7 +192,7 @@ Asphalt.start()
 |-----------|---------|-------------|
 | `ingestUrl` | (required) | Backend ingestion endpoint URL |
 | `vehicleType` | `FOUR_WHEELER` | Vehicle profile for detection tuning |
-| `minSpeedKmh` | 15.0 | Minimum speed to activate sensors |
+| `minSpeedKmh` | 15.0 | Minimum speed in km/h to activate sensors (15 km/h ≈ 9 mph) |
 | `detectionWindowMs` | 500 | Detection window width in ms |
 | `maxGpsAccuracyMeters` | 50.0 | GPS accuracy threshold for event tagging |
 | `uploadIntervalSeconds` | 300 | Seconds between background upload attempts |

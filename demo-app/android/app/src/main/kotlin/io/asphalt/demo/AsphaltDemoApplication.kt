@@ -17,8 +17,8 @@ import io.asphalt.sdk.model.VehicleType
  *
  * vehicleType defaults to FOUR_WHEELER here.
  *   The demo UI does not yet expose a vehicle selector (the selector is wired
- *   in DemoViewModel for simulate-bump purposes only). To test three-wheeler or
- *   two-wheeler detection on a real drive, change the vehicleType constant
+ *   in DemoViewModel for simulate-bump purposes only). To test two-wheeler
+ *   detection on a real drive, change the vehicleType constant
  *   below and reinstall.
  */
 class AsphaltDemoApplication : Application() {
@@ -33,8 +33,8 @@ class AsphaltDemoApplication : Application() {
         baseConfig = AsphaltConfig(
             ingestUrl = BuildConfig.INGEST_URL,
             vehicleType = VehicleType.FOUR_WHEELER,
-            // Debug builds lower the speed gate to 5 km/h so detection can be
-            // verified indoors or while walking. Release builds use 15 km/h.
+            // Debug builds lower the speed gate to 5 km/h (~3 mph) so detection can be
+            // verified indoors or while walking. Release builds use 15 km/h (~9 mph).
             minSpeedKmh = if (BuildConfig.DEBUG) 5f else 15f,
             debugLogging = BuildConfig.DEBUG
         )

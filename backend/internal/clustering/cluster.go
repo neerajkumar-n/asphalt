@@ -206,12 +206,12 @@ func regionQuery(pts []point, i int, epsMetres float64) []int {
 //
 // ## Confidence scoring
 //
-// Five components contribute to the final confidence score:
+// Four components contribute to the final confidence score:
 //
 //  1. Weighted event count: log scale, saturates near 1.0 at ~20 events.
 //     Each event's contribution is scaled by its vehicle type signal weight
-//     (cars = 1.0, two-wheelers = 0.8, three-wheelers = 0.7). This means
-//     20 auto-only events carry less weight than 20 car events.
+//     (cars = 1.0, two-wheelers = 0.8). This means 20 motorcycle-only
+//     events carry less weight than 20 car events.
 //
 //  2. Type consistency: fraction of events with the dominant anomaly type.
 //     A cluster where all events agree on "pothole" is more trustworthy
@@ -222,19 +222,14 @@ func regionQuery(pts []point, i int, epsMetres float64) []int {
 //
 //  4. Vehicle diversity bonus: if events come from multiple vehicle types,
 //     confidence receives a bonus of 0.08 per additional vehicle type.
-//     Rationale: a pothole that both auto drivers and car drivers report
+//     Rationale: a pothole that both motorcyclists and car drivers report
 //     is much more likely to be real. A cluster reported only by
-//     three-wheelers could be their normal vibration level. A cluster
-//     confirmed by both three-wheelers and cars is almost certainly real.
-//     Maximum bonus: 0.16 (two additional types beyond the first).
+//     motorcycles could be lean or handlebar vibration. A cluster
+//     confirmed by both motorcycles and cars is almost certainly real.
+//     Maximum bonus: 0.08 (one additional type beyond the first).
 //
-//  5. Three-wheeler-only penalty: if ALL events are from three-wheelers and
-//     the cluster has fewer than 4 events, apply a small penalty (-0.08).
-//     This is because three-wheelers have a higher false-positive rate
-//     even after on-device filtering.
-//
-// Weights (0.5 / 0.25 / 0.15 / diversity / penalty) sum to 1.0 at baseline.
-// All adjustments are capped so the final confidence stays within [0, 1].
+// Base weights are 0.5 / 0.25 / 0.15, plus the diversity bonus.
+// The final confidence is clamped to [0, 1].
 func scoreCluster(events []model.Event, nowMs int64) model.AnomalyCluster {
 	if len(events) == 0 {
 		return model.AnomalyCluster{}
@@ -251,7 +246,7 @@ func scoreCluster(events []model.Event, nowMs int64) model.AnomalyCluster {
 		weight := model.VehicleSignalWeight(e.VehicleType)
 		sumLat += e.Latitude
 		sumLon += e.Longitude
-		// Weighted intensity: three-wheeler events contribute 0.7x to avg intensity
+		// Weighted intensity: two-wheeler events contribute 0.8x to avg intensity
 		weightedIntensitySum += e.Intensity * weight
 		totalWeight += weight
 
@@ -300,8 +295,8 @@ func scoreCluster(events []model.Event, nowMs int64) model.AnomalyCluster {
 
 	// 1. Weighted count score
 	// Use total signal weight (not raw event count) as the effective count.
-	// A cluster of 10 three-wheeler events has total weight 7.0, equivalent
-	// to 7 car events. This normalises for vehicle type reliability.
+	// A cluster of 10 two-wheeler events has total weight 8.0, equivalent
+	// to 8 car events. This normalises for vehicle type reliability.
 	effectiveCount := float64(totalWeight)
 	countScore := math.Log10(effectiveCount+1) / math.Log10(21)
 
@@ -317,17 +312,9 @@ func scoreCluster(events []model.Event, nowMs int64) model.AnomalyCluster {
 
 	// 4. Vehicle diversity bonus
 	diversity := len(vehicleTypeCounts)
-	diversityBonus := 0.08 * float64(diversity-1) // 0 for 1 type, 0.08 for 2, 0.16 for 3
+	diversityBonus := 0.08 * float64(diversity-1) // 0 for 1 type, 0.08 for 2
 
-	// 5. Three-wheeler-only penalty for sparse clusters
-	threeWheelerPenalty := 0.0
-	if len(vehicleTypeCounts) == 1 {
-		if _, onlyAuto := vehicleTypeCounts[model.VehicleTypeThreeWheeler]; onlyAuto && n < 4 {
-			threeWheelerPenalty = 0.08
-		}
-	}
-
-	rawConfidence := countScore*0.50 + consistencyScore*0.25 + recencyScore*0.15 + diversityBonus - threeWheelerPenalty
+	rawConfidence := countScore*0.50 + consistencyScore*0.25 + recencyScore*0.15 + diversityBonus
 	confidence := float32(math.Min(1.0, math.Max(0.0, rawConfidence)))
 
 	return model.AnomalyCluster{

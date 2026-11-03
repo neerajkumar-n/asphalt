@@ -9,7 +9,7 @@ assignees: ''
 ## What problem does this solve?
 
 <!-- Describe the specific limitation or gap this addresses. Real-world
-     context (e.g. "auto rickshaws with CNG engines produce more vibration")
+     context (e.g. "delivery mopeds with loaded top boxes produce more vibration")
      is more useful than abstract descriptions. -->
 
 ## Proposed solution

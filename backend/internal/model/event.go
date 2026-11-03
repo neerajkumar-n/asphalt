@@ -62,9 +62,8 @@ const (
 	AnomalyTypeRoughPatch = "rough_patch"
 	AnomalyTypeUnknown    = "unknown"
 
-	VehicleTypeTwoWheeler   = "two_wheeler"
-	VehicleTypeThreeWheeler = "three_wheeler"
-	VehicleTypeFourWheeler  = "four_wheeler"
+	VehicleTypeTwoWheeler  = "two_wheeler"
+	VehicleTypeFourWheeler = "four_wheeler"
 )
 
 var validAnomalyTypes = map[string]bool{
@@ -75,9 +74,8 @@ var validAnomalyTypes = map[string]bool{
 }
 
 var validVehicleTypes = map[string]bool{
-	VehicleTypeTwoWheeler:   true,
-	VehicleTypeThreeWheeler: true,
-	VehicleTypeFourWheeler:  true,
+	VehicleTypeTwoWheeler:  true,
+	VehicleTypeFourWheeler: true,
 }
 
 // VehicleSignalWeight returns the normalisation weight for a vehicle type.
@@ -85,7 +83,6 @@ var validVehicleTypes = map[string]bool{
 //
 // Four-wheelers have the most stable, well-characterised signal (1.0).
 // Two-wheelers are noisier due to lean dynamics (0.8).
-// Three-wheelers are noisiest: engine vibration, lateral wobble (0.7).
 //
 // These weights were set to reflect empirical noise floor differences.
 // They should be validated and refined once real-world data is available.
@@ -95,8 +92,6 @@ func VehicleSignalWeight(vehicleType string) float32 {
 		return 1.0
 	case VehicleTypeTwoWheeler:
 		return 0.8
-	case VehicleTypeThreeWheeler:
-		return 0.7
 	default:
 		return 0.85 // unknown types treated conservatively
 	}

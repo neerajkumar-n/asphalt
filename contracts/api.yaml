@@ -240,8 +240,6 @@ components:
             Confidence that this cluster represents a real anomaly.
             Incorporates event count, anomaly type consistency, recency,
             vehicle type signal weights, and a cross-vehicle diversity bonus.
-            Three-wheeler-only clusters with fewer than 4 events receive
-            a small penalty due to higher per-event false-positive rate.
         event_count:
           type: integer
           description: Total number of raw events that contributed to this cluster
@@ -262,16 +260,16 @@ components:
             type: integer
           description: |
             Map of vehicle_type -> event count for events in this cluster.
-            Example: {"four_wheeler": 3, "three_wheeler": 7}.
+            Example: {"four_wheeler": 7, "two_wheeler": 3}.
             Use this to assess cross-vehicle corroboration.
         vehicle_type_diversity:
           type: integer
           minimum: 1
-          maximum: 3
+          maximum: 2
           description: |
             Number of distinct vehicle types that contributed to this cluster.
             1 = single vehicle type (less cross-validated).
-            3 = all three types reported this location (highly corroborated).
+            2 = both cars and two-wheelers reported this location (highly corroborated).
 
     TileResponse:
       type: object

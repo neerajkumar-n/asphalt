@@ -53,8 +53,8 @@ func validEvent(id string) model.Event {
 	return model.Event{
 		EventID:     id,
 		TimestampMs: time.Now().UnixMilli(),
-		Latitude:    12.97,
-		Longitude:   77.59,
+		Latitude:    40.75,
+		Longitude:   -73.99,
 		AccuracyM:   8.0,
 		Intensity:   0.65,
 		SpeedKmh:    35.0,

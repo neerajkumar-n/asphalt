@@ -14,7 +14,7 @@ draws 15-50mA depending on satellite lock quality. Together, active collection
 adds 5-10% battery drain per hour of driving compared to a phone sitting idle.
 
 **Mitigations in v1**:
-- Speed gate: sensors are inactive below 15 km/h
+- Speed gate: sensors are inactive below 15 km/h (~9 mph)
 - WorkManager batch uploads: radio wakes up infrequently, not per event
 - No wake lock: relies on Android sensor hardware FIFO for delivery
 
@@ -41,9 +41,8 @@ adds 5-10% battery drain per hour of driving compared to a phone sitting idle.
 - Rolling median baseline instead of instantaneous comparison
 - Gyroscope confirmation threshold: most vibration noise has near-zero angular
   momentum and fails the gyro check
-- Per-vehicle cooldown between detected events: 1500ms for four-wheelers and
-  two-wheelers, 2000ms for three-wheelers (whose frame rings longer after an
-  impact). Reduces double-counting of a single anomaly.
+- Cooldown between detected events (1500ms for both vehicle types). Reduces
+  double-counting of a single anomaly.
 
 **Remaining constraints**:
 - The detection threshold (4.0 m/s^2 default) was set empirically. It is a
@@ -54,7 +53,7 @@ adds 5-10% battery drain per hour of driving compared to a phone sitting idle.
   computation and a longer buffer.
 - Engine idle vibration at stoplights occasionally triggers false positives when
   the vehicle accelerates sharply from a standing start. The speed gate at 15
-  km/h catches most of these, but not all.
+  km/h (~9 mph) catches most of these, but not all.
 
 ---
 
@@ -152,7 +151,7 @@ to pollute the road quality map.
   values from different times) to reach high confidence; a single bad actor
   submitting many events from one session has limited impact
 - The `speed_kmh` field provides a basic sanity check (a GPS-spoofed stationary
-  device submitting 80 km/h speed data is detectable)
+  device submitting 50 mph speed data is detectable)
 
 **Remaining gaps**:
 - v1 has no IP-based or device-fingerprint-based rate limiting
@@ -193,87 +192,81 @@ the scope of v1.
 
 ---
 
-## 9. Three-Wheeler Signal Complexity
+## 9. Two-Wheeler Signal Complexity
 
-**What happens**: Auto rickshaws produce a significantly higher noise floor than
-cars due to engine vibration, lightweight frame resonance, and tricycle lateral
-dynamics. The on-device filters (`ThreeWheelerFilter`) suppress three specific
-false-positive patterns: engine vibration, turns, and lateral wobble. However,
-the filters are heuristic and edge cases exist.
+**What happens**: Motorcycles, scooters and delivery mopeds produce a higher
+noise floor than cars. The rider leans into corners, the handlebars transmit
+engine and road buzz directly to a mounted phone, and the lighter suspension
+passes more of every impact through. v1 handles this only with a raised
+detection threshold (5.0 vs 4.0 m/s^2), a stricter gyro confirmation
+(0.45 vs 0.3 rad/s) and a wider baseline window. There is no dedicated lean
+or turn filter.
 
 **Known residual false positives**:
 
-- **CNG vs petrol engines**: The engine vibration zero-crossing filter is
-  calibrated for a dominant felt frequency of 15-30 Hz. Compressed natural gas
-  (CNG) autos, which are now the majority in many Indian cities, have slightly
-  smoother combustion than older petrol 2-strokes. Their vibration profile may
-  have a different dominant frequency. The 25 zero-crossings/sec threshold was
-  set for older auto profiles; CNG autos may benefit from a lower threshold.
+- **Cornering lean**: A 20-30 degree lean on a corner shifts the gravity
+  vector. The gravity projection tracks this, but rapid lean transitions
+  (a quick left-right swerve) can briefly look like an impact.
 
-- **Load variation**: An empty auto has a much softer effective suspension than
-  a fully loaded one (driver + 3 passengers = ~200kg additional mass). The same
-  pothole produces a materially larger Z delta in an empty auto. The threshold
-  of 5.5 m/s^2 is calibrated for a loaded auto. An empty auto may report
-  intensities that are 20-30% inflated.
+- **Hard braking**: Aggressive braking pitches the bike forward, which can
+  look like the spike phase of a pothole.
 
-- **Pillion passengers on bikes**: Similarly for two-wheelers, a scooter with a
-  pillion rider has different suspension compression and body dynamics.
+- **Pillion passengers and cargo**: A scooter with a passenger, or a delivery
+  moped with a loaded top box, has different suspension compression and body
+  dynamics. The same pothole produces a different Z delta.
 
-- **Turning on rough roads**: If an auto is both turning AND traversing a rough
-  road surface simultaneously (a common scenario at any Indian intersection),
-  the turn suppression window may mask a genuine pothole during the turn.
-  This is a known missed detection case with no clean solution in v1.
-
-- **Auto with CNG cylinder vibration**: Some autos carry large rear-mounted CNG
-  cylinders that add mechanical noise at a different frequency from the engine.
-  This can increase the zero-crossing rate even without engine vibration.
+- **Mount position**: A handlebar mount sees more vibration than a tank or
+  pocket position. Thresholds are calibrated for a handlebar mount.
 
 **Mitigations in v1**:
-- Higher detection threshold (5.5 vs 4.0 m/s^2) reduces false positives
-- Backend three-wheeler-only penalty reduces unverified auto clusters
-- Cross-vehicle diversity bonus ensures car/bike confirmation compensates
+- Higher detection and gyro thresholds reduce false positives
+- Backend signal weight (0.8) reduces the influence of motorcycle-only reports
+- Cross-vehicle diversity bonus rewards car confirmation of motorcycle reports
 
 **Planned improvements**:
-- Per-operator threshold calibration (fleet operators could run a calibration
-  drive on a known smooth road to measure their auto's baseline noise floor)
-- Frequency domain analysis (FFT) on the detection window to identify and
-  subtract the engine harmonic before applying the threshold
-- Load estimation using sustained Z-axis reading as a proxy for suspension
-  compression, adjusting the threshold dynamically
+- A motorcycle turn and lean filter that suppresses detection during sustained
+  roll and yaw (cornering)
+- Per-operator threshold calibration (delivery fleets could run a calibration
+  ride on a known smooth road to measure their bikes' baseline noise floor)
 
 ---
 
 ## 10. Dense Urban Environment Noise
 
-**What happens**: Indian urban road environments combine multiple noise sources
-that do not appear in the test conditions where most road detection research
-is conducted:
+**What happens**: US city streets combine noise sources that look like
+potholes to a motion sensor but are not road damage:
 
-- **Speed breakers without signage**: Unofficial speed bumps built by residents
-  are common in Indian cities. They vary in height (5cm to 20cm) and profile.
-  Many are not in any map database, so there is no way to pre-filter known bumps.
-  These are detected as genuine anomalies, which is correct behaviour, but they
-  can dominate the map in some localities.
+- **Speed humps and speed tables**: Residential traffic calming varies widely
+  in height and profile, and most installations are not in any map database,
+  so there is no way to pre-filter known humps. These are detected as genuine
+  anomalies (BUMP), which is correct behaviour, but they can dominate the map
+  in some neighbourhoods.
 
-- **Railway crossings**: Level crossings create a distinctive double-impact
-  signature (two rails, spaced ~1.4m apart). At 30 km/h, the two impacts
-  arrive ~170ms apart. The detector may report this as a single pothole event
+- **Railroad crossings**: Grade crossings create a distinctive double-impact
+  signature (two rails, spaced ~1.4m apart). At 20 mph, the two impacts
+  arrive ~160ms apart. The detector may report this as a single pothole event
   or two separate events depending on cooldown timing.
 
+- **Steel plates, manhole covers and expansion joints**: Road plates over
+  utility work, raised or sunken manhole covers, and bridge expansion joints
+  all produce sharp impacts. Some are genuine hazards worth reporting; others
+  are permanent infrastructure.
+
 - **Speed humps in series**: Traffic calming installations often use 3-4 speed
-  bumps in quick succession (every 20-30m). At 30 km/h, these arrive every
-  ~2.4 seconds. The 2-second cooldown for three-wheelers means the first bump
-  suppresses detection of subsequent ones. Not all bumps in a series will be
-  reported.
+  humps in quick succession (every 20-30m). At 20 mph, these arrive every
+  ~2.2-3.4 seconds, outside the 1.5-second cooldown, so each hump is reported.
+  Because the spacing is close to the 30m clustering radius, DBSCAN may merge
+  a series into one cluster or split it, depending on exact spacing.
 
-- **Congested traffic**: Stop-and-go traffic at speeds of 5-15 km/h is common
-  in Indian cities during peak hours. The speed gate (15 km/h minimum) means no
-  detection occurs during this time, even if the vehicle is traversing severe
-  road damage. This is by design (avoiding walking false positives) but means
-  that damage at bottlenecks in congested areas is underreported.
+- **Congested traffic**: Stop-and-go traffic below ~9 mph is common on urban
+  arterials and freeway on-ramps during rush hour. The speed gate (15 km/h /
+  ~9 mph minimum) means no detection occurs during this time, even if the
+  vehicle is traversing severe road damage. This is by design (avoiding
+  walking false positives) but means that damage at bottlenecks is
+  underreported.
 
-- **Dust and road patches**: Indian roads are frequently patched with tar,
-  gravel, or concrete infill. These patches create surface irregularities
+- **Patches and utility cuts**: Roads are frequently patched after utility
+  work or freeze-thaw damage. These patches create surface irregularities
   that produce Z deltas of 2-4 m/s^2, below the detection threshold for all
   vehicle types, but which accumulate to a rough-ride experience. The ROUGH_PATCH
   type is intended to capture this, but the current classifier requires at least
@@ -285,8 +278,8 @@ acknowledged gaps.
 **Planned improvements**:
 - Low-threshold "background roughness score" computed from Z-axis variance
   during normal driving, aggregated per road segment
-- Map integration to distinguish known infrastructure (railway crossings,
-  official speed bumps) from anomalies
+- Map integration (e.g. OpenStreetMap railroad crossings and traffic calming
+  tags) to distinguish known infrastructure from anomalies
 
 ---
 
@@ -302,9 +295,8 @@ acknowledged gaps.
 | GPS spoofing | Low | Multi-report confidence | Ingestion anomaly detection |
 | Urban GPS accuracy | Medium | `accuracy_m` field | Dead reckoning fusion |
 | Long offline gaps | Low | 7-day retention window | Extended retention policy |
-| Three-wheeler engine vibration | Medium | Zero-crossing filter | FFT harmonic removal |
-| Three-wheeler load variation | Medium | Raised threshold (5.5 m/s^2) | Dynamic threshold tuning |
-| Turn masking genuine potholes | Low | Turn suppression duration tuning | Directional turn model |
-| Dense urban speed bumps | Low | BUMP classification | Map integration for known humps |
-| Congested traffic (<15 km/h) | Medium | Acknowledged gap | Lower threshold mode for autos |
+| Motorcycle lean and braking | Medium | Raised threshold (5.0 m/s^2) | Turn and lean filter |
+| Motorcycle load variation | Low | Backend signal weight (0.8) | Dynamic threshold tuning |
+| Speed humps, rail crossings, plates | Low | BUMP classification | Map integration for known infrastructure |
+| Congested traffic (<9 mph) | Medium | Acknowledged gap | Low-speed detection mode |
 | Background roughness scoring | Medium | Acknowledged gap | Per-segment variance aggregation |

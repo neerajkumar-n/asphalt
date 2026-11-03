@@ -38,15 +38,14 @@ enum class AnomalyType(val value: String) {
  * Vehicle category, set by the integrating application via [AsphaltConfig.vehicleType].
  *
  * This is not auto-detected. The app deployer sets it at SDK initialisation
- * time based on the known context (e.g. an auto rickshaw fleet management app
- * sets THREE_WHEELER; a consumer driving app defaults to FOUR_WHEELER).
+ * time based on the known context (e.g. a motorcycle delivery app sets
+ * TWO_WHEELER; a consumer driving app defaults to FOUR_WHEELER).
  *
  * The value travels with every event to the backend where it drives signal
  * normalisation and cross-vehicle confidence scoring.
  */
 enum class VehicleType(val value: String) {
     TWO_WHEELER("two_wheeler"),
-    THREE_WHEELER("three_wheeler"),
     FOUR_WHEELER("four_wheeler")
 }
 

@@ -26,13 +26,13 @@ flowchart TD
         end
 
         subgraph Preprocessing["On-Device Preprocessing"]
-            SPEED_GATE["Speed Gate\n>15 km/h required\nActivates/deactivates sensors"]
-            BASELINE["Rolling Baseline\nMedian, per-vehicle window\n64-96 samples (1.3-1.9 s at 50Hz)"]
+            SPEED_GATE["Speed Gate\n>15 km/h (~9 mph) required\nActivates/deactivates sensors"]
+            BASELINE["Rolling Baseline\nMedian, per-vehicle window\n64-80 samples (1.3-1.6 s at 50Hz)"]
         end
 
         subgraph Detection["Event Detection"]
-            SPIKE_DIP["Spike-Dip Detector\nZ-axis delta threshold\n4.0-5.5 m/s^2 by vehicle type"]
-            GYRO_CONFIRM["Gyro Confirmation\nMagnitude threshold\n0.30-0.55 rad/s by vehicle type"]
+            SPIKE_DIP["Spike-Dip Detector\nZ-axis delta threshold\n4.0-5.0 m/s^2 by vehicle type"]
+            GYRO_CONFIRM["Gyro Confirmation\nMagnitude threshold\n0.30-0.45 rad/s by vehicle type"]
             CLASSIFIER["Signature Classifier\nTemporal ordering of peak/dip\nPothole vs Bump vs Rough"]
             INTENSITY["Intensity Scorer\nNormalised 0.0-1.0\nSpeed-adjusted"]
         end
@@ -128,7 +128,7 @@ principle: no single sensor is trusted alone.
 ### Speed Gate
 
 The speed gate is the most impactful battery optimisation. Accelerometer and
-gyroscope are unregistered below 15 km/h. At 50Hz sampling, each sensor draws
+gyroscope are unregistered below 15 km/h (~9 mph). At 50Hz sampling, each sensor draws
 approximately 0.5-1.5mA continuously. Inactive sensors draw near zero.
 
 On a typical urban drive (60% of time above threshold), this halves sensor
@@ -180,24 +180,21 @@ DBSCAN was chosen because:
 - No need to specify the number of clusters.
 - Noise points (isolated false positives) are naturally excluded.
 
-Confidence scoring uses five components:
+Confidence scoring uses four components:
 1. Weighted event count (log scale, saturates near 1.0 at ~20 events; each event
-   is weighted by vehicle signal reliability: car=1.0, two-wheeler=0.8, three-wheeler=0.7)
+   is weighted by vehicle signal reliability: car=1.0, two-wheeler=0.8)
 2. Type consistency (fraction with the dominant anomaly type)
 3. Recency (decay over 90 days)
 4. Vehicle diversity bonus (+0.08 per additional vehicle type beyond the first;
-   a pothole confirmed by both autos and cars is treated as significantly more reliable)
-5. Three-wheeler-only penalty (-0.08 if all events are from three-wheelers AND the
-   cluster has fewer than 4 events, to account for their higher residual false-positive rate)
+   a pothole confirmed by both motorcycles and cars is treated as significantly more reliable)
 
 A single isolated event never appears on the map because DBSCAN requires at
 least 2 nearby events (within 30m) to form a cluster; single events are
 classified as noise and discarded.
 
 Two nearby four-wheeler events form a cluster with confidence ~0.58, well above
-the default tile API display threshold of 0.30. Two three-wheeler events score
-~0.46 after the sparse-auto penalty, which still clears the default threshold.
-Mixed-vehicle clusters (e.g. one auto + one car) score higher due to the
+the default tile API display threshold of 0.30. Two two-wheeler events score
+~0.56. Mixed-vehicle clusters (e.g. one motorcycle + one car) score higher due to the
 diversity bonus (+0.08 per additional vehicle type).
 
 ---
@@ -206,7 +203,7 @@ diversity bonus (+0.08 per additional vehicle type).
 
 ```
 Drive starts
-  GPS speed: 22 km/h
+  GPS speed: 25 mph (40 km/h)
   -> Speed gate opens
   -> Accelerometer + Gyroscope registered at 50Hz
 
@@ -225,7 +222,7 @@ At 00:00.210:
   -> AnomalyDetector fires
   -> Signature: dip before spike -> POTHOLE
   -> Intensity: (6.0 / 12.0) * 1.1 (speed factor) = 0.55
-  -> GPS fix: lat=12.9716, lon=77.5946, accuracy=8m  (Bengaluru)
+  -> GPS fix: lat=40.7516, lon=-73.9855, accuracy=8m  (Midtown Manhattan)
   -> Event stored to Room DB
 
 ...more driving...
@@ -240,13 +237,13 @@ After 5 minutes OR buffer fills to 200:
 At T+5 minutes (backend side):
   Clustering worker runs DBSCAN
   -> 3 events within 30m -> new cluster at centroid
-  -> Confidence: 0.60 (3 four-wheeler events, consistent type, recent)
+  -> Confidence: 0.63 (3 four-wheeler events, consistent type, recent)
   -> Cluster written to anomaly_clusters table
 
 Map client query:
-  GET /v1/map/clusters?min_lat=12.96&min_lon=77.58&max_lat=12.98&max_lon=77.61
-  -> Returns cluster with confidence=0.60, intensity=0.55
-  -> Map renders amber marker at lat=12.9716, lon=77.5946  (Bengaluru)
+  GET /v1/map/clusters?min_lat=40.74&min_lon=-74.00&max_lat=40.76&max_lon=-73.97
+  -> Returns cluster with confidence=0.63, intensity=0.55
+  -> Map renders amber marker at lat=40.7516, lon=-73.9855  (Midtown Manhattan)
 ```
 
 ---
