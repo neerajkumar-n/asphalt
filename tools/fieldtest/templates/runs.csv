@@ -1,0 +1,4 @@
+run_id,start,end,vehicle_type,phone,mount,distance_mi,notes
+# One row per pass over the route. Times are ISO 8601; include the UTC offset (e.g. -06:00).
+# vehicle_type: four_wheeler | two_wheeler. distance_mi is optional but enables false positives per mile.
+R1,2026-11-08T10:02:00-06:00,2026-11-08T10:14:00-06:00,four_wheeler,Pixel 8,dash holder,3.1,dry

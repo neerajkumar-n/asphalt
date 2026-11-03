@@ -1,0 +1,6 @@
+run_id,start,end,vehicle_type,phone,mount,distance_mi,notes
+R1,2026-10-24T09:30:00-05:00,2026-10-24T09:43:00-05:00,four_wheeler,Pixel 8,dash holder,2.6,"dry, light traffic"
+R2,2026-10-24T09:50:00-05:00,2026-10-24T10:03:00-05:00,four_wheeler,Pixel 8,dash holder,2.6,"dry, light traffic"
+R3,2026-10-24T10:10:00-05:00,2026-10-24T10:23:00-05:00,four_wheeler,Galaxy S23,cupholder,2.6,"dry, light traffic"
+R4,2026-10-24T10:30:00-05:00,2026-10-24T10:43:00-05:00,four_wheeler,Galaxy S23,cupholder,2.6,"dry, light traffic"
+R5,2026-10-24T10:50:00-05:00,2026-10-24T11:03:00-05:00,two_wheeler,Pixel 8,handlebar,2.6,"dry, light traffic"
