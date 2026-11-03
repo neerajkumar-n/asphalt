@@ -49,6 +49,7 @@ asphalt/
   docs/                        Architecture, sensor model, setup guides
   docs/demo/                   Static demo map with synthetic data (GitHub Pages)
   tools/synthetic/             Synthetic data generator and loader
+  tools/fieldtest/             Field test kit for measuring detection accuracy
   data/synthetic/              Generated synthetic event batches
 ```
 
@@ -165,13 +166,12 @@ a physical Android device to test detection end-to-end.
    If testing on an **emulator**, the default `http://10.0.2.2:8080` (emulator
    alias for host localhost) already works.
 
-   If testing on a **physical device** over Wi-Fi, edit the `debug` block in
-   `demo-app/android/app/build.gradle.kts` and replace `10.0.2.2` with your
-   development machine's local IP address:
-   ```kotlin
-   buildConfigField("String", "INGEST_URL",
-       "\"http://192.168.1.42:8080/v1/ingest/batch\"")
+   If testing on a **physical device** over Wi-Fi, pass your development
+   machine's local IP address at build time (step 3):
+   ```bash
+   ./gradlew installDebug -PingestUrl="http://192.168.1.42:8080/v1/ingest/batch"
    ```
+   Debug builds allow plain HTTP to any host; release builds do not.
 
 3. Build and install the debug APK:
    ```bash
