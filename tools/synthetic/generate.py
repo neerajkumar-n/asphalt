@@ -55,8 +55,7 @@ CITIES = {
         "defects": 200,
         # Share of reports by vehicle type. US traffic is overwhelmingly cars;
         # NYC has more two-wheelers than most US cities thanks to delivery mopeds.
-        # Three-wheelers are effectively absent on US roads.
-        "vehicle_mix": {"four_wheeler": 0.85, "two_wheeler": 0.15, "three_wheeler": 0.0},
+        "vehicle_mix": {"four_wheeler": 0.85, "two_wheeler": 0.15},
         "corridors": {
             "Broadway": [(40.7047, -74.0132), (40.7359, -73.9911), (40.7580, -73.9855),
                          (40.7681, -73.9819), (40.7887, -73.9767), (40.8081, -73.9641)],
@@ -80,7 +79,7 @@ CITIES = {
         "zoom": 12,
         "utc_offset_h": -5,     # CDT
         "defects": 175,
-        "vehicle_mix": {"four_wheeler": 0.92, "two_wheeler": 0.08, "three_wheeler": 0.0},
+        "vehicle_mix": {"four_wheeler": 0.92, "two_wheeler": 0.08},
         "corridors": {
             "Lake Shore Drive": [(41.8680, -87.6150), (41.8920, -87.6140), (41.9150, -87.6260),
                                  (41.9400, -87.6380), (41.9700, -87.6480)],
@@ -105,7 +104,7 @@ CITIES = {
         "zoom": 11,
         "utc_offset_h": -7,     # PDT
         "defects": 165,
-        "vehicle_mix": {"four_wheeler": 0.88, "two_wheeler": 0.12, "three_wheeler": 0.0},
+        "vehicle_mix": {"four_wheeler": 0.88, "two_wheeler": 0.12},
         "corridors": {
             "I-405 San Diego Freeway": [(33.9454, -118.3701), (33.9900, -118.4050), (34.0350, -118.4400),
                                         (34.0700, -118.4600), (34.1300, -118.4750)],
@@ -133,10 +132,9 @@ PROFILES = {
     # US urban speeds: city streets at 25-35 mph, freeway stretches faster.
     "four_wheeler":  {"delta": 4.0, "gyro": 0.30, "speed": (20, 95)},
     "two_wheeler":   {"delta": 5.0, "gyro": 0.45, "speed": (20, 80)},
-    "three_wheeler": {"delta": 5.5, "gyro": 0.55, "speed": (12, 35)},
 }
 
-VEHICLE_WEIGHT = {"four_wheeler": 1.0, "two_wheeler": 0.8, "three_wheeler": 0.7}
+VEHICLE_WEIGHT = {"four_wheeler": 1.0, "two_wheeler": 0.8}
 
 INTENSITY = {  # base intensity range per true defect type
     "pothole": (0.50, 0.95),
@@ -219,10 +217,7 @@ def make_defects(rng, city_key, city):
         dtype = pick(rng, {"pothole": 0.57, "bump": 0.27, "rough_patch": 0.16})
         hot = road in city["hotspots"]
         # Report-count tiers drive the visible confidence spread on the map.
-        # The auto-only tier needs three-wheelers; cities without them fold it into "weak".
-        has_autos = city["vehicle_mix"].get("three_wheeler", 0) > 0
-        tier = pick(rng, {"weak": 0.22 if has_autos else 0.28, "auto_only": 0.06 if has_autos else 0.0,
-                          "mid": 0.52,
+        tier = pick(rng, {"weak": 0.28, "mid": 0.52,
                           "strong": 0.16 if not hot else 0.24, "showcase": 0.04 if not hot else 0.08})
         severity = rng.uniform(*INTENSITY[dtype])
         # Most defects are fresh; some were last reported long ago so recency decays.
@@ -239,7 +234,6 @@ def report_count(rng, tier):
     return {
         # The backend's DBSCAN needs 3 events for the smallest cluster.
         "weak": lambda: rng.randint(3, 4),
-        "auto_only": lambda: 3,                 # < 4 so the auto-only penalty applies
         "mid": lambda: rng.randint(4, 9),
         "strong": lambda: rng.randint(10, 16),
         "showcase": lambda: rng.randint(20, 32),
@@ -247,8 +241,6 @@ def report_count(rng, tier):
 
 
 def vehicles_for(rng, defect, n, mix):
-    if defect["tier"] == "auto_only":
-        return ["three_wheeler"] * n
     if defect["tier"] == "weak":
         return [pick(rng, mix)] * n            # single vehicle type, no cross-confirmation
     vs = [pick(rng, mix) for _ in range(n)]
@@ -343,13 +335,11 @@ def make_events(rng, defects, city_key, city, now_ms, sessions):
             atype = d["type"] if rng.random() > 0.14 else rng.choice(
                 ["pothole", "bump", "rough_patch", "unknown"])
             intensity = d["severity"] + rng.gauss(0, 0.07)
-            if vehicle == "three_wheeler":
-                intensity += 0.05       # autos feel every hit harder
             ts = event_time(rng, now_ms, d["stale"], city["utc_offset_h"])
             sid = sessions.get(city_key, vehicle, ts)
             events.append(make_event(rng, lat, lon, ts, vehicle, atype, intensity, sid))
 
-    # Noise: isolated one-off triggers (speed breakers not yet confirmed, phone
+    # Noise: isolated one-off triggers (speed bumps not yet confirmed, phone
     # knocks) scattered along corridors. DBSCAN should discard these.
     n_noise = int(len(events) * 0.08)
     lengths = {name: corridor_length(p) for name, p in city["corridors"].items()}
@@ -442,8 +432,7 @@ def score_cluster(evs, now_ms, rng):
     recency = max(0.0, 1.0 - age / MAX_AGE_MS) if age > 0 else 1.0
     diversity = len(vts)
     bonus = 0.08 * (diversity - 1)
-    penalty = 0.08 if (diversity == 1 and "three_wheeler" in vts and n < 4) else 0.0
-    conf = min(1.0, max(0.0, count_score * 0.50 + consistency * 0.25 + recency * 0.15 + bonus - penalty))
+    conf = min(1.0, max(0.0, count_score * 0.50 + consistency * 0.25 + recency * 0.15 + bonus))
     return {
         "cluster_id": str(uuid.UUID(int=rng.getrandbits(128), version=4)),
         "latitude": round(lat, 7), "longitude": round(lon, 7),
@@ -523,7 +512,7 @@ def main():
     }
     # Lightweight event rows for the map's raw-events layer and timeline chart:
     # [lat, lon, timestamp_ms, vehicle_type index, anomaly_type index, city index]
-    vt_idx = ["two_wheeler", "three_wheeler", "four_wheeler"]
+    vt_idx = ["two_wheeler", "four_wheeler"]
     at_idx = ["pothole", "bump", "rough_patch", "unknown"]
     city_idx = list(CITIES)
     lite = {"fields": ["lat", "lon", "ts", "vehicle", "type", "city"],

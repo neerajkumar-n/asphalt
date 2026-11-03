@@ -49,22 +49,20 @@ class DemoViewModel : ViewModel() {
      * Injects a synthetic bump event for testing the UI and upload pipeline
      * without needing to physically drive.
      *
-     * Uses [selectedVehicleType] so the demo can exercise all three vehicle
+     * Uses [selectedVehicleType] so the demo can exercise both vehicle
      * profiles. Sensor values are tuned to realistic ranges per type:
      * - Four-wheeler: clean signal, delta ~5.4 m/s^2
-     * - Three-wheeler: noisier baseline, delta ~6.2 m/s^2 (higher threshold)
      * - Two-wheeler: moderate noise, delta ~5.8 m/s^2
      */
     fun simulateBump() {
         val (peakZ, baselineZ, gyro, speedKmh) = when (selectedVehicleType) {
             VehicleType.FOUR_WHEELER  -> SimValues(15.2f, 9.81f, 0.85f, 52f)
-            VehicleType.THREE_WHEELER -> SimValues(16.5f, 9.81f, 1.10f, 28f)
             VehicleType.TWO_WHEELER   -> SimValues(15.8f, 9.81f, 0.95f, 38f)
         }
 
-        // Bengaluru coordinates with small random scatter to simulate different road segments
-        val lat = 12.9716 + (Math.random() - 0.5) * 0.02
-        val lon = 77.5946 + (Math.random() - 0.5) * 0.02
+        // Midtown Manhattan coordinates with small random scatter to simulate different road segments
+        val lat = 40.7580 + (Math.random() - 0.5) * 0.02
+        val lon = -73.9855 + (Math.random() - 0.5) * 0.02
 
         val simulatedEvent = RoadEvent(
             timestampMs = System.currentTimeMillis(),

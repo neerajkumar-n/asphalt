@@ -3,17 +3,18 @@ package io.asphalt.demo
 import android.content.Context
 
 /**
- * Manages user consent for road data collection under India's Digital Personal
- * Data Protection Act 2023 (DPDP Act).
+ * Manages user consent for road data collection.
  *
  * Although GPS coordinates attached to road anomaly events are not directly
  * personal data (they describe road conditions, not the user's identity),
- * the DPDP Act's broad definition of "digital personal data" and the
- * requirement for explicit consent for any sensor/location usage makes a
- * consent gate the safest practice for production deployments in India.
+ * US state privacy laws such as California's CCPA/CPRA treat precise
+ * geolocation as sensitive personal information, and Google Play requires a
+ * prominent disclosure and affirmative consent before collecting location in
+ * the background. An explicit consent gate is the safest practice for
+ * production deployments.
  *
  * ## What we collect
- * - Accelerometer and gyroscope readings (only while driving above 15 km/h)
+ * - Accelerometer and gyroscope readings (only while driving above ~9 mph)
  * - GPS coordinates (only when an anomaly is detected, not continuously)
  * - Anonymous device metadata: manufacturer, model, Android SDK version,
  *   sensor vendor

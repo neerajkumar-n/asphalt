@@ -1,29 +1,28 @@
 # Asphalt
 
-Asphalt detects road anomalies (potholes, speed bumps, rough patches) using
-smartphone sensor data and aggregates them into a queryable road quality map.
+Asphalt detects road anomalies (potholes, speed bumps, rough patches) on US
+roads using smartphone sensor data and aggregates them into a queryable road
+quality map.
 
 It is a privacy-first, offline-first, battery-aware system designed for real
 deployment conditions: noisy sensors, intermittent connectivity, and heterogeneous
-device hardware.
+device hardware. Potential users include city public works and DOT road crews,
+delivery and rideshare fleets, and navigation or insurance products that want
+road-condition data without dashcams.
 
 ---
 
 ## How It Works
 
 A driver installs an app that includes the Asphalt SDK. The app declares the
-vehicle type (two-wheeler, three-wheeler, or four-wheeler) at initialisation
-time. While driving above 15 km/h, the SDK samples `TYPE_LINEAR_ACCELERATION` and
+vehicle type (car or motorcycle) at initialisation time. While driving above
+~9 mph (15 km/h), the SDK samples `TYPE_LINEAR_ACCELERATION` and
 `TYPE_GRAVITY` at ~50Hz. The linear acceleration is projected onto the gravity
 unit vector to extract the road-normal force component — this works regardless
 of how the phone is mounted (flat, upright, angled in a holder). When the
 road-normal reading deviates sharply from the rolling baseline (the pothole
 spike-dip signature), and the gyroscope confirms actual physical motion, the SDK
 records the event with a GPS coordinate and intensity score.
-
-For three-wheelers (auto rickshaws), additional on-device filters suppress
-false positives from engine vibration, turn dynamics, and lateral wobble before
-any event is recorded.
 
 Events are batched locally and uploaded to the backend when connectivity is
 available. The backend clusters nearby events, scores cluster confidence based
@@ -61,12 +60,12 @@ asphalt/
 flowchart LR
     A[Linear Accel + Gravity\n~50Hz, orientation-agnostic] --> D[Spike-Dip Detector]
     B[Gyroscope ~50Hz] --> D
-    C[GPS 1Hz] --> G[Speed Gate\n>15 km/h]
+    C[GPS 1Hz] --> G[Speed Gate\n>9 mph]
     G --> D
     D --> E[Local SQLite Buffer]
     E --> F[WorkManager Upload]
     F -->|HTTPS JSON batch| H[Ingestion API\nGo]
-    H --> I[(PostgreSQL\n+ PostGIS)]
+    H --> I[(PostgreSQL)]
     I --> J[DBSCAN Clustering\nevery 5 min]
     J --> K[Map Query API]
     K --> L[Map Client]
@@ -120,7 +119,7 @@ See [tools/synthetic/README.md](tools/synthetic/README.md) for details.
 // In Application.onCreate()
 Asphalt.init(this, AsphaltConfig(
     ingestUrl = "https://your-backend.example.com/v1/ingest/batch",
-    vehicleType = VehicleType.THREE_WHEELER  // or TWO_WHEELER, FOUR_WHEELER
+    vehicleType = VehicleType.FOUR_WHEELER  // or TWO_WHEELER for motorcycles
 ))
 
 // Start detection (call after location permission is granted)
@@ -186,7 +185,7 @@ a physical Android device to test detection end-to-end.
 
 | Behaviour | Debug build | Release build |
 |-----------|-------------|---------------|
-| Speed gate | 5 km/h | 15 km/h |
+| Speed gate | ~3 mph (5 km/h) | ~9 mph (15 km/h) |
 | Logging | Verbose (Logcat tag: `Asphalt`) | Silent |
 | Backend URL | `http://10.0.2.2:8080` | Set in `build.gradle.kts` |
 | Obfuscation | Off | R8 + ProGuard |
@@ -199,10 +198,11 @@ walking slowly, without needing to drive.
 ## Sensor Model
 
 The accelerometer detects vertical displacement caused by road anomalies.
-A pothole creates a characteristic spike-dip Z-axis signature over 150-400ms.
+A pothole creates a characteristic dip-then-spike signature on the road-normal
+axis over 150-400ms; a speed bump produces the reverse (spike, then dip).
 The gyroscope confirms physical angular motion, filtering out sensor noise
-from vibration, music, and loose phone mounts. GPS speed gates the system
-to activate only during vehicle travel above 15 km/h.
+from vibration, car stereo bass, and loose phone mounts. GPS speed gates the
+system to activate only during vehicle travel above ~9 mph (15 km/h).
 
 See [docs/sensor-model.md](docs/sensor-model.md) for sample signal patterns
 and full explanation.
@@ -211,70 +211,50 @@ and full explanation.
 
 ## Vehicle Support
 
-Asphalt explicitly models three vehicle categories:
+Asphalt models two vehicle categories, matching the US fleet:
 
-| Vehicle | Examples | Detection Threshold | Special Handling |
-|---------|---------|---------------------|-----------------|
-| Four-wheeler | Cars, SUVs, taxis | 4.0 m/s^2 | Standard |
-| Three-wheeler | Auto rickshaws, tuk-tuks | 5.5 m/s^2 | Engine vibration filter, turn suppression, lateral wobble suppression |
-| Two-wheeler | Motorcycles, scooters | 5.0 m/s^2 | Turn suppression, wider baseline window |
+| Vehicle | Examples | Detection Threshold | Gyro Confirmation | Signal Weight |
+|---------|---------|---------------------|-------------------|---------------|
+| Four-wheeler | Cars, SUVs, pickups, rideshare | 4.0 m/s^2 | 0.30 rad/s | 1.0 |
+| Two-wheeler | Motorcycles, scooters, delivery mopeds | 5.0 m/s^2 | 0.45 rad/s | 0.8 |
 
-### Why Indian traffic makes this problem harder
+Motorcycles are noisier sensors than cars: the rider leans into corners, the
+handlebars pass engine and road buzz straight to a mounted phone, and hard
+braking pitches the bike forward. The two-wheeler profile compensates with a
+higher detection threshold, a stricter gyro check and a wider rolling-baseline
+window.
 
-Indian urban roads present a combination of conditions not found in most road
-detection research:
+On the backend:
 
-- **Mixed fleet**: The same road segment is used simultaneously by two-wheelers,
-  three-wheelers, cars, trucks, and cycle rickshaws. Road damage affects each
-  vehicle type differently. A pothole that barely registers in a car may be
-  severe for a scooter.
+- **Signal weights**: Motorcycle events count 0.8x relative to cars when
+  computing cluster intensity and confidence.
+- **Cross-vehicle confidence bonus**: A cluster confirmed by both cars and
+  motorcycles receives +0.08 confidence. Two vehicle types with different
+  suspensions reporting the same spot is the strongest evidence a defect is real.
 
-- **Auto rickshaws as dominant mode**: In cities like Mumbai, Delhi, and
-  Bengaluru, autos account for a large fraction of road kilometres driven.
-  Any road quality system that cannot handle auto data is blind to a significant
-  portion of the fleet. At the same time, autos have higher sensor noise floors
-  than cars, making them harder to process correctly.
+See [docs/vehicle-profiles.md](docs/vehicle-profiles.md) for the full
+explanation and worked confidence examples.
 
-- **Unofficial road modifications**: Speed bumps built by resident welfare
-  associations, road patches of varying quality, and temporary diversions are
-  common. These are not in any map database and must be detected from sensor
-  data alone.
+### What makes US roads hard
 
-- **Dense, slow traffic**: Congested corridors operate at 5-15 km/h for hours
-  daily. The speed gate (minimum 15 km/h for activation) means these segments
-  are harder to survey during peak hours.
-
-- **GPS degradation**: Tall buildings, flyovers, and narrow lanes cause GPS
-  multipath errors. Urban canyon GPS in Indian cities can degrade to 30-50m
-  accuracy, which is above the 30m cluster radius.
-
-### How Asphalt accounts for this diversity
-
-- **Per-vehicle signal profiles**: Each vehicle type has its own detection
-  threshold, gyro confirmation threshold, baseline window size, and suppression
-  parameters derived from real-world auto and bike vibration characteristics.
-
-- **On-device three-wheeler filtering**: Engine vibration (zero-crossing rate),
-  turns (sustained lateral gyro), and wobble (sustained roll) are suppressed
-  before any event reaches the database. This happens on the phone, so no
-  false-positive events are uploaded.
-
-- **Cross-vehicle confidence bonus**: A cluster confirmed by both autos and cars
-  receives a confidence boost of +0.08 per additional vehicle type. This rewards
-  the most reliable signal: multiple vehicle categories independently reporting
-  the same location.
-
-- **Vehicle type signal weights**: Backend intensity normalisation weights
-  three-wheeler events at 0.7x and two-wheeler events at 0.8x relative to
-  cars, reflecting their higher per-event uncertainty. A cluster dominated by
-  auto reports but also confirmed by one car will have substantially higher
-  confidence than an auto-only cluster.
+- **Freeze-thaw damage**: In northern states, potholes appear and grow quickly
+  through late winter and spring. Recency decay in confidence scoring lets old
+  reports fade as roads are patched.
+- **Speed humps, rail crossings, steel plates**: Traffic calming, grade
+  crossings, utility-work plates and manhole covers all produce sharp impacts.
+  Some are hazards worth reporting; many are permanent infrastructure.
+- **Freeway speeds**: At 65+ mph the same defect produces a larger G-force, so
+  intensity is speed-normalised.
+- **Urban canyons**: GPS in downtown Manhattan, Chicago's Loop or under elevated
+  highways can degrade to 30-50m accuracy, above the 30m cluster radius.
+- **Rush-hour congestion**: Stop-and-go traffic below ~9 mph is not surveyed,
+  so damage at bottlenecks is underreported.
 
 ---
 
 ## Design Principles
 
-**Battery aware**: Sensors are inactive below 15 km/h. Uploads use WorkManager
+**Battery aware**: Sensors are inactive below ~9 mph (15 km/h). Uploads use WorkManager
 to batch events and avoid unnecessary radio wake-ups.
 
 **Privacy first**: No PII collected. No device identifiers, user accounts, or
@@ -304,18 +284,26 @@ Go was chosen over Node.js for the backend:
 
 ## Known Limitations
 
-- Phone orientation does not affect detection accuracy. The SDK projects sensor
-  readings onto the gravity vector, so a dashboard holder, windshield mount, or
-  cupholder all work correctly.
-- No per-device sensor calibration in v1. Threshold is global (4.0 m/s^2).
-- Rural roads with sparse users will have low confidence scores until more
-  drivers report the same location.
-- GPS spoofing is not prevented in v1; multi-report confidence scoring
+- **Unvalidated thresholds**: Detection thresholds were set from published
+  vehicle-dynamics ranges, not from labelled US field data. A ground-truth
+  drive study is the most important next step.
+- **No per-device calibration**: Thresholds are per vehicle type, not per
+  phone model. Sensor gain and OEM filtering vary between devices.
+- **No motorcycle turn filter**: Cornering lean is handled only by the raised
+  threshold; a dedicated lean/turn filter is planned.
+- **Sparse coverage**: Rural roads and quiet streets will have low confidence
+  scores until more drivers report the same location.
+- **GPS spoofing**: Not prevented in v1; multi-report confidence scoring
   limits but does not eliminate its impact.
-- Background collection requires a Foreground Service with
+- **Android only**: There is no iOS SDK yet, and more than half of US
+  smartphone users are on iPhone.
+- **Background collection**: Requires a Foreground Service with
   `foregroundServiceType="location"` on Android 10+. The demo app includes
-  `DetectionForegroundService` that handles this automatically when the user
-  taps Start.
+  `DetectionForegroundService`, which handles this when the user taps Start.
+
+Phone orientation is not a limitation: the SDK projects sensor readings onto
+the gravity vector, so dashboard holders, windshield mounts and cupholders all
+work.
 
 Full limitations: [docs/limitations.md](docs/limitations.md)
 
