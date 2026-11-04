@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Asphalt · Road quality from the phones already driving</title>
+  <meta name="description" content="Asphalt is an open-source Android SDK and Go backend that detects potholes, speed bumps and rough patches from smartphone sensors and turns them into a road quality map. No accounts, no continuous tracking." />
+  <meta name="color-scheme" content="light dark" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23171717'/%3E%3Cpath d='M6 22h20' stroke='%23E58A1F' stroke-width='3' stroke-dasharray='5 3'/%3E%3Cpath d='M12 13q4 5 8 0' stroke='%23fff' stroke-width='2.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E" />
+
+  <style>
+    /* Layout: one calm screen. Centered hero with a rotating word, a tilted collage of real product surfaces, one call-to-action card, a hairline footer. */
+    :root {
+      --bg: #fbfbfa;
+      --raised: #ffffff;
+      --fg: #171717;
+      --label: #2e2e2d;
+      --muted: #6e6e6c;
+      --subtle: #757573;
+      --ghost: #a3a3a0;
+      --hair: color-mix(in srgb, #171717 9%, transparent);
+      --token: color-mix(in srgb, #171717 10%, transparent);
+      --wash: color-mix(in srgb, #171717 4.5%, transparent);
+      --hit: #E58A1F;          /* road-marking amber: the one accent */
+      --hit-wash: #fcebd8;
+      --live: #2f9e55;
+      --v2: #3b82f6;           /* two-wheeler */
+      --v3: #22a05a;           /* three-wheeler */
+      --v4: #8b5cf6;           /* four-wheeler */
+      --street: #e7e7e4;
+      --shadow: 0 18px 40px rgb(0 0 0 / .14);
+      --pill-shadow: 0 4px 12px rgb(0 0 0 / .08);
+      --sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      --mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #141414;
+        --raised: #1b1b1b;
+        --fg: #ededec;
+        --label: #c4c4c2;
+        --muted: #9a9a98;
+        --subtle: #858583;
+        --ghost: #5c5c5a;
+        --hair: color-mix(in srgb, #ededec 9%, transparent);
+        --token: color-mix(in srgb, #ededec 10%, transparent);
+        --wash: color-mix(in srgb, #ededec 4.5%, transparent);
+        --hit: #F09A35;
+        --hit-wash: #3a2414;
+        --live: #5bb974;
+        --street: #242424;
+        --shadow: 0 18px 40px rgb(0 0 0 / .45);
+        --pill-shadow: 0 4px 12px rgb(0 0 0 / .3);
+      }
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; }
+    body {
+      min-height: 100vh; display: flex; flex-direction: column;
+      background: var(--bg); color: var(--fg);
+      font-family: var(--sans); font-size: 15px; line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+    a { color: inherit; }
+    :focus-visible { outline: 2px solid var(--hit); outline-offset: 3px; border-radius: 6px; }
+    .mono { font-family: var(--mono); }
+
+    /* ---------- nav ---------- */
+    nav.top {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 18px max(20px, env(safe-area-inset-right)) 0 max(20px, env(safe-area-inset-left));
+    }
+    .brand { display: inline-flex; align-items: center; gap: 9px; text-decoration: none; font-weight: 600; letter-spacing: -.01em; font-size: 16px; }
+    .mark { width: 22px; height: 22px; border-radius: 5px; background: var(--fg); display: grid; place-items: center; }
+    .mark svg { width: 16px; height: 16px; }
+    .navlinks { display: flex; align-items: center; gap: 22px; font-size: 14px; color: var(--muted); }
+    .navlinks a { text-decoration: none; }
+    .navlinks a:hover { color: var(--fg); }
+    .navlinks .gh { color: var(--fg); border: 1px solid var(--hair); border-radius: 8px; padding: 5px 11px; display: inline-flex; gap: 7px; align-items: center; }
+    .navlinks .gh:hover { background: var(--wash); }
+
+    /* ---------- hero ---------- */
+    .hero {
+      position: relative; flex: 1; display: flex; flex-direction: column; align-items: center;
+      overflow: hidden; text-align: center;
+      padding: clamp(40px, 9vh, 96px) 16px clamp(16px, 5vh, 64px);
+    }
+    .badge {
+      display: inline-flex; align-items: center; gap: 9px; border: 1px solid var(--hair); border-radius: 3px;
+      padding: 7px 12px; font-family: var(--mono); font-size: 11.5px; letter-spacing: .08em; color: var(--muted);
+      text-decoration: none;
+    }
+    .badge:hover { color: var(--fg); }
+    .badge .sq { width: 18px; height: 18px; border-radius: 2px; background: var(--hit); display: grid; place-items: center; }
+    .badge .sq svg { width: 12px; height: 12px; }
+
+    h1 {
+      margin: 26px 0 0; font-size: 56px; line-height: 64px; font-weight: 500; letter-spacing: -.035em;
+      display: flex; flex-wrap: wrap; justify-content: center; column-gap: .26em;
+    }
+    h1 .lead { color: var(--subtle); }
+    .rotator { position: relative; display: inline-block; height: 64px; overflow: hidden; vertical-align: top; text-align: left; transition: width .45s cubic-bezier(.2,.7,.2,1); }
+    .rotator span { display: block; white-space: nowrap; }
+    .rotator .word { position: absolute; left: 0; top: 0; transition: transform .45s cubic-bezier(.2,.7,.2,1), opacity .45s; }
+    .rotator .word:only-child { position: relative; }
+    .rotator .word.in { transform: translateY(0); opacity: 1; }
+    .rotator .word.out { transform: translateY(-100%); opacity: 0; }
+    .rotator .word.wait { transform: translateY(100%); opacity: 0; }
+    .sub { margin: 14px 0 0; max-width: min(560px, calc(100vw - 32px)); font-size: 18px; line-height: 26px; color: var(--muted); text-wrap: balance; }
+
+    /* ---------- collage ---------- */
+    .stage { position: relative; margin-top: 56px; height: 460px; width: 480px; flex-shrink: 0; text-align: left; }
+    .card {
+      position: absolute; display: flex; flex-direction: column; overflow: hidden;
+      background: var(--bg); border: 1px solid var(--hair); border-radius: 14px;
+    }
+    .chrome { height: 32px; flex-shrink: 0; display: flex; align-items: center; gap: 9px; padding: 0 12px; border-bottom: 1px solid var(--hair); }
+    .dots { display: flex; gap: 5px; }
+    .dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--token); }
+    .chrome .url { font-family: var(--mono); font-size: 10.5px; color: var(--ghost); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* left: phone running the SDK */
+    .c-phone { width: 260px; height: 340px; left: -140px; top: 70px; transform: rotate(-6deg); padding: 20px 18px; gap: 12px; }
+    .who { display: flex; align-items: center; gap: 12px; }
+    .avatar { width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0; display: grid; place-items: center;
+      background: radial-gradient(circle at 30% 25%, #fde68a 0%, transparent 45%), radial-gradient(circle at 75% 70%, #15803d 0%, transparent 60%), linear-gradient(135deg, #4ade80 0%, #14532d 100%); }
+    .who b { display: block; font-size: 16px; font-weight: 500; }
+    .who small { font-size: 11.5px; color: var(--muted); }
+    .status { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--label); }
+    .status i { width: 7px; height: 7px; border-radius: 50%; background: var(--live); box-shadow: 0 0 0 3px color-mix(in srgb, var(--live) 20%, transparent); }
+    .trace { width: 100%; height: 54px; display: block; }
+    .row-btns { display: flex; gap: 6px; align-items: center; }
+    .btn-sm { border-radius: 8px; background: var(--fg); color: var(--bg); padding: 6px 12px; font-size: 12px; font-weight: 500; }
+    .token { border-radius: 6px; background: var(--token); padding: 3px 8px; font-size: 11px; }
+    .token span { color: var(--muted); }
+    .ev { display: flex; align-items: center; gap: 10px; }
+    .ev .ic { width: 26px; height: 26px; border-radius: 7px; flex-shrink: 0; display: grid; place-items: center; }
+    .ev .t { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .ev .t b { font-size: 12.5px; font-weight: 500; }
+    .ev .t small { font-size: 11px; color: var(--muted); }
+    .ev .v { font-family: var(--mono); font-size: 11.5px; }
+
+    /* right: what leaves the phone */
+    .c-json { width: 260px; height: 340px; left: 436px; top: 44px; transform: rotate(6deg); }
+    .json { padding: 14px 16px 10px; font-family: var(--mono); font-size: 10.5px; line-height: 17px; color: var(--muted); white-space: pre; }
+    .json .k { color: var(--label); }
+    .json .s { color: var(--hit); }
+    .json .n { color: var(--live); }
+    .privacy { margin: 0 14px; display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--hair); background: var(--raised); border-radius: 10px; padding: 10px 12px; }
+    .privacy b { display: block; font-size: 12.5px; font-weight: 500; }
+    .privacy small { display: block; font-size: 10.5px; color: var(--muted); line-height: 15px; }
+    .foot-row { margin-top: auto; display: flex; justify-content: space-between; border-top: 1px solid var(--hair); margin-inline: 14px; padding: 10px 0 12px; font-family: var(--mono); font-size: 9.5px; color: var(--ghost); }
+
+    /* center: the map's view of one cluster */
+    .c-main { width: 340px; height: 400px; left: 80px; top: 0; box-shadow: var(--shadow); z-index: 2; }
+    .c-main .body { display: flex; flex-direction: column; gap: 11px; padding: 16px 20px 18px; }
+    .c-main h3 { margin: 0; font-size: 17px; font-weight: 500; letter-spacing: -.01em; }
+    .meta { margin-top: -6px; display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); flex-wrap: wrap; }
+    .meta i { font-style: normal; color: var(--ghost); }
+    .minimap { height: 92px; border-radius: 10px; overflow: hidden; border: 1px solid var(--hair); background: var(--raised); }
+    .minimap svg { width: 100%; height: 100%; display: block; }
+    .reports { display: flex; flex-direction: column; gap: 6px; }
+    .rep { display: flex; align-items: center; gap: 10px; }
+    .rep .vdot { width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; display: grid; place-items: center; font-family: var(--mono); font-size: 8.5px; color: #fff; font-weight: 500; }
+    .rep span.b { flex: 1; display: flex; justify-content: space-between; border-radius: 9px; background: var(--wash); padding: 7px 12px; font-size: 12.5px; }
+    .rep span.b em { font-style: normal; font-family: var(--mono); font-size: 11.5px; color: var(--muted); }
+    .conclude { display: flex; gap: 10px; font-size: 12.5px; color: var(--label); padding-top: 2px; }
+    .conclude span { width: 10px; font-size: 11px; color: var(--hit); }
+
+    /* floating pills */
+    .pill {
+      position: absolute; z-index: 3; height: 34px; display: flex; align-items: center; gap: 7px; white-space: nowrap;
+      border: 1px solid var(--hair); background: var(--raised); border-radius: 999px; padding: 0 14px; box-shadow: var(--pill-shadow);
+    }
+    .p-reports { left: 20px; top: -22px; transform: rotate(-4deg); }
+    .p-reports i { width: 7px; height: 7px; border-radius: 50%; background: var(--hit); }
+    .p-reports span { font-family: var(--mono); font-size: 12px; color: var(--hit); }
+    .p-conf { left: 488px; top: 4px; transform: rotate(5deg); }
+    .p-conf b { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--live); }
+    .p-conf span { font-family: var(--mono); font-size: 12px; color: var(--subtle); }
+    .p-fleet { left: 420px; top: 380px; transform: rotate(3deg); padding-left: 6px; }
+    .stack { display: flex; }
+    .stack span { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--raised); display: grid; place-items: center; font-family: var(--mono); font-size: 10px; color: #fff; font-weight: 500; }
+    .stack span + span { margin-left: -9px; }
+    .p-fleet em { font-style: normal; font-size: 13px; }
+    .term {
+      position: absolute; z-index: 3; left: -200px; top: 334px; width: 250px; transform: rotate(-3deg);
+      display: flex; flex-direction: column; gap: 5px; border-radius: 10px; border: 1px solid var(--hair);
+      background: #0a0a0a; padding: 12px 14px; font-family: var(--mono); font-size: 11px; line-height: 16px;
+      box-shadow: 0 10px 24px rgb(0 0 0 / .3);
+    }
+    .term .cmd { color: #ededec; }
+    .term .out { color: #F09A35; }
+    .term .ok { color: #8c8c89; }
+
+    /* ---------- get started ---------- */
+    .start { display: flex; justify-content: center; padding: 24px 16px 72px; }
+    .start-card { width: 100%; max-width: 400px; display: flex; flex-direction: column; align-items: stretch; text-align: center; }
+    .start-card h2 { margin: 0; font-size: 22px; font-weight: 500; letter-spacing: -.02em; }
+    .start-card p.lede { margin: 8px 0 0; font-size: 14px; color: var(--muted); }
+    .code {
+      position: relative; margin-top: 22px; text-align: left; border: 1px solid var(--hair); border-radius: 10px; background: var(--raised);
+      font-family: var(--mono); font-size: 12px; line-height: 19px; padding: 14px 16px; color: var(--label); overflow-x: auto; white-space: pre;
+    }
+    .code .c { color: var(--ghost); }
+    .code .s { color: var(--hit); }
+    .code .f { color: var(--fg); font-weight: 500; }
+    .copy {
+      position: absolute; top: 8px; right: 8px; border: 1px solid var(--hair); background: var(--bg); color: var(--muted);
+      border-radius: 6px; font-family: var(--mono); font-size: 10.5px; padding: 3px 8px; cursor: pointer;
+    }
+    .copy:hover { color: var(--fg); }
+    .cta { margin-top: 16px; height: 44px; border-radius: 10px; background: var(--fg); color: var(--bg); display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 15px; font-weight: 500; }
+    .cta:hover { opacity: .88; }
+    .alt { margin: 16px 0 0; font-size: 13px; color: var(--subtle); }
+    .alt a { color: var(--label); text-underline-offset: 3px; }
+
+    footer {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 24px;
+      border-top: 1px solid var(--hair); padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
+      font-size: 13px; color: var(--subtle);
+    }
+    footer a { text-decoration: none; }
+    footer a:hover { color: var(--fg); }
+
+    /* ---------- responsive: scale the collage like a picture ---------- */
+    @media (max-width: 1023px) { .stage { transform: scale(.85); transform-origin: top center; margin-bottom: -69px; } }
+    @media (max-width: 767px) {
+      h1 { font-size: 40px; line-height: 46px; }
+      .rotator { height: 46px; }
+      .sub { font-size: 16px; line-height: 24px; }
+      .stage { margin-top: 28px; }
+      .p-conf { left: 400px; }
+      .p-fleet { left: 300px; }
+      .navlinks .hide-sm { display: none; }
+    }
+    @media (max-width: 639px) { .stage { transform: scale(.62); margin-bottom: -175px; } }
+    @media (max-width: 380px) { h1 { font-size: 34px; line-height: 40px; } .rotator { height: 40px; } }
+
+    @media (prefers-reduced-motion: reduce) {
+      .rotator, .rotator .word { transition: none; }
+      .live-trace { animation: none !important; }
+    }
+    @keyframes scan { from { stroke-dashoffset: 0; } to { stroke-dashoffset: -240; } }
+    .live-trace { stroke-dasharray: 240; animation: scan 3.2s linear infinite; }
+  </style>
+</head>
+<body>
+
+  <nav class="top" aria-label="Main">
+    <a class="brand" href="./">
+      <span class="mark" aria-hidden="true"><svg viewBox="0 0 16 16"><path d="M1 12h14" stroke="#E58A1F" stroke-width="1.8" stroke-dasharray="3 2"/><path d="M5 6.5q3 3.5 6 0" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg></span>
+      asphalt
+    </a>
+    <div class="navlinks">
+      <a href="demo/">Demo map</a>
+      <a class="hide-sm" href="https://github.com/neerajkumar-n/asphalt/blob/main/docs/sdk-integration.md">Docs</a>
+      <a class="gh" href="https://github.com/neerajkumar-n/asphalt">
+        <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a>
+    </div>
+  </nav>
+
+  <main class="hero">
+    <a class="badge" href="https://github.com/neerajkumar-n/asphalt/blob/main/LICENSE">
+      <span class="sq" aria-hidden="true"><svg viewBox="0 0 12 12"><path d="M2 5q4 4.5 8 0" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></span>
+      OPEN SOURCE · APACHE 2.0
+    </a>
+
+    <h1>
+      <span class="lead">Map every</span>
+      <span class="rotator" id="rotator" aria-live="off">
+        <span class="word in">pothole</span>
+      </span>
+    </h1>
+    <p class="sub">Turn the phones already driving your city into a live road quality map. No accounts, no continuous tracking. Only the bumps leave the phone.</p>
+
+    <div class="stage" aria-hidden="true">
+
+      <!-- left: SDK running on a phone in an auto -->
+      <div class="card c-phone">
+        <div class="who">
+          <span class="avatar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16V9a4 4 0 014-4h6l4 5v6"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M9 17h6"/></svg></span>
+          <div><b>Auto-rickshaw</b><small>three_wheeler · 32 km/h</small></div>
+        </div>
+        <span class="status"><i></i>Detecting above the 15 km/h gate</span>
+        <svg class="trace" viewBox="0 0 224 54" preserveAspectRatio="none">
+          <line x1="0" y1="12" x2="224" y2="12" stroke="var(--hit)" stroke-width="1" stroke-dasharray="3 3" opacity=".7"/>
+          <polyline fill="none" stroke="var(--ghost)" stroke-width="1.3" points="0,30 8,28 16,32 24,27 32,31 40,29 48,33 56,28 64,31 72,29 80,30 88,28 96,31 104,26 110,6 116,50 122,34 130,29 138,31 146,28 154,32 162,29 170,30 178,28 186,31 194,29 202,30 210,28 224,30"/>
+          <polyline class="live-trace" fill="none" stroke="var(--fg)" stroke-width="1.5" points="0,30 8,28 16,32 24,27 32,31 40,29 48,33 56,28 64,31 72,29 80,30 88,28 96,31 104,26 110,6 116,50 122,34 130,29 138,31 146,28 154,32 162,29 170,30 178,28 186,31 194,29 202,30 210,28 224,30"/>
+          <circle cx="110" cy="6" r="3" fill="var(--hit)"/>
+        </svg>
+        <div class="row-btns"><span class="btn-sm">Stop</span><span class="token">Queued <span>3</span></span></div>
+        <div class="ev">
+          <span class="ic" style="background:color-mix(in srgb, var(--hit) 24%, var(--bg))"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M2 6q5 6 10 0" stroke="var(--hit)" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></span>
+          <span class="t"><b>pothole</b><small>Δz 6.29 m/s² · gyro ok</small></span>
+          <span class="v">now</span>
+        </div>
+        <div class="ev">
+          <span class="ic" style="background:color-mix(in srgb, var(--v4) 22%, var(--bg))"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M2 9q5 -7 10 0" stroke="var(--v4)" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></span>
+          <span class="t"><b>speed_bump</b><small>Δz 5.81 m/s² · gyro ok</small></span>
+          <span class="v">2m</span>
+        </div>
+      </div>
+
+      <!-- right: the event that actually gets uploaded -->
+      <div class="card c-json">
+        <div class="chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">POST /v1/ingest/batch</span></div>
+<div class="json">{
+  <span class="k">"anomaly_type"</span>: <span class="s">"pothole"</span>,
+  <span class="k">"intensity"</span>: <span class="n">0.65</span>,
+  <span class="k">"speed_kmh"</span>: <span class="n">28.5</span>,
+  <span class="k">"vehicle_type"</span>: <span class="s">"two_wheeler"</span>,
+  <span class="k">"latitude"</span>: <span class="n">40.6796</span>,
+  <span class="k">"longitude"</span>: <span class="n">-73.9531</span>,
+  <span class="k">"accuracy_m"</span>: <span class="n">8.0</span>
+}</div>
+        <div class="privacy">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="var(--live)" stroke-width="1.6" style="flex-shrink:0;margin-top:1px"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 015 0v2"/></svg>
+          <span><b>Only the bump leaves the phone</b><small>No raw sensor data, no account, no route. Location is attached to the event, nothing else.</small></span>
+        </div>
+        <div class="foot-row"><span>batched offline</span><span>sent on reconnect</span></div>
+      </div>
+
+      <!-- center: what the map sees -->
+      <div class="card c-main">
+        <div class="chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">localhost:8080/dashboard · New York City</span></div>
+        <div class="body">
+          <h3>Pothole on Atlantic Ave</h3>
+          <span class="meta">Brooklyn <i>·</i> 30 m cluster <i>·</i> 11 reports <i>·</i> 2 vehicle types</span>
+          <div class="minimap">
+            <svg viewBox="0 0 300 92" preserveAspectRatio="xMidYMid slice">
+              <g stroke="var(--street)" stroke-width="7" fill="none" stroke-linecap="round">
+                <path d="M-10 58 L310 40"/><path d="M60 -10 L80 110"/><path d="M190 -10 L205 110"/><path d="M-10 18 L310 8"/>
+              </g>
+              <g stroke="var(--street)" stroke-width="3" fill="none"><path d="M130 -10 L140 110"/><path d="M250 -10 L262 110"/><path d="M-10 86 L310 74"/></g>
+              <circle cx="96" cy="70" r="4" fill="var(--ghost)"/>
+              <circle cx="232" cy="20" r="5" fill="var(--hit)" opacity=".55"/>
+              <circle cx="40" cy="30" r="3.5" fill="var(--ghost)"/>
+              <circle cx="152" cy="50" r="22" fill="var(--hit)" opacity=".14"/>
+              <circle cx="152" cy="50" r="13" fill="var(--hit)" opacity=".25"/>
+              <circle cx="146" cy="48" r="2.6" fill="var(--v4)"/><circle cx="157" cy="46" r="2.6" fill="var(--v4)"/><circle cx="151" cy="55" r="2.6" fill="var(--v2)"/><circle cx="159" cy="53" r="2.6" fill="var(--v4)"/><circle cx="148" cy="42" r="2.6" fill="var(--v2)"/>
+              <circle cx="152" cy="50" r="4" fill="var(--hit)"/>
+            </svg>
+          </div>
+          <div class="reports">
+            <div class="rep"><span class="vdot" style="background:var(--v2)">2W</span><span class="b">scooter <em>Δz 5.6 · 07:42</em></span></div>
+            <div class="rep"><span class="vdot" style="background:var(--v4)">4W</span><span class="b">car <em>Δz 4.4 · 08:31</em></span></div>
+          </div>
+          <div class="conclude"><span>✦</span>Confirmed by two vehicle types: +0.08 confidence.</div>
+        </div>
+      </div>
+
+      <div class="pill p-reports"><i></i><span>4,583 reports</span></div>
+      <div class="pill p-conf"><b>avg conf 0.72</b><span>540 clusters</span></div>
+      <div class="pill p-fleet">
+        <span class="stack"><span style="background:var(--v2)">2</span><span style="background:var(--v3)">3</span><span style="background:var(--v4)">4</span></span>
+        <em>Tuned per vehicle type</em>
+      </div>
+      <div class="term">
+        <span class="cmd">❯ docker compose up</span>
+        <span class="ok">  postgis ready · dbscan every 5m</span>
+        <span class="out">⏺ ingest listening on :8080</span>
+      </div>
+    </div>
+  </main>
+
+  <section class="start" aria-labelledby="start-h">
+    <div class="start-card">
+      <h2 id="start-h">Put it in your app</h2>
+      <p class="lede">Two calls in your Android app. Bring your own backend or run ours.</p>
+      <div class="code" id="snippet"><button class="copy" type="button" id="copy">copy</button><span class="c">// Application.onCreate()</span>
+<span class="f">Asphalt.init</span>(this, AsphaltConfig(
+    ingestUrl = <span class="s">"https://your-host/v1/ingest/batch"</span>,
+    vehicleType = VehicleType.THREE_WHEELER
+))
+<span class="f">Asphalt.start</span>()</div>
+      <a class="cta" href="https://github.com/neerajkumar-n/asphalt/blob/main/docs/sdk-integration.md">Read the SDK guide</a>
+      <p class="alt">Just looking? <a href="demo/">Open the demo map</a></p>
+    </div>
+  </section>
+
+  <footer>
+    <a href="demo/">demo map</a>
+    <a href="https://github.com/neerajkumar-n/asphalt/blob/main/docs/architecture.md">architecture</a>
+    <a href="https://github.com/neerajkumar-n/asphalt/blob/main/docs/limitations.md">limitations</a>
+    <a href="https://github.com/neerajkumar-n/asphalt/blob/main/CONTRIBUTING.md">contributing</a>
+    <span>Apache 2.0 · Asphalt contributors</span>
+  </footer>
+
+  <script>
+    // Rotating headline word
+    (function () {
+      var words = ['pothole', 'speed bump', 'rough patch', 'bad road'];
+      var box = document.getElementById('rotator');
+      var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var i = 0;
+      var current = box.querySelector('.word');
+      function measure(el) { return Math.ceil(el.getBoundingClientRect().width); }
+      function setWidth(el) { box.style.width = measure(el) + 'px'; }
+      function ready() { setWidth(current); }
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(ready); else ready();
+      window.addEventListener('resize', ready);
+      setInterval(function () {
+        i = (i + 1) % words.length;
+        var next = document.createElement('span');
+        next.className = 'word wait';
+        next.textContent = words[i];
+        box.appendChild(next);
+        setWidth(next);
+        var prev = current;
+        current = next;
+        if (reduce) { prev.remove(); next.className = 'word in'; return; }
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () {
+            next.className = 'word in';
+            prev.className = 'word out';
+            setTimeout(function () { prev.remove(); }, 500);
+          });
+        });
+      }, 2400);
+    })();
+
+    // Copy snippet
+    (function () {
+      var btn = document.getElementById('copy');
+      var text = 'Asphalt.init(this, AsphaltConfig(\n    ingestUrl = "https://your-host/v1/ingest/batch",\n    vehicleType = VehicleType.THREE_WHEELER\n))\nAsphalt.start()';
+      btn.addEventListener('click', function () {
+        if (!navigator.clipboard) return;
+        navigator.clipboard.writeText(text).then(function () {
+          btn.textContent = 'copied';
+          setTimeout(function () { btn.textContent = 'copy'; }, 1400);
+        }).catch(function () {});
+      });
+    })();
+  </script>
+</body>
+</html>
