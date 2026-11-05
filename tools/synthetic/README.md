@@ -52,12 +52,13 @@ deploy from the `main` branch and the `/docs` folder. The map is then at
 cd docs/demo && python3 -m http.server 8000   # open http://localhost:8000
 ```
 
-**In the real dashboard.** Start the backend (`cd backend && docker compose up`)
+**In the real dashboard.** Start the backend once (`cd backend && go run ./cmd/server`)
 so the schema exists, then load the data one of two ways:
 
 ```bash
 # Keeps the full 90-day history. Recommended for demos.
-python3 tools/synthetic/load.py --sql | psql "postgres://asphalt:asphalt@localhost:5432/asphalt"
+python3 tools/synthetic/load.py --sqlite | sqlite3 backend/asphalt.db                       # default SQLite
+python3 tools/synthetic/load.py --sql | psql "postgres://asphalt:asphalt@localhost:5432/asphalt"  # PostgreSQL
 
 # Through the real ingestion API. The API rejects events older than 7 days,
 # so this squeezes the timeline into the last week.

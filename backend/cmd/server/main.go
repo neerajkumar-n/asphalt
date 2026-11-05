@@ -24,7 +24,8 @@ func main() {
 	// -------------------------------------------------------------------------
 	// Configuration from environment variables
 	// -------------------------------------------------------------------------
-	dsn := getEnv("DATABASE_URL", "postgres://asphalt:asphalt@localhost:5432/asphalt?sslmode=disable")
+	// sqlite:<path> (default, zero setup) or postgres://user:pass@host/db
+	dsn := getEnv("DATABASE_URL", "sqlite:asphalt.db")
 	addr := getEnv("LISTEN_ADDR", ":8080")
 	clusterIntervalStr := getEnv("CLUSTER_INTERVAL", "5m")
 
@@ -36,7 +37,6 @@ func main() {
 	// -------------------------------------------------------------------------
 	// Database
 	// -------------------------------------------------------------------------
-	log.Println("connecting to database...")
 	db, err := storage.New(dsn)
 	if err != nil {
 		log.Fatalf("database connection failed: %v", err)
@@ -46,7 +46,7 @@ func main() {
 	if err := db.Migrate(ctx); err != nil {
 		log.Fatalf("migration failed: %v", err)
 	}
-	log.Println("database ready")
+	log.Printf("database ready (%s)", db.Driver())
 
 	// -------------------------------------------------------------------------
 	// Application components

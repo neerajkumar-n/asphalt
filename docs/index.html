@@ -378,7 +378,7 @@ a{color:inherit}
         <li><span class="n">02</span><h3>Detect</h3><p>The spike-dip detector compares each reading to a rolling baseline. The gyroscope has to confirm real motion.</p><span class="spec">threshold 4.0 m/s² (car)</span></li>
         <li><span class="n">03</span><h3>Buffer</h3><p>Events are written to SQLite on the phone before anything touches the network.</p><span class="spec">offline first</span></li>
         <li><span class="n">04</span><h3>Upload</h3><p>WorkManager sends batches when there is signal and retries with exponential backoff.</p><span class="spec">POST /v1/ingest/batch</span></li>
-        <li><span class="n">05</span><h3>Cluster</h3><p>The Go backend stores events in PostGIS and groups nearby reports into scored clusters.</p><span class="spec">DBSCAN · 30 m · every 5 min</span></li>
+        <li><span class="n">05</span><h3>Cluster</h3><p>The Go backend stores events in SQLite or PostgreSQL and groups nearby reports into scored clusters.</p><span class="spec">DBSCAN · 30 m · every 5 min</span></li>
       </ol>
     </div>
   </div>
@@ -491,21 +491,19 @@ a{color:inherit}
   <div class="wrap">
     <div class="grid sec-head">
       <p class="label">05 · Get started</p>
-      <h2 id="start-h">Two calls in your app. One command for the backend.</h2>
+      <h2 id="start-h">One line in your app. One command for the backend.</h2>
     </div>
     <div class="grid">
       <div class="code-col">
         <h3><span>A</span>Add the Android SDK</h3>
         <div class="code">
           <button class="copy" type="button" data-copy="sdk">Copy</button>
-<pre id="sdk"><code><span class="c">// Application.onCreate()</span>
-Asphalt.init(this, AsphaltConfig(
-    ingestUrl = <span class="s">"https://your-host/v1/ingest/batch"</span>,
-    vehicleType = VehicleType.FOUR_WHEELER
-))
+<pre id="sdk"><code><span class="c">&lt;!-- AndroidManifest.xml, inside &lt;application&gt; --&gt;</span>
+&lt;meta-data android:name=<span class="s">"io.asphalt.INGEST_URL"</span>
+    android:value=<span class="s">"https://your-host/v1/ingest/batch"</span> /&gt;
 
-<span class="c">// after location permission is granted</span>
-Asphalt.start()</code></pre>
+<span class="c">// when a trip starts: asks for location, then runs</span>
+Asphalt.requestPermissionAndStart(this)</code></pre>
         </div>
       </div>
       <div class="code-col">
@@ -513,15 +511,16 @@ Asphalt.start()</code></pre>
         <div class="code">
           <button class="copy" type="button" data-copy="be">Copy</button>
 <pre id="be"><code>cd backend
-docker compose up --build
-<span class="c"># API on http://localhost:8080</span>
+docker build -t asphalt .
+docker run -p 8080:8080 -v asphalt:/data asphalt
+<span class="c"># API on :8080, data in built-in SQLite</span>
 
 curl http://localhost:8080/v1/health</code></pre>
         </div>
       </div>
       <dl class="facts">
         <div><dt>SDK</dt><dd>Android 7.0+ · Kotlin</dd></div>
-        <div><dt>Backend</dt><dd>Go · PostgreSQL + PostGIS</dd></div>
+        <div><dt>Backend</dt><dd>Go · SQLite or PostgreSQL</dd></div>
         <div><dt>API</dt><dd>OpenAPI 3.1</dd></div>
         <div><dt>Licence</dt><dd>Apache 2.0</dd></div>
       </dl>

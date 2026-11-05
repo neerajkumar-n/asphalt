@@ -27,26 +27,53 @@ The backend is written in Go for the following reasons:
 
 ## Prerequisites
 
-- Docker and Docker Compose v2
-- Go 1.22+ (for local development without Docker)
+- Docker, or Go 1.22+ to run from source
 
 ---
 
-## Quick Start with Docker Compose
+## Quick Start
+
+The server stores data in a built-in SQLite file by default, so there is no
+database to set up:
 
 ```bash
 cd asphalt/backend
-docker compose up --build
+docker build -t asphalt .
+docker run -p 8080:8080 -v asphalt:/data asphalt
 ```
 
-This starts:
-- PostgreSQL 16 with PostGIS extension on port 5432
-- Asphalt API server on port 8080
+Or without Docker:
+
+```bash
+cd asphalt/backend
+go run ./cmd/server        # creates asphalt.db in the current directory
+```
 
 Verify the server is healthy:
 ```bash
 curl http://localhost:8080/v1/health
 # {"status":"ok"}
+```
+
+Point the SDK at `http://<host>:8080/v1/ingest/batch`. The server runs
+migrations automatically on startup.
+
+---
+
+## Using PostgreSQL
+
+SQLite suits a single server. For more traffic, or to run several server
+instances, use PostgreSQL 13 or newer (no extensions needed):
+
+```bash
+cd asphalt/backend
+docker compose up --build   # PostgreSQL 16 on :5432, API on :8080
+```
+
+Or set `DATABASE_URL` on any server:
+
+```bash
+DATABASE_URL=postgres://asphalt:asphalt@localhost:5432/asphalt?sslmode=disable go run ./cmd/server
 ```
 
 ---
@@ -55,32 +82,9 @@ curl http://localhost:8080/v1/health
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `DATABASE_URL` | `postgres://asphalt:asphalt@localhost:5432/asphalt?sslmode=disable` | PostgreSQL DSN |
+| `DATABASE_URL` | `sqlite:asphalt.db` (`sqlite:/data/asphalt.db` in Docker) | `sqlite:<path>` or a `postgres://` URL |
 | `LISTEN_ADDR` | `:8080` | HTTP listen address |
 | `CLUSTER_INTERVAL` | `5m` | How often the clustering worker runs |
-
----
-
-## Running Locally (without Docker)
-
-**1. Start PostgreSQL with PostGIS:**
-```bash
-# Using Docker for just the database
-docker run -d \
-  -e POSTGRES_USER=asphalt \
-  -e POSTGRES_PASSWORD=asphalt \
-  -e POSTGRES_DB=asphalt \
-  -p 5432:5432 \
-  postgis/postgis:16-3.4-alpine
-```
-
-**2. Run the server:**
-```bash
-cd asphalt/backend
-go run ./cmd/server
-```
-
-The server runs migrations automatically on startup.
 
 ---
 
@@ -181,8 +185,8 @@ No additional setup is needed; the HTML is embedded in the Go binary at compile 
 
 The full schema is in `internal/storage/queries.go`. Key tables:
 
-**road_events**: Raw events as received. Never modified after insert. Has a
-PostGIS `geom` generated column for spatial queries.
+**road_events**: Raw events as received. Only `cluster_id` changes after
+insert. Coordinates use a plain composite index; clustering runs in Go.
 
 **anomaly_clusters**: Aggregated clusters produced by the clustering worker.
 Updated incrementally (UPSERT) each run.
@@ -194,7 +198,10 @@ batch uploads.
 
 ## Production Considerations
 
-**Connection pooling**: The server uses `database/sql` with 25 max open
+**Database choice**: SQLite handles a single server well. Switch to PostgreSQL
+when you need several server instances or a managed database.
+
+**Connection pooling**: On PostgreSQL the server uses `database/sql` with 25 max open
 connections. For high traffic, add PgBouncer in transaction mode between the
 server and PostgreSQL.
 

@@ -1,8 +1,9 @@
 package storage
 
 // schema contains the DDL for the initial database schema.
-// Events are partitioned by ingested_at for efficient archival.
-// PostGIS is used for spatial indexing of event coordinates.
+// It is written to run unchanged on PostgreSQL and SQLite: JSONB is swapped
+// for TEXT on SQLite, and no extensions are needed. Coordinates use a plain
+// composite index; clustering happens in Go, not in the database.
 const schema = `
 -- Raw road anomaly events as received from SDK batches
 CREATE TABLE IF NOT EXISTS road_events (
@@ -33,10 +34,10 @@ CREATE TABLE IF NOT EXISTS road_events (
     -- Clustering state
     cluster_id      TEXT,
     -- Ingestion metadata
-    ingested_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    ingested_at     TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- Composite index for bounding-box queries (replaces PostGIS spatial index for local use)
+-- Composite index for bounding-box queries
 CREATE INDEX IF NOT EXISTS idx_road_events_lat_lon
     ON road_events (latitude, longitude);
 
@@ -63,7 +64,7 @@ CREATE TABLE IF NOT EXISTS anomaly_clusters (
     radius_m             DOUBLE PRECISION NOT NULL,
     vehicle_type_counts  JSONB NOT NULL DEFAULT '{}',
     vehicle_diversity    INTEGER NOT NULL DEFAULT 1,
-    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_clusters_lat_lon
@@ -76,7 +77,7 @@ CREATE INDEX IF NOT EXISTS idx_clusters_confidence
 CREATE TABLE IF NOT EXISTS ingested_batches (
     batch_id        TEXT PRIMARY KEY,
     event_count     INTEGER NOT NULL,
-    ingested_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    ingested_at     TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 `
 
@@ -136,7 +137,7 @@ ON CONFLICT (cluster_id) DO UPDATE SET
     radius_m             = EXCLUDED.radius_m,
     vehicle_type_counts  = EXCLUDED.vehicle_type_counts,
     vehicle_diversity    = EXCLUDED.vehicle_diversity,
-    updated_at           = NOW()
+    updated_at           = CURRENT_TIMESTAMP
 `
 
 const getUnclusteredSQL = `

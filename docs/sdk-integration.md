@@ -8,6 +8,41 @@
 
 ---
 
+## Quick start
+
+Three steps, no Application subclass and no permission code.
+
+1. Add the SDK (see [Installation](#installation)).
+2. Put your ingest URL in `AndroidManifest.xml`, inside `<application>`:
+
+   ```xml
+   <meta-data
+       android:name="io.asphalt.INGEST_URL"
+       android:value="https://your-host/v1/ingest/batch" />
+   <!-- Optional: car (default) or motorcycle -->
+   <meta-data android:name="io.asphalt.VEHICLE_TYPE" android:value="car" />
+   ```
+
+3. From an Activity, when a trip starts and ends:
+
+   ```kotlin
+   Asphalt.requestPermissionAndStart(this)   // asks for location if needed, then starts
+   Asphalt.stop()
+   ```
+
+`requestPermissionAndStart` takes an optional callback that receives `true`
+once collection is running. If you manage permissions yourself, call
+`Asphalt.start(context)` instead; it returns `false` when location permission
+is missing rather than crashing.
+
+Need a server to point at? `docker run -p 8080:8080 -v asphalt:/data asphalt`
+runs the backend with a built-in SQLite database. See
+[Backend Setup](backend-setup.md).
+
+The rest of this guide covers the full API for apps that need more control.
+
+---
+
 ## Installation
 
 Add the Asphalt SDK to your project. Until the SDK is published to Maven
@@ -48,7 +83,7 @@ dependencies {
 
 ## Permissions
 
-Declare the following in your `AndroidManifest.xml`:
+The SDK's manifest declares these, and they merge into your app automatically:
 
 ```xml
 <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
@@ -56,7 +91,9 @@ Declare the following in your `AndroidManifest.xml`:
 <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 ```
 
-Request `ACCESS_FINE_LOCATION` at runtime before calling `Asphalt.start()`.
+`ACCESS_FINE_LOCATION` still needs a runtime grant.
+`Asphalt.requestPermissionAndStart(activity)` asks for it; if you request it
+yourself, `Asphalt.hasLocationPermission(context)` tells you whether it is held.
 
 **Background collection (Android 10+):** On API 29+, Android stops delivering
 location updates to `FusedLocationProviderClient` once the app leaves the
@@ -77,7 +114,9 @@ use case. For demo or screen-on-only apps, it can be omitted.
 
 ## Initialisation
 
-Initialise the SDK once in your `Application.onCreate()`:
+With the manifest meta-data from the quick start, this step is optional:
+`Asphalt.start(context)` initialises the SDK on first use. To set other options,
+initialise it yourself once in `Application.onCreate()`:
 
 ```kotlin
 class MyApplication : Application() {

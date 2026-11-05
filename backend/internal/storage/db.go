@@ -5,28 +5,64 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
-	"github.com/lib/pq"
+	_ "github.com/lib/pq"  // PostgreSQL driver
+	_ "modernc.org/sqlite" // SQLite driver (pure Go, no cgo)
 
 	"github.com/asphalt-maps/asphalt/backend/internal/model"
 )
 
+type dialect int
+
+const (
+	dialectPostgres dialect = iota
+	dialectSQLite
+)
+
 // DB wraps a sql.DB connection pool and provides all storage operations.
 type DB struct {
-	db *sql.DB
+	db      *sql.DB
+	dialect dialect
 }
 
-// New opens a connection pool to PostgreSQL and verifies connectivity.
-func New(dsn string) (*DB, error) {
-	db, err := sql.Open("postgres", dsn)
+// New opens the database named by url and verifies connectivity.
+//
+//	sqlite:<path>                   SQLite file, created if missing (the default)
+//	postgres://user:pass@host/db    PostgreSQL
+//
+// The schema uses no extensions, so any PostgreSQL 13+ works.
+func New(url string) (*DB, error) {
+	var (
+		db  *sql.DB
+		d   dialect
+		err error
+	)
+	switch {
+	case strings.HasPrefix(url, "postgres://"), strings.HasPrefix(url, "postgresql://"):
+		d = dialectPostgres
+		db, err = sql.Open("postgres", url)
+		if err == nil {
+			db.SetMaxOpenConns(25)
+			db.SetMaxIdleConns(5)
+			db.SetConnMaxLifetime(5 * time.Minute)
+		}
+	case strings.HasPrefix(url, "sqlite:"):
+		d = dialectSQLite
+		path := strings.TrimPrefix(url, "sqlite:")
+		db, err = sql.Open("sqlite", "file:"+path+"?_pragma=busy_timeout(5000)&_pragma=journal_mode(WAL)")
+		if err == nil {
+			// SQLite allows one writer at a time; a single connection avoids
+			// "database is locked" errors between ingestion and clustering.
+			db.SetMaxOpenConns(1)
+		}
+	default:
+		return nil, fmt.Errorf("unsupported DATABASE_URL %q: use sqlite:<path> or postgres://...", url)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("open db: %w", err)
 	}
-
-	db.SetMaxOpenConns(25)
-	db.SetMaxIdleConns(5)
-	db.SetConnMaxLifetime(5 * time.Minute)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -35,14 +71,26 @@ func New(dsn string) (*DB, error) {
 		return nil, fmt.Errorf("ping db: %w", err)
 	}
 
-	return &DB{db: db}, nil
+	return &DB{db: db, dialect: d}, nil
+}
+
+// Driver names the database in use, for logging.
+func (d *DB) Driver() string {
+	if d.dialect == dialectSQLite {
+		return "sqlite"
+	}
+	return "postgres"
 }
 
 // Migrate runs the SQL schema migrations.
 // In production, use a proper migration tool (golang-migrate, Atlas).
 // This is provided for development convenience.
 func (d *DB) Migrate(ctx context.Context) error {
-	_, err := d.db.ExecContext(ctx, schema)
+	ddl := schema
+	if d.dialect == dialectSQLite {
+		ddl = strings.ReplaceAll(ddl, "JSONB", "TEXT")
+	}
+	_, err := d.db.ExecContext(ctx, ddl)
 	return err
 }
 
@@ -119,7 +167,7 @@ func (d *DB) BatchExists(ctx context.Context, batchID string) (bool, error) {
 func (d *DB) RecordBatch(ctx context.Context, batchID string, eventCount int) error {
 	_, err := d.db.ExecContext(ctx,
 		`INSERT INTO ingested_batches (batch_id, event_count, ingested_at)
-		 VALUES ($1, $2, NOW())
+		 VALUES ($1, $2, CURRENT_TIMESTAMP)
 		 ON CONFLICT (batch_id) DO NOTHING`,
 		batchID, eventCount,
 	)
@@ -242,23 +290,39 @@ func (d *DB) GetUnclusteredEvents(ctx context.Context, limit int) ([]model.Event
 
 // GetDashboardStats returns aggregate counts for the dashboard overview cards.
 func (d *DB) GetDashboardStats(ctx context.Context) (model.DashboardStats, error) {
+	dayAgo := "NOW() - INTERVAL '24 hours'"
+	if d.dialect == dialectSQLite {
+		dayAgo = "datetime('now', '-1 day')"
+	}
 	var s model.DashboardStats
 	err := d.db.QueryRowContext(ctx, `
 		SELECT
-			(SELECT COUNT(*) FROM road_events)                                                 AS total_events,
-			(SELECT COUNT(*) FROM anomaly_clusters)                                            AS total_clusters,
-			(SELECT COUNT(*) FROM road_events WHERE ingested_at > NOW() - INTERVAL '24 hours') AS events_24h,
-			(SELECT COALESCE(AVG(confidence), 0) FROM anomaly_clusters)                        AS avg_confidence
+			(SELECT COUNT(*) FROM road_events)                              AS total_events,
+			(SELECT COUNT(*) FROM anomaly_clusters)                         AS total_clusters,
+			(SELECT COUNT(*) FROM road_events WHERE ingested_at > `+dayAgo+`) AS events_24h,
+			(SELECT COALESCE(AVG(confidence), 0) FROM anomaly_clusters)     AS avg_confidence
 	`).Scan(&s.TotalEvents, &s.TotalClusters, &s.Events24h, &s.AvgConfidence)
 	return s, err
 }
 
 // MarkEventsClustered marks a set of event IDs as clustered.
 func (d *DB) MarkEventsClustered(ctx context.Context, eventIDs []string, clusterID string) error {
-	// Use ANY for bulk update
-	_, err := d.db.ExecContext(ctx,
-		`UPDATE road_events SET cluster_id = $1 WHERE event_id = ANY($2)`,
-		clusterID, pq.Array(eventIDs),
-	)
-	return err
+	tx, err := d.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("begin tx: %w", err)
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.PrepareContext(ctx, `UPDATE road_events SET cluster_id = $1 WHERE event_id = $2`)
+	if err != nil {
+		return fmt.Errorf("prepare: %w", err)
+	}
+	defer stmt.Close()
+
+	for _, id := range eventIDs {
+		if _, err := stmt.ExecContext(ctx, clusterID, id); err != nil {
+			return fmt.Errorf("mark event %s: %w", id, err)
+		}
+	}
+	return tx.Commit()
 }
