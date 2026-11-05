@@ -1,169 +1,173 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Asphalt Demo Map</title>
-  <meta name="description" content="Asphalt road anomaly map populated with synthetic data for New York City, Chicago and Los Angeles." />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Asphalt · Demo map</title>
+<meta name="description" content="Asphalt road anomaly map populated with synthetic data for New York City, Chicago and Los Angeles.">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231c1c1e'/%3E%3Cpath d='M6 22h20' stroke='%23e0f354' stroke-width='3' stroke-dasharray='5 3'/%3E%3Cpath d='M12 13q4 5 8 0' stroke='%23fff' stroke-width='2.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root{
+  /* Same 60-30-10 palette as the landing page: charcoal ground, yellow data, orange signals. */
+  --charcoal:#1c1c1e;
+  --yellow:#e0f354;
+  --orange:#fd550a;
+  --bg:var(--charcoal);
+  --surface:#26262a;
+  --fg:#f4f1e6;
+  --fg-mute:#a8a8a2;
+  --line:rgba(244,241,230,.16);
+  --c-high:var(--yellow);
+  --c-mid:var(--orange);
+  --c-low:#7d7d78;
+  --f-sans:"Archivo","Helvetica Neue",Helvetica,Arial,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-sans);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+.label{font-family:var(--f-mono);font-size:.7rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-mute);margin:0 0 10px}
+.num{font-variant-numeric:tabular-nums lining-nums}
 
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+.app{display:flex;flex-direction:column;height:100dvh}
 
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+/* top bar */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px 24px;flex-wrap:wrap;flex-shrink:0;padding:10px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--line)}
+.brand{display:inline-flex;align-items:center;gap:10px;text-decoration:none;font-weight:800;font-size:1.15rem;letter-spacing:-.02em}
+.brand svg{width:22px;height:22px;flex:none}
+.brand small{font-family:var(--f-mono);font-size:.7rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-mute);padding-left:10px;border-left:1px solid var(--line)}
+.cities{display:flex;border:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+.city-btn{flex:none;background:none;border:0;border-left:1px solid var(--line);color:var(--fg-mute);font:500 .85rem/1 var(--f-sans);padding:10px 14px;cursor:pointer;white-space:nowrap}
+.city-btn:first-child{border-left:0}
+.city-btn:hover{color:var(--fg)}
+.city-btn.active{background:var(--yellow);color:var(--charcoal)}
 
-    :root {
-      --bg: #0f1117;
-      --surface: #1a1d27;
-      --surface2: #20243a;
-      --border: #2a2d3a;
-      --accent: #f59e0b;
-      --accent2: #10b981;
-      --text: #e2e8f0;
-      --muted: #94a3b8;
-      --radius: 10px;
-      --c-high: #10b981;
-      --c-mid: #f59e0b;
-      --c-low: #94a3b8;
-      --v2: #60a5fa;
-      --v3: #f472b6;
-      --v4: #a78bfa;
-    }
+/* map + sidebar */
+.body{display:flex;flex:1;min-height:0}
+#map{flex:1;min-height:0;background:var(--bg)}
+.side{width:360px;flex-shrink:0;overflow-y:auto;border-left:1px solid var(--line);padding:20px 20px max(20px,env(safe-area-inset-bottom,0px))}
+.side section{padding-bottom:20px;margin-bottom:20px;border-bottom:1px solid var(--line)}
+.side section:last-child{border-bottom:0;margin-bottom:0}
 
-    html, body { height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); }
+.stats{display:grid;grid-template-columns:1fr 1fr;margin:0}
+.stats div{display:flex;flex-direction:column-reverse;justify-content:flex-end;padding:10px 0 12px}
+.stats div:nth-child(odd){padding-right:12px;border-right:1px solid var(--line)}
+.stats div:nth-child(even){padding-left:16px}
+.stats div:nth-child(-n+2){border-bottom:1px solid var(--line)}
+.stats dd{margin:0;font-weight:700;font-stretch:80%;font-size:2rem;line-height:1;letter-spacing:-.02em;color:var(--yellow)}
+.stats dt{margin-top:6px;font-size:.8rem;color:var(--fg-mute)}
 
-    .app { display: flex; flex-direction: column; height: 100vh; }
+.chart{display:block;width:100%;height:64px}
+.chart rect{fill:var(--yellow)}
+.chart-cap{display:flex;justify-content:space-between;margin-top:6px;font-family:var(--f-mono);font-size:.7rem;color:var(--fg-mute)}
 
-    .topbar {
-      display: flex; align-items: center; justify-content: space-between; gap: 1rem;
-      padding: 0 1rem; min-height: 52px; background: var(--surface);
-      border-bottom: 1px solid var(--border); flex-shrink: 0; flex-wrap: wrap;
-    }
-    .brand { display: flex; align-items: center; gap: 0.6rem; }
-    .logo { font-size: 1.1rem; font-weight: 700; color: var(--accent); white-space: nowrap; }
-    .logo span { color: var(--text); }
-    .badge {
-      font-size: 0.7rem; color: var(--accent); border: 1px solid var(--accent);
-      border-radius: 999px; padding: 0.1rem 0.55rem; white-space: nowrap;
-    }
-    .cities { display: flex; gap: 0.35rem; flex-wrap: wrap; padding: 0.4rem 0; }
-    .city-btn {
-      background: var(--surface2); border: 1px solid var(--border); color: var(--text);
-      border-radius: 6px; padding: 0.35rem 0.75rem; font-size: 0.82rem; cursor: pointer;
-    }
-    .city-btn:hover { background: var(--border); }
-    .city-btn.active { border-color: var(--accent); color: var(--accent); }
+.mix{display:flex;height:10px;background:var(--surface)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;font-size:.8rem;color:var(--fg-mute)}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:-1px}
 
-    .body { display: flex; flex: 1; min-height: 0; }
-    #map { flex: 1; min-height: 0; }
+.field{display:block;margin-bottom:14px;font-size:.85rem;color:var(--fg-mute)}
+.field b{color:var(--fg);font-family:var(--f-mono);font-weight:500}
+input[type=range]{display:block;width:100%;margin-top:8px;accent-color:var(--orange)}
+select{display:block;width:100%;margin-top:6px;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:0;padding:9px 10px;font:inherit;font-size:.9rem}
+.check{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:.88rem;cursor:pointer}
+.check input{width:16px;height:16px;margin:0;accent-color:var(--orange)}
 
-    .sidebar {
-      width: 340px; flex-shrink: 0; overflow-y: auto; background: var(--surface);
-      border-left: 1px solid var(--border); padding: 1rem; display: flex; flex-direction: column; gap: 1.1rem;
-    }
-    .sidebar-heading { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 0.5rem; }
+.list{display:flex;flex-direction:column}
+.item{display:block;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);color:inherit;font:inherit;padding:12px 0;cursor:pointer}
+.item:first-child{border-top:0;padding-top:0}
+.item:hover .item-type{color:var(--yellow)}
+.item-top{display:flex;justify-content:space-between;gap:12px;align-items:baseline}
+.item-type{font-weight:700;font-size:1rem}
+.item-conf{font-family:var(--f-mono);font-size:.85rem}
+.item-meta{display:block;margin-top:3px;font-size:.8rem;color:var(--fg-mute)}
 
-    .stat-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
-    .stat-card { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.7rem 0.8rem; }
-    .stat-value { font-size: 1.35rem; font-weight: 700; font-variant-numeric: tabular-nums; }
-    .stat-label { font-size: 0.72rem; color: var(--muted); margin-top: 0.15rem; }
+.note{font-size:.8rem;color:var(--fg-mute);margin:0}
+.note a{color:var(--fg);text-underline-offset:3px}
+.back{display:inline-block;margin-top:12px;font-weight:600;font-size:.88rem;text-underline-offset:4px}
 
-    label.filter-label { font-size: 0.78rem; color: var(--muted); display: block; margin-bottom: 0.3rem; }
-    .filter-row { margin-bottom: 0.7rem; }
-    input[type=range] { width: 100%; accent-color: var(--accent); }
-    select.filter-select {
-      width: 100%; background: var(--surface2); color: var(--text); border: 1px solid var(--border);
-      border-radius: 6px; padding: 0.35rem 0.5rem; font-size: 0.82rem;
-    }
-    .check { display: flex; align-items: center; gap: 0.45rem; font-size: 0.8rem; margin-bottom: 0.4rem; cursor: pointer; }
-    .check input { accent-color: var(--accent); }
+/* leaflet */
+.leaflet-container{font-family:var(--f-sans)}
+.leaflet-bar a,.leaflet-bar a:hover{background:var(--bg);color:var(--fg);border-color:var(--line)}
+.leaflet-bar{border:1px solid var(--line)!important;border-radius:0!important}
+.leaflet-bar a{border-radius:0!important}
+.leaflet-control-attribution{background:rgba(28,28,30,.8)!important;color:var(--fg-mute)}
+.leaflet-control-attribution a{color:var(--fg)}
+.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--bg);color:var(--fg);border-radius:0;box-shadow:0 0 0 1px var(--line)}
+.leaflet-container a.leaflet-popup-close-button{color:var(--fg-mute)}
+.pop-title{font-weight:700;font-size:1rem;margin-bottom:6px}
+.pop-row{font-size:.8rem;color:var(--fg-mute)}
+.pop-row span{color:var(--fg);font-family:var(--f-mono)}
 
-    .chart { width: 100%; height: 70px; display: block; }
-    .chart-caption { display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--muted); margin-top: 0.25rem; }
-
-    .mix { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: var(--surface2); }
-    .legend { display: flex; flex-wrap: wrap; gap: 0.35rem 0.8rem; font-size: 0.74rem; color: var(--muted); margin-top: 0.45rem; }
-    .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 0.3rem; vertical-align: -1px; }
-
-    .cluster-list { display: flex; flex-direction: column; gap: 0.4rem; }
-    .cluster-item {
-      background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
-      padding: 0.5rem 0.65rem; cursor: pointer; font-size: 0.8rem;
-    }
-    .cluster-item:hover { border-color: var(--accent); }
-    .cluster-top { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
-    .cluster-type { font-weight: 600; text-transform: capitalize; }
-    .cluster-conf { font-variant-numeric: tabular-nums; font-weight: 600; }
-    .cluster-meta { color: var(--muted); font-size: 0.72rem; margin-top: 0.2rem; }
-
-    .note { font-size: 0.72rem; color: var(--muted); line-height: 1.45; }
-    .note a { color: var(--accent); }
-
-    .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: var(--surface); color: var(--text); }
-    .popup-title { font-weight: 700; margin-bottom: 0.35rem; text-transform: capitalize; }
-    .popup-row { font-size: 0.78rem; color: var(--muted); }
-    .popup-row span { color: var(--text); }
-
-    @media (max-width: 820px) {
-      .body { flex-direction: column; overflow-y: auto; }
-      #map { flex: none; height: 60vh; }
-      .sidebar { width: 100%; border-left: none; border-top: 1px solid var(--border); overflow: visible; padding: 1rem 16px; }
-    }
-  </style>
+@media (max-width:820px){
+  .app{height:auto;min-height:100dvh}
+  .body{flex-direction:column}
+  #map{flex:none;height:58svh}
+  .side{width:100%;border-left:0;border-top:1px solid var(--line);overflow:visible;padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px))}
+  .cities{width:100%}
+  .city-btn{flex:1 0 auto;padding:10px 8px;font-size:.8rem}
+}
+</style>
 </head>
 <body>
 <div class="app">
-  <div class="topbar">
-    <div class="brand">
-      <div class="logo">Asphalt <span>Road Map</span></div>
-      <div class="badge">Synthetic demo data</div>
-    </div>
-    <div class="cities" id="cities"></div>
-  </div>
+  <header class="top">
+    <a class="brand" href="../" aria-label="Asphalt home">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="7.5" fill="currentColor"/><path d="M1 20.5 H23" stroke="var(--orange)" stroke-width="2.4" stroke-dasharray="4 2.5"/></svg>
+      asphalt <small>Demo map · synthetic data</small>
+    </a>
+    <nav class="cities" id="cities" aria-label="City"></nav>
+  </header>
 
   <div class="body">
-    <div id="map"></div>
+    <div id="map" role="region" aria-label="Map of road anomalies"></div>
 
-    <aside class="sidebar">
+    <aside class="side">
       <section>
-        <div class="sidebar-heading">Overview</div>
-        <div class="stat-cards">
-          <div class="stat-card"><div class="stat-value" id="s-events">–</div><div class="stat-label">Events reported</div></div>
-          <div class="stat-card"><div class="stat-value" id="s-clusters">–</div><div class="stat-label">Confirmed anomalies</div></div>
-          <div class="stat-card"><div class="stat-value" id="s-24h">–</div><div class="stat-label">Events, last 24h</div></div>
-          <div class="stat-card"><div class="stat-value" id="s-conf">–</div><div class="stat-label">Avg confidence</div></div>
-        </div>
+        <p class="label">Overview</p>
+        <dl class="stats num">
+          <div><dt>Phone reports</dt><dd id="s-events">–</dd></div>
+          <div><dt>Confirmed anomalies</dt><dd id="s-clusters">–</dd></div>
+          <div><dt>Reports, last 24 h</dt><dd id="s-24h">–</dd></div>
+          <div><dt>Average confidence</dt><dd id="s-conf">–</dd></div>
+        </dl>
       </section>
 
       <section>
-        <div class="sidebar-heading">Reports per day, last 90 days</div>
-        <svg class="chart" id="chart" preserveAspectRatio="none" role="img" aria-label="Events per day"></svg>
-        <div class="chart-caption"><span id="chart-from"></span><span id="chart-peak"></span><span>today</span></div>
+        <p class="label">Reports per day · last 90 days</p>
+        <svg class="chart" id="chart" preserveAspectRatio="none" role="img" aria-label="Reports per day over the last 90 days"></svg>
+        <div class="chart-cap"><span>90 days ago</span><span id="chart-peak"></span><span>today</span></div>
       </section>
 
       <section>
-        <div class="sidebar-heading">Who reported</div>
+        <p class="label">Who reported</p>
         <div class="mix" id="mix"></div>
         <div class="legend" id="mix-legend"></div>
       </section>
 
       <section>
-        <div class="sidebar-heading">Filters</div>
-        <div class="filter-row">
-          <label class="filter-label" for="conf-range">Min confidence: <strong id="conf-val">30%</strong></label>
-          <input type="range" id="conf-range" min="0" max="100" value="30" />
-        </div>
-        <div class="filter-row">
-          <label class="filter-label" for="type-filter">Anomaly type</label>
-          <select class="filter-select" id="type-filter">
+        <p class="label">Filters</p>
+        <label class="field">Minimum confidence <b id="conf-val">30%</b>
+          <input type="range" id="conf-range" min="0" max="100" value="30">
+        </label>
+        <label class="field">Anomaly type
+          <select id="type-filter">
             <option value="">All types</option>
             <option value="pothole">Pothole</option>
             <option value="bump">Speed bump</option>
             <option value="rough_patch">Rough patch</option>
           </select>
-        </div>
-        <label class="check"><input type="checkbox" id="cross-only" /> Confirmed by 2+ vehicle types</label>
-        <label class="check"><input type="checkbox" id="show-raw" /> Show raw phone reports</label>
+        </label>
+        <label class="check"><input type="checkbox" id="cross-only"> Confirmed by a car and a motorcycle</label>
+        <label class="check"><input type="checkbox" id="show-raw"> Show raw phone reports</label>
         <div class="legend">
           <span><i class="dot" style="background:var(--c-high)"></i>≥ 75%</span>
           <span><i class="dot" style="background:var(--c-mid)"></i>45–75%</span>
@@ -172,65 +176,69 @@
       </section>
 
       <section>
-        <div class="sidebar-heading" id="list-heading">Worst stretches</div>
-        <div class="cluster-list" id="cluster-list"></div>
+        <p class="label" id="list-heading">Worst stretches</p>
+        <div class="list" id="list"></div>
       </section>
 
-      <section class="note" id="about"></section>
+      <section>
+        <p class="note" id="about"></p>
+        <a class="back" href="../">← Back to Asphalt</a>
+      </section>
     </aside>
   </div>
 </div>
 
 <script>
 const VEHICLES = {
-  two_wheeler:   { label: 'Two-wheeler',   icon: '🏍️', color: '#60a5fa' },
-  three_wheeler: { label: 'Auto rickshaw', icon: '🛺', color: '#f472b6' },
-  four_wheeler:  { label: 'Car',           icon: '🚗', color: '#a78bfa' },
+  four_wheeler: { label: 'Car', short: 'car', color: '#f4f1e6' },
+  two_wheeler: { label: 'Motorcycle', short: 'moto', color: '#fd550a' },
 };
 const TYPE_LABEL = { pothole: 'Pothole', bump: 'Speed bump', rough_patch: 'Rough patch', unknown: 'Unknown' };
+const CONF = { high: '#e0f354', mid: '#fd550a', low: '#7d7d78' };
 const DAY_MS = 86400000;
+const $ = id => document.getElementById(id);
 
-const map = L.map('map', { zoomControl: true, preferCanvas: true }).setView([20.5937, 78.9629], 5);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>',
-  subdomains: 'abcd', maxZoom: 19
+const map = L.map('map', { preferCanvas: true }).setView([39.5, -98.35], 4);
+const ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/';
+L.tileLayer(ESRI + 'World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+  attribution: 'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  maxZoom: 16,
 }).addTo(map);
+L.tileLayer(ESRI + 'World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', { maxZoom: 16 }).addTo(map);
 
 const clusterLayer = L.layerGroup().addTo(map);
 const rawLayer = L.layerGroup();
+const markers = new Map();
 let DATA = null;
-let city = 'all';
-const markerById = {};
+let city = 'nyc';
 
-function confColor(c) { return c >= 0.75 ? '#10b981' : c >= 0.45 ? '#f59e0b' : '#94a3b8'; }
-function fmt(n) { return n.toLocaleString('en-US'); }
-function vehicleIcons(counts) {
-  return Object.keys(VEHICLES).filter(v => counts && counts[v]).map(v => VEHICLES[v].icon).join(' ');
-}
-function ago(ms) {
+const confColor = c => c >= 0.75 ? CONF.high : c >= 0.45 ? CONF.mid : CONF.low;
+const fmt = n => n.toLocaleString('en-US');
+const pct = c => `${Math.round(c * 100)}%`;
+const vehicleSummary = counts => Object.keys(VEHICLES).filter(v => counts[v]).map(v => `${counts[v]} ${VEHICLES[v].short}`).join(' · ');
+const ago = ms => {
   const d = Math.floor((DATA.stats.generated_at_ms - ms) / DAY_MS);
   return d <= 0 ? 'today' : d === 1 ? 'yesterday' : `${d} days ago`;
-}
+};
+const inCity = c => city === 'all' || c.city === city;
+const cityRows = () => {
+  const idx = DATA.events.cities.indexOf(city);
+  return city === 'all' ? DATA.events.rows : DATA.events.rows.filter(r => r[5] === idx);
+};
 
 function popup(c) {
-  const vc = c.vehicle_type_counts || {};
-  const byVehicle = Object.keys(VEHICLES).filter(v => vc[v]).map(v => `${VEHICLES[v].icon} ${vc[v]}`).join(' &nbsp;');
-  return `<div>
-    <div class="popup-title">${TYPE_LABEL[c.anomaly_type] || c.anomaly_type}</div>
-    <div class="popup-row">Confidence: <span>${(c.confidence * 100).toFixed(0)}%</span></div>
-    <div class="popup-row">Reports: <span>${c.event_count}</span> &nbsp;${byVehicle}</div>
-    <div class="popup-row">Avg intensity: <span>${c.avg_intensity.toFixed(2)}</span></div>
-    <div class="popup-row">Spread: <span>${c.radius_m.toFixed(1)} m</span></div>
-    <div class="popup-row">Last reported: <span>${ago(c.last_seen_ms)}</span></div>
-  </div>`;
+  return `<div class="pop-title">${TYPE_LABEL[c.anomaly_type] || c.anomaly_type}</div>
+    <div class="pop-row">Confidence <span>${pct(c.confidence)}</span></div>
+    <div class="pop-row">Reports <span>${c.event_count}</span> (${vehicleSummary(c.vehicle_type_counts || {})})</div>
+    <div class="pop-row">Average intensity <span>${c.avg_intensity.toFixed(2)}</span></div>
+    <div class="pop-row">Spread <span>${c.radius_m.toFixed(1)} m</span></div>
+    <div class="pop-row">Last reported <span>${ago(c.last_seen_ms)}</span></div>`;
 }
 
-function inCity(c) { return city === 'all' || c.city === city; }
-
 function filtered() {
-  const minConf = document.getElementById('conf-range').value / 100;
-  const type = document.getElementById('type-filter').value;
-  const cross = document.getElementById('cross-only').checked;
+  const minConf = $('conf-range').value / 100;
+  const type = $('type-filter').value;
+  const cross = $('cross-only').checked;
   return DATA.clusters.filter(c =>
     inCity(c) && c.confidence >= minConf && (!type || c.anomaly_type === type) &&
     (!cross || c.vehicle_type_diversity >= 2));
@@ -238,95 +246,82 @@ function filtered() {
 
 function renderClusters() {
   clusterLayer.clearLayers();
+  markers.clear();
   const list = filtered();
   for (const c of list) {
-    const r = Math.max(5, Math.min(16, 4 + Math.sqrt(c.event_count) * 2.2));
+    const col = confColor(c.confidence);
     const m = L.circleMarker([c.latitude, c.longitude], {
-      radius: r, color: confColor(c.confidence), weight: 1.5,
-      fillColor: confColor(c.confidence), fillOpacity: 0.45,
+      radius: Math.max(5, Math.min(16, 4 + Math.sqrt(c.event_count) * 2.2)),
+      color: col, weight: 1.5, fillColor: col, fillOpacity: 0.4,
     }).bindPopup(popup(c));
-    markerById[c.cluster_id] = m;
+    markers.set(c.cluster_id, m);
     clusterLayer.addLayer(m);
   }
 
   const top = [...list].sort((a, b) => (b.confidence - a.confidence) || (b.avg_intensity - a.avg_intensity)).slice(0, 12);
-  document.getElementById('list-heading').textContent = `Worst stretches (${fmt(list.length)} shown on map)`;
-  document.getElementById('cluster-list').innerHTML = top.length ? top.map(c => `
-    <div class="cluster-item" data-id="${c.cluster_id}">
-      <div class="cluster-top">
-        <span class="cluster-type">${TYPE_LABEL[c.anomaly_type]}</span>
-        <span class="cluster-conf" style="color:${confColor(c.confidence)}">${(c.confidence * 100).toFixed(0)}%</span>
-      </div>
-      <div class="cluster-meta">${DATA.stats.cities[c.city].name} · ${c.event_count} reports · ${vehicleIcons(c.vehicle_type_counts)} · ${ago(c.last_seen_ms)}</div>
-    </div>`).join('') : '<div class="note">No anomalies match these filters.</div>';
+  $('list-heading').textContent = `Worst stretches · ${fmt(list.length)} on map`;
+  $('list').innerHTML = top.length ? top.map(c => `
+    <button class="item" type="button" data-id="${c.cluster_id}">
+      <span class="item-top"><span class="item-type">${TYPE_LABEL[c.anomaly_type]}</span><span class="item-conf" style="color:${confColor(c.confidence)}">${pct(c.confidence)}</span></span>
+      <span class="item-meta">${DATA.stats.cities[c.city].name} · ${vehicleSummary(c.vehicle_type_counts || {})} · ${ago(c.last_seen_ms)}</span>
+    </button>`).join('') : '<p class="note">No anomalies match these filters.</p>';
 }
 
 function renderRaw() {
   rawLayer.clearLayers();
-  if (!document.getElementById('show-raw').checked) { map.removeLayer(rawLayer); return; }
-  const lite = DATA.events;
-  const cityIdx = lite.cities.indexOf(city);
-  for (const [lat, lon, , v, , ci] of lite.rows) {
-    if (city !== 'all' && ci !== cityIdx) continue;
+  if (!$('show-raw').checked) { map.removeLayer(rawLayer); return; }
+  const types = DATA.events.vehicle_types;
+  for (const [lat, lon, , v] of cityRows()) {
     rawLayer.addLayer(L.circleMarker([lat, lon], {
-      radius: 3, stroke: false, fillColor: VEHICLES[lite.vehicle_types[v]].color, fillOpacity: 0.8,
+      radius: 3, stroke: false, fillColor: (VEHICLES[types[v]] || VEHICLES.four_wheeler).color, fillOpacity: 0.8,
     }));
   }
   rawLayer.addTo(map);
 }
 
 function renderStats() {
-  const s = DATA.stats;
-  const rows = DATA.events.rows.filter(r => city === 'all' || r[5] === DATA.events.cities.indexOf(city));
+  const rows = cityRows();
   const clusters = DATA.clusters.filter(inCity);
-  const gen = s.generated_at_ms;
-  document.getElementById('s-events').textContent = fmt(rows.length);
-  document.getElementById('s-clusters').textContent = fmt(clusters.length);
-  document.getElementById('s-24h').textContent = fmt(rows.filter(r => gen - r[2] <= DAY_MS).length);
-  const avg = clusters.reduce((a, c) => a + c.confidence, 0) / (clusters.length || 1);
-  document.getElementById('s-conf').textContent = `${(avg * 100).toFixed(0)}%`;
+  const gen = DATA.stats.generated_at_ms;
+  $('s-events').textContent = fmt(rows.length);
+  $('s-clusters').textContent = fmt(clusters.length);
+  $('s-24h').textContent = fmt(rows.filter(r => gen - r[2] <= DAY_MS).length);
+  $('s-conf').textContent = pct(clusters.reduce((a, c) => a + c.confidence, 0) / (clusters.length || 1));
 
-  // Reports per day
   const days = new Array(90).fill(0);
   for (const r of rows) {
     const d = Math.floor((gen - r[2]) / DAY_MS);
     if (d >= 0 && d < 90) days[89 - d]++;
   }
-  const peak = Math.max(...days, 1);
-  const svg = document.getElementById('chart');
-  const w = 90, h = 70;
-  svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  const peak = Math.max(...days, 1), h = 64;
+  const svg = $('chart');
+  svg.setAttribute('viewBox', `0 0 90 ${h}`);
   svg.innerHTML = days.map((n, i) => {
     const bh = Math.max(n ? 1 : 0, (n / peak) * (h - 2));
-    return `<rect x="${i + 0.12}" y="${h - bh}" width="0.76" height="${bh}" rx="0.2" fill="#f59e0b" opacity="${i >= 83 ? 1 : 0.65}"><title>${n} reports, ${89 - i === 0 ? 'today' : (89 - i) + ' days ago'}</title></rect>`;
+    return `<rect x="${i + 0.12}" y="${h - bh}" width="0.76" height="${bh}" opacity="${i >= 83 ? 1 : 0.55}"><title>${n} reports, ${i === 89 ? 'today' : `${89 - i} days ago`}</title></rect>`;
   }).join('');
-  document.getElementById('chart-from').textContent = '90 days ago';
-  document.getElementById('chart-peak').textContent = `peak ${peak}/day`;
+  $('chart-peak').textContent = `peak ${peak}/day`;
 
-  // Vehicle mix
-  const counts = [0, 0, 0];
+  const types = DATA.events.vehicle_types;
+  const counts = types.map(() => 0);
   for (const r of rows) counts[r[3]]++;
   const total = rows.length || 1;
-  const types = DATA.events.vehicle_types;
-  document.getElementById('mix').innerHTML = types.map((v, i) =>
-    `<div style="width:${(counts[i] / total) * 100}%;background:${VEHICLES[v].color}" title="${VEHICLES[v].label}"></div>`).join('');
-  document.getElementById('mix-legend').innerHTML = types.map((v, i) => !counts[i] ? '' :
-    `<span><i class="dot" style="background:${VEHICLES[v].color}"></i>${VEHICLES[v].label} ${Math.round((counts[i] / total) * 100)}%</span>`).join('');
+  const shown = types.map((v, i) => [VEHICLES[v], counts[i]]).filter(([v, n]) => v && n);
+  $('mix').innerHTML = shown.map(([v, n]) => `<div style="width:${(n / total) * 100}%;background:${v.color}" title="${v.label}"></div>`).join('');
+  $('mix-legend').innerHTML = shown.map(([v, n]) => `<span><i class="dot" style="background:${v.color}"></i>${v.label} ${Math.round((n / total) * 100)}%</span>`).join('');
 }
-
-function render() { renderStats(); renderClusters(); renderRaw(); }
 
 function selectCity(key) {
   city = key;
-  document.querySelectorAll('.city-btn').forEach(b => b.classList.toggle('active', b.dataset.city === key));
-  if (key === 'all') {
-    map.fitBounds(DATA.clusters.map(c => [c.latitude, c.longitude]), { padding: [30, 30] });
-  } else {
-    const c = DATA.stats.cities[key];
-    map.setView(c.center, c.zoom);
-  }
+  document.querySelectorAll('.city-btn').forEach(b => {
+    const on = b.dataset.city === key;
+    b.classList.toggle('active', on);
+    b.setAttribute('aria-pressed', on);
+  });
+  if (key === 'all') map.fitBounds(DATA.clusters.map(c => [c.latitude, c.longitude]), { padding: [30, 30] });
+  else map.setView(DATA.stats.cities[key].center, DATA.stats.cities[key].zoom);
   try { localStorage.setItem('asphalt-demo-city', key); } catch (e) {}
-  render();
+  renderStats(); renderClusters(); renderRaw();
 }
 
 async function load() {
@@ -335,34 +330,30 @@ async function load() {
   DATA = { clusters: clusters.clusters, stats, events };
 
   const btns = [['all', 'All cities'], ...Object.entries(stats.cities).map(([k, c]) => [k, c.name])];
-  document.getElementById('cities').innerHTML = btns.map(([k, n]) =>
-    `<button class="city-btn" data-city="${k}">${n}</button>`).join('');
-  document.querySelectorAll('.city-btn').forEach(b => b.addEventListener('click', () => selectCity(b.dataset.city)));
+  $('cities').innerHTML = btns.map(([k, n]) => `<button class="city-btn" type="button" data-city="${k}">${n}</button>`).join('');
+  $('cities').addEventListener('click', e => { const b = e.target.closest('.city-btn'); if (b) selectCity(b.dataset.city); });
 
-  document.getElementById('about').innerHTML = `Every report on this page is synthetic, generated by
+  $('about').innerHTML = `Every report on this page is synthetic, generated by
     <a href="https://github.com/neerajkumar-n/asphalt/tree/main/tools/synthetic">tools/synthetic</a>
     (seed ${stats.seed}, as of ${new Date(stats.generated_at_ms).toLocaleDateString('en-US', { dateStyle: 'medium' })}).
     Anomalies are clustered with the same DBSCAN and confidence scoring as the Asphalt backend.`;
 
   let start = 'nyc';
   try { start = localStorage.getItem('asphalt-demo-city') || start; } catch (e) {}
-  selectCity(stats.cities[start] || start === 'all' ? start : 'nyc');
+  selectCity(start === 'all' || stats.cities[start] ? start : 'nyc');
 }
 
-document.getElementById('conf-range').addEventListener('input', e => {
-  document.getElementById('conf-val').textContent = `${e.target.value}%`;
-  renderClusters();
-});
-['type-filter', 'cross-only'].forEach(id => document.getElementById(id).addEventListener('change', renderClusters));
-document.getElementById('show-raw').addEventListener('change', renderRaw);
-document.getElementById('cluster-list').addEventListener('click', e => {
-  const item = e.target.closest('.cluster-item');
-  const m = item && markerById[item.dataset.id];
+$('conf-range').addEventListener('input', e => { $('conf-val').textContent = `${e.target.value}%`; renderClusters(); });
+['type-filter', 'cross-only'].forEach(id => $(id).addEventListener('change', renderClusters));
+$('show-raw').addEventListener('change', renderRaw);
+$('list').addEventListener('click', e => {
+  const item = e.target.closest('.item');
+  const m = item && markers.get(item.dataset.id);
   if (m) { map.flyTo(m.getLatLng(), 16, { duration: 0.8 }); setTimeout(() => m.openPopup(), 850); }
 });
 
 load().catch(err => {
-  document.getElementById('about').textContent = `Could not load demo data: ${err.message}. Serve this folder over HTTP (for example with python3 -m http.server) rather than opening the file directly.`;
+  $('about').textContent = `Could not load demo data: ${err.message}. Serve this folder over HTTP (for example with python3 -m http.server) rather than opening the file directly.`;
 });
 </script>
 </body>
