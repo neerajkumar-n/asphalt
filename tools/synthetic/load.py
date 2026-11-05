@@ -12,10 +12,11 @@ Load the synthetic batches into an Asphalt backend so the live dashboard at
    the last 6.5 days, keeping order. Every event is accepted, but the history
    looks a week long.
 
-2. As SQL straight into Postgres (keeps the full 90-day history, as if the
-   backend had been ingesting for three months):
+2. As SQL straight into the database (keeps the full 90-day history, as if
+   the backend had been ingesting for three months):
 
-     python3 tools/synthetic/load.py --sql | psql "$DATABASE_URL"
+     python3 tools/synthetic/load.py --sqlite | sqlite3 backend/asphalt.db   # default SQLite
+     python3 tools/synthetic/load.py --sql | psql "$DATABASE_URL"            # PostgreSQL
 
    Timestamps are written relative to NOW() at load time, so the data is always
    fresh, and ingested_at mirrors each event's time so "events in the last 24h"
@@ -90,13 +91,16 @@ def q(v):
     return "'" + str(v).replace("'", "''") + "'"
 
 
-def as_sql(batches):
+def as_sql(batches, sqlite=False):
     events = [e for b in batches for e in b["events"]]
     newest = max(e["timestamp_ms"] for e in events)
     out = sys.stdout
     out.write("-- Asphalt synthetic seed. Timestamps are relative to NOW() at load time.\n")
     out.write("BEGIN;\n")
-    out.write("CREATE TEMP TABLE _seed_now AS SELECT (EXTRACT(EPOCH FROM NOW()) * 1000)::BIGINT - 300000 AS ms;\n")
+    if sqlite:
+        out.write("CREATE TEMP TABLE _seed_now AS SELECT CAST(strftime('%s', 'now') AS INTEGER) * 1000 - 300000 AS ms;\n")
+    else:
+        out.write("CREATE TEMP TABLE _seed_now AS SELECT (EXTRACT(EPOCH FROM NOW()) * 1000)::BIGINT - 300000 AS ms;\n")
     cols = ("event_id, timestamp_ms, latitude, longitude, accuracy_m, intensity, speed_kmh, "
             "anomaly_type, vehicle_type, accel_peak_z, accel_baseline_z, accel_delta_z, "
             "gyro_peak_magnitude, sample_count, window_duration_ms, platform, sdk_int, "
@@ -108,7 +112,9 @@ def as_sql(batches):
             age = newest - e["timestamp_ms"]
             ts = f"(SELECT ms FROM _seed_now) - {age}"
             # Phones upload in batches, so ingestion lags detection by minutes.
-            ingested = f"TO_TIMESTAMP(({ts} + {600_000 + (age % 1_800_000)}) / 1000.0)"
+            lag = 600_000 + (age % 1_800_000)
+            ingested = (f"datetime(({ts} + {lag}) / 1000, 'unixepoch')" if sqlite
+                        else f"TO_TIMESTAMP(({ts} + {lag}) / 1000.0)")
             vals = [q(e["event_id"]), ts, q(e["latitude"]), q(e["longitude"]), q(e.get("accuracy_m")),
                     q(e["intensity"]), q(e["speed_kmh"]), q(e["anomaly_type"]), q(e["vehicle_type"]),
                     q(s["accel_peak_z"]), q(s["accel_baseline_z"]), q(s.get("accel_delta_z")),
@@ -126,12 +132,13 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--url", default="http://localhost:8080", help="backend base URL (API mode)")
     ap.add_argument("--sql", action="store_true", help="print SQL for psql instead of calling the API")
+    ap.add_argument("--sqlite", action="store_true", help="print SQL for sqlite3 instead of calling the API")
     ap.add_argument("--dir", default=os.path.join(ROOT, "data", "synthetic", "batches"))
     args = ap.parse_args()
 
     files, batches = load_batches(args.dir)
-    if args.sql:
-        as_sql(batches)
+    if args.sql or args.sqlite:
+        as_sql(batches, sqlite=args.sqlite)
     else:
         via_api(args.url, files, batches)
 

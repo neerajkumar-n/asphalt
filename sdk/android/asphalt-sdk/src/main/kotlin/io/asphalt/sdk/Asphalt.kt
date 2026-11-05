@@ -1,7 +1,12 @@
 package io.asphalt.sdk
 
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.location.Location
+import androidx.activity.ComponentActivity
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import io.asphalt.sdk.detection.AnomalyDetector
 import io.asphalt.sdk.internal.AsphaltLog
 import io.asphalt.sdk.location.LocationTracker
@@ -20,17 +25,24 @@ import java.util.UUID
 /**
  * Main entry point for the Asphalt SDK.
  *
- * ## Typical usage
+ * ## Quick start
+ *
+ * Put the ingest URL in AndroidManifest.xml, inside `<application>`:
+ * ```xml
+ * <meta-data android:name="io.asphalt.INGEST_URL"
+ *            android:value="https://your-server/v1/ingest/batch" />
+ * ```
+ * Then, from an Activity, when the user begins a trip:
+ * ```kotlin
+ * Asphalt.requestPermissionAndStart(this)   // asks for location if needed, then starts
+ * Asphalt.stop()                            // when the trip ends
+ * ```
+ *
+ * ## Full control
  *
  * ```kotlin
- * // In Application.onCreate()
  * Asphalt.init(this, AsphaltConfig(ingestUrl = "https://your-server/v1/ingest/batch"))
- *
- * // Start collection (e.g., when user begins a trip)
- * Asphalt.start()
- *
- * // Stop collection (e.g., when user ends a trip)
- * Asphalt.stop()
+ * Asphalt.start()   // once location permission is granted
  * ```
  *
  * ## Threading model
@@ -39,14 +51,11 @@ import java.util.UUID
  * [AsphaltCallback] methods are posted to the main thread.
  * Database operations use Dispatchers.IO.
  *
- * ## Permissions required
+ * ## Permissions
  *
- * Declare in your AndroidManifest.xml:
- * ```xml
- * <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
- * <uses-permission android:name="android.permission.INTERNET" />
- * <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
- * ```
+ * The SDK manifest declares location and network permissions; they merge into
+ * the app automatically. Location still needs a runtime grant, which
+ * [requestPermissionAndStart] handles.
  */
 object Asphalt {
 
@@ -93,18 +102,67 @@ object Asphalt {
         this.callback = callback
     }
 
+    /** True when the app holds ACCESS_FINE_LOCATION, which [start] needs. */
+    @JvmStatic
+    fun hasLocationPermission(context: Context): Boolean =
+        context.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+
+    /**
+     * One-call start. If [init] has not been called, the config is read from the
+     * `io.asphalt.INGEST_URL` (and optional `io.asphalt.VEHICLE_TYPE`) manifest
+     * meta-data.
+     *
+     * @return true if collection started, false if location permission is missing.
+     */
+    @JvmStatic
+    fun start(context: Context): Boolean {
+        if (config == null) init(context, configFromManifest(context))
+        return start()
+    }
+
+    /**
+     * Asks for location permission if it has not been granted, then starts.
+     * [onResult] receives true if collection started.
+     */
+    @JvmStatic
+    @JvmOverloads
+    fun requestPermissionAndStart(activity: ComponentActivity, onResult: (Boolean) -> Unit = {}) {
+        if (hasLocationPermission(activity)) {
+            onResult(start(activity))
+            return
+        }
+        lateinit var launcher: ActivityResultLauncher<String>
+        launcher = activity.activityResultRegistry.register(
+            "io.asphalt.location-permission",
+            ActivityResultContracts.RequestPermission()
+        ) { granted ->
+            launcher.unregister()
+            onResult(granted && start(activity))
+        }
+        launcher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+    }
+
     /**
      * Starts sensor collection and location tracking.
      *
      * Sensors are not activated immediately; they activate when GPS speed
      * exceeds [AsphaltConfig.minSpeedKmh]. Location tracking starts immediately.
      *
-     * A new anonymous session ID is generated on each call.
+     * A new anonymous session ID is generated on each call. Calling it while
+     * already running does nothing.
+     *
+     * @return true if collection is running, false if location permission is missing.
      */
     @JvmStatic
-    fun start() {
+    fun start(): Boolean {
         val ctx = appContext ?: error("Asphalt.init() must be called before start()")
         val cfg = config ?: error("Asphalt.init() must be called before start()")
+
+        if (isRunning()) return true
+        if (!hasLocationPermission(ctx)) {
+            AsphaltLog.w("Asphalt", "ACCESS_FINE_LOCATION not granted. Use requestPermissionAndStart(activity) or request it first.")
+            return false
+        }
 
         sessionId = UUID.randomUUID().toString()
 
@@ -135,6 +193,7 @@ object Asphalt {
 
         AsphaltLog.d("Asphalt", "Session started. ID: $sessionId")
         scope.launch { callback?.onStateChanged(false) }
+        return true
     }
 
     /**
@@ -173,6 +232,16 @@ object Asphalt {
     // -------------------------------------------------------------------------
     // Internal
     // -------------------------------------------------------------------------
+
+    private fun configFromManifest(context: Context): AsphaltConfig {
+        val app = context.applicationContext
+        @Suppress("DEPRECATION") // getApplicationInfo(String, ApplicationInfoFlags) needs API 33
+        val meta = app.packageManager.getApplicationInfo(app.packageName, PackageManager.GET_META_DATA).metaData
+        return AsphaltConfig.fromManifestValues(
+            meta?.getString(AsphaltConfig.META_INGEST_URL),
+            meta?.getString(AsphaltConfig.META_VEHICLE_TYPE)
+        )
+    }
 
     private fun handleSpeedChanged(active: Boolean, speedKmh: Float) {
         currentSpeedKmh = speedKmh

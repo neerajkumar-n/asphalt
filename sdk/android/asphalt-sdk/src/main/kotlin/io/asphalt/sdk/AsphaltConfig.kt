@@ -105,4 +105,31 @@ data class AsphaltConfig(
      * Enable verbose logging. Should be false in production builds.
      */
     val debugLogging: Boolean = false
-)
+) {
+    companion object {
+        /** Manifest `<meta-data>` key holding the ingest URL, read by `Asphalt.start(context)`. */
+        const val META_INGEST_URL = "io.asphalt.INGEST_URL"
+
+        /** Optional manifest `<meta-data>` key: `car` / `four_wheeler` (default) or `motorcycle` / `two_wheeler`. */
+        const val META_VEHICLE_TYPE = "io.asphalt.VEHICLE_TYPE"
+
+        /**
+         * Builds a config from the two manifest values. Kept free of Android
+         * types so it can be unit tested on the JVM.
+         */
+        internal fun fromManifestValues(ingestUrl: String?, vehicleType: String?): AsphaltConfig {
+            require(!ingestUrl.isNullOrBlank()) {
+                "Asphalt: add <meta-data android:name=\"$META_INGEST_URL\" android:value=\"https://your-host/v1/ingest/batch\" /> " +
+                    "inside <application> in AndroidManifest.xml, or call Asphalt.init(context, AsphaltConfig(...)) first."
+            }
+            val vehicle = when (vehicleType?.trim()?.lowercase()) {
+                null, "", "car", "four_wheeler" -> io.asphalt.sdk.model.VehicleType.FOUR_WHEELER
+                "motorcycle", "two_wheeler" -> io.asphalt.sdk.model.VehicleType.TWO_WHEELER
+                else -> throw IllegalArgumentException(
+                    "Asphalt: unknown $META_VEHICLE_TYPE \"$vehicleType\". Use car or motorcycle."
+                )
+            }
+            return AsphaltConfig(ingestUrl = ingestUrl, vehicleType = vehicle)
+        }
+    }
+}

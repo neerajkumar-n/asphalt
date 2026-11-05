@@ -11,7 +11,8 @@ RUN go mod download
 
 # Copy source and build
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+ARG TARGETARCH=amd64
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=$TARGETARCH \
     go build -ldflags="-w -s" -o /bin/asphalt-server ./cmd/server
 
 # Stage 2: Runtime
@@ -23,8 +24,14 @@ RUN apk add --no-cache ca-certificates tzdata
 COPY --from=builder /bin/asphalt-server /bin/asphalt-server
 
 # Non-root user for production security
-RUN addgroup -S asphalt && adduser -S asphalt -G asphalt
+RUN addgroup -S asphalt && adduser -S asphalt -G asphalt \
+    && mkdir /data && chown asphalt:asphalt /data
 USER asphalt
+
+# SQLite by default: no database to set up. Mount /data to keep it, or set
+# DATABASE_URL=postgres://... to use PostgreSQL instead.
+ENV DATABASE_URL=sqlite:/data/asphalt.db
+VOLUME /data
 
 EXPOSE 8080
 

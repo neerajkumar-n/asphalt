@@ -83,9 +83,13 @@ Full architecture with component breakdown: [docs/architecture.md](docs/architec
 
 ```bash
 cd backend
-docker compose up --build
-# API available at http://localhost:8080
+docker build -t asphalt .
+docker run -p 8080:8080 -v asphalt:/data asphalt
+# API at http://localhost:8080, data in a built-in SQLite file
 ```
+
+No database to install. To use PostgreSQL instead, run `docker compose up --build`
+or set `DATABASE_URL=postgres://...`.
 
 Test the health endpoint:
 ```bash
@@ -109,27 +113,35 @@ opening the static demo map in `docs/demo/`, or load it into a running backend
 so the live dashboard fills up:
 
 ```bash
-python3 tools/synthetic/load.py --sql | psql "postgres://asphalt:asphalt@localhost:5432/asphalt"
+cd backend && go run ./cmd/server &          # creates backend/asphalt.db
+python3 ../tools/synthetic/load.py --sqlite | sqlite3 asphalt.db
 # then open http://localhost:8080/dashboard.html
 ```
+
+On PostgreSQL, use `load.py --sql | psql "$DATABASE_URL"` instead.
 
 See [tools/synthetic/README.md](tools/synthetic/README.md) for details.
 
 ### Android SDK
 
-```kotlin
-// In Application.onCreate()
-Asphalt.init(this, AsphaltConfig(
-    ingestUrl = "https://your-backend.example.com/v1/ingest/batch",
-    vehicleType = VehicleType.FOUR_WHEELER  // or TWO_WHEELER for motorcycles
-))
+Put your ingest URL in `AndroidManifest.xml`, inside `<application>`:
 
-// Start detection (call after location permission is granted)
-Asphalt.start()
-
-// Stop detection
-Asphalt.stop()
+```xml
+<meta-data android:name="io.asphalt.INGEST_URL"
+           android:value="https://your-backend.example.com/v1/ingest/batch" />
+<!-- optional: car (default) or motorcycle -->
+<meta-data android:name="io.asphalt.VEHICLE_TYPE" android:value="car" />
 ```
+
+Then, from an Activity:
+
+```kotlin
+Asphalt.requestPermissionAndStart(this)  // asks for location if needed, then starts
+Asphalt.stop()                           // when the trip ends
+```
+
+Permissions merge in from the SDK's manifest. For full control, call
+`Asphalt.init(context, AsphaltConfig(...))` and `Asphalt.start()` yourself.
 
 Full SDK documentation: [docs/sdk-integration.md](docs/sdk-integration.md)
 

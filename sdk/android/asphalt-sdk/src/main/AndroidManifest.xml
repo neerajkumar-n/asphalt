@@ -2,9 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!--
-        SDK manifest: declares permissions required by the SDK.
-        The host application must also declare these in its own manifest
-        and request runtime permission for ACCESS_FINE_LOCATION on Android 6+.
+        SDK manifest: declares the permissions the SDK needs. They merge into the
+        host app's manifest automatically. ACCESS_FINE_LOCATION still needs a
+        runtime grant; Asphalt.requestPermissionAndStart(activity) asks for it.
     -->
 
     <!-- Required: Network access for batch upload -->

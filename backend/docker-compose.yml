@@ -1,8 +1,8 @@
-version: "3.9"
-
+# Optional: run the backend against PostgreSQL instead of the built-in SQLite.
+# For the zero-setup path, `docker build -t asphalt . && docker run -p 8080:8080 asphalt` is enough.
 services:
   db:
-    image: postgis/postgis:16-3.4-alpine
+    image: postgres:16-alpine
     environment:
       POSTGRES_USER: asphalt
       POSTGRES_PASSWORD: asphalt

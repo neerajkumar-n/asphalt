@@ -50,6 +50,9 @@ dependencies {
     implementation("androidx.room:room-ktx:2.6.1")
     kapt("androidx.room:room-compiler:2.6.1")
 
+    // Runtime permission request in Asphalt.requestPermissionAndStart()
+    implementation("androidx.activity:activity:1.8.2")
+
     // Kotlin coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
