@@ -10,8 +10,8 @@ func validEvent() Event {
 	return Event{
 		EventID:     "evt-test-001",
 		TimestampMs: time.Now().UnixMilli(),
-		Latitude:    12.97,
-		Longitude:   77.59,
+		Latitude:    40.75,
+		Longitude:   -73.99,
 		AccuracyM:   8.0,
 		Intensity:   0.65,
 		SpeedKmh:    35.0,
@@ -194,10 +194,17 @@ func TestValidate_invalidVehicleTypeIsRejected(t *testing.T) {
 	}
 }
 
+func TestValidate_threeWheelerRejected(t *testing.T) {
+	e := validEvent()
+	e.VehicleType = "three_wheeler"
+	if msg := e.Validate(); msg == "" {
+		t.Error("expected error for three_wheeler, which is no longer supported")
+	}
+}
+
 func TestValidate_allValidVehicleTypes(t *testing.T) {
 	types := []string{
 		VehicleTypeTwoWheeler,
-		VehicleTypeThreeWheeler,
 		VehicleTypeFourWheeler,
 	}
 	for _, vt := range types {
@@ -220,7 +227,6 @@ func TestVehicleSignalWeight_knownTypes(t *testing.T) {
 	}{
 		{VehicleTypeFourWheeler, 1.0},
 		{VehicleTypeTwoWheeler, 0.8},
-		{VehicleTypeThreeWheeler, 0.7},
 	}
 	for _, c := range cases {
 		got := VehicleSignalWeight(c.vehicleType)

@@ -20,13 +20,12 @@ import org.junit.Test
  * - [flatRoad]: flat-road baseline with near-zero road-normal linear accel and near-zero gyro
  * - [pothole]: dip-first then spike signature (wheel drops, then rebounds)
  * - [speedBump]: spike-first then dip signature (wheel climbs, then drops)
- * - [engineVibration]: periodic 20Hz oscillation as seen on a three-wheeler at idle
  */
 class AnomalyDetectorTest {
 
     // Config with low thresholds to simplify test signal generation
     private lateinit var carConfig: AsphaltConfig
-    private lateinit var autoConfig: AsphaltConfig
+    private lateinit var bikeConfig: AsphaltConfig
 
     @Before
     fun setUp() {
@@ -35,9 +34,9 @@ class AnomalyDetectorTest {
             vehicleType = VehicleType.FOUR_WHEELER,
             detectionWindowMs = 500L
         )
-        autoConfig = AsphaltConfig(
+        bikeConfig = AsphaltConfig(
             ingestUrl = "http://localhost/",
-            vehicleType = VehicleType.THREE_WHEELER,
+            vehicleType = VehicleType.TWO_WHEELER,
             detectionWindowMs = 500L
         )
     }
@@ -56,7 +55,7 @@ class AnomalyDetectorTest {
     }
 
     @Test
-    fun `below speed threshold: evaluate is still callable but detection reflects signal`() {
+    fun `below speed threshold - evaluate is still callable but detection reflects signal`() {
         // Speed gating is handled by LocationTracker/SensorCollector; the detector
         // itself does not check speed for threshold purposes (only for intensity).
         val detector = AnomalyDetector(carConfig)
@@ -227,26 +226,26 @@ class AnomalyDetectorTest {
     }
 
     // -------------------------------------------------------------------------
-    // Three-wheeler config uses VehicleProfile thresholds
+    // Two-wheeler config uses VehicleProfile thresholds
     // -------------------------------------------------------------------------
 
     @Test
-    fun `signal below three-wheeler threshold but above car threshold is not detected on auto config`() {
-        // Delta of ~4.5 m/s^2: detectable by car (threshold 4.0) but below auto (threshold 5.5)
+    fun `signal below two-wheeler threshold but above car threshold is not detected on bike config`() {
+        // Delta of ~4.5 m/s^2: detectable by car (threshold 4.0) but below bike (threshold 5.0)
         val carDetector = AnomalyDetector(carConfig)
-        val autoDetector = AnomalyDetector(autoConfig)
+        val bikeDetector = AnomalyDetector(bikeConfig)
 
-        for (detector in listOf(carDetector, autoDetector)) {
+        for (detector in listOf(carDetector, bikeDetector)) {
             feedFlatRoad(detector, durationMs = 1000L, stepMs = 20L)
             // spikeZ = 14.3 -> delta from 9.81 baseline = 4.49 m/s^2
             feedPothole(detector, startMs = 1000L, dipZ = 8.5f, spikeZ = 14.3f, gyroMag = 0.6f)
         }
 
         val carResult = carDetector.evaluate(1500L, speedKmh = 40f)
-        val autoResult = autoDetector.evaluate(1500L, speedKmh = 40f)
+        val bikeResult = bikeDetector.evaluate(1500L, speedKmh = 40f)
 
         assertTrue("Car detector should detect 4.49 m/s^2 delta", carResult.detected)
-        assertFalse("Auto detector should NOT detect 4.49 m/s^2 delta (threshold 5.5)", autoResult.detected)
+        assertFalse("Bike detector should NOT detect 4.49 m/s^2 delta (threshold 5.0)", bikeResult.detected)
     }
 
     // -------------------------------------------------------------------------

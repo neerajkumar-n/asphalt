@@ -288,7 +288,7 @@ func TestHandleIngestBatch_malformedJSON_returns400(t *testing.T) {
 func TestHandleIngestBatch_emptyBatchID_returns400(t *testing.T) {
 	// ProcessBatch validates batch_id before touching the DB; nil DB is safe.
 	h := &Handler{processor: ingestion.New(nil)}
-	body := `{"batch_id":"","events":[{"event_id":"e1","timestamp_ms":1700000000000,"latitude":12.97,"longitude":77.59,"accuracy_m":8,"intensity":0.5,"speed_kmh":30,"anomaly_type":"pothole","vehicle_type":"FOUR_WHEELER"}]}`
+	body := `{"batch_id":"","events":[{"event_id":"e1","timestamp_ms":1700000000000,"latitude":40.75,"longitude":-73.99,"accuracy_m":8,"intensity":0.5,"speed_kmh":30,"anomaly_type":"pothole","vehicle_type":"FOUR_WHEELER"}]}`
 	req := httptest.NewRequest(http.MethodPost, "/v1/ingest/batch", strings.NewReader(body))
 	w := httptest.NewRecorder()
 	h.handleIngestBatch(w, req)

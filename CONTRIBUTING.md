@@ -1,8 +1,8 @@
 # Contributing to Asphalt
 
 Thank you for your interest in contributing. Asphalt is a privacy-first road
-anomaly detection system designed for real deployment conditions in India and
-similar markets. Good contributions improve detection quality, reduce false
+anomaly detection system designed for real deployment conditions on US roads.
+Good contributions improve detection quality, reduce false
 positives, and help make road safety data available to communities that need it.
 
 ---
@@ -32,7 +32,7 @@ maintainers via the contact address in that document.
 ## What we welcome
 
 - **Bug fixes** — especially misclassifications (false positives/negatives on real roads)
-- **Vehicle type additions** — e.g. electric three-wheelers, heavy trucks, tractors
+- **Vehicle type additions** — e.g. buses, heavy trucks, e-bikes
 - **Backend improvements** — clustering quality, confidence scoring, query performance
 - **Documentation** — corrections, translations, clearer explanations
 - **Test coverage** — unit tests for untested logic, integration test infrastructure
@@ -57,7 +57,7 @@ We do not accept contributions that:
 | Git | any | Version control |
 
 You do **not** need an Android device or emulator to run the unit tests.
-The detection logic (`AnomalyDetector`, `ThreeWheelerFilter`, etc.) runs on the JVM.
+The detection logic (`AnomalyDetector`, `VehicleProfile`, etc.) runs on the JVM.
 
 ### Fork and clone
 
@@ -114,7 +114,7 @@ asphalt/
   sdk/android/
     asphalt-sdk/               Android SDK (Kotlin, ships as AAR)
       src/main/
-        detection/             AnomalyDetector, ThreeWheelerFilter, VehicleProfile
+        detection/             AnomalyDetector, VehicleProfile, SlidingWindowBuffer
         location/              LocationTracker (GPS dual-mode)
         sensor/                SensorCollector
         upload/                BatchUploader, UploadWorker
@@ -246,12 +246,11 @@ Android version, approximate speed, and whether it was a false positive or negat
 
 | Area | Why it matters |
 |------|---------------|
-| iOS SDK | Large share of urban two-wheeler riders use iPhones |
+| iOS SDK | More than half of US smartphone users are on iPhone |
 | Electric vehicle profiles | EVs have different vibration signatures than ICE vehicles |
 | Per-device calibration | Threshold auto-tuning based on first-session noise floor |
 | Integration tests | End-to-end: sensor → batch → backend → cluster |
-| Field validation dataset | Labelled ground-truth events from real Indian roads |
-| Regional language docs | Lower barrier to entry for local developers |
+| Field validation dataset | Labelled ground-truth events from real US roads |
 
 If you are working on any of these, please open an issue first to coordinate.
 

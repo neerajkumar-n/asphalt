@@ -5,13 +5,13 @@
     {
       "event_id": "7c3e6b2a-1234-4567-89ab-cdef01234567",
       "timestamp_ms": 1711756795000,
-      "latitude": 12.9716,
-      "longitude": 77.5946,
+      "latitude": 40.7516,
+      "longitude": -73.9855,
       "accuracy_m": 8.0,
       "intensity": 0.65,
       "speed_kmh": 28.5,
       "anomaly_type": "pothole",
-      "vehicle_type": "three_wheeler",
+      "vehicle_type": "four_wheeler",
       "sensor_summary": {
         "accel_peak_z": 16.1,
         "accel_baseline_z": 9.81,
@@ -23,8 +23,8 @@
       "device_meta": {
         "platform": "android",
         "sdk_int": 33,
-        "manufacturer": "Xiaomi",
-        "model": "Redmi Note 11",
+        "manufacturer": "Google",
+        "model": "Pixel 8",
         "sensor_vendor": "LSM6DSO"
       },
       "sdk_version": "1.0.0",
@@ -33,8 +33,8 @@
     {
       "event_id": "8d4f7c3b-2345-5678-90bc-def012345678",
       "timestamp_ms": 1711756830000,
-      "latitude": 12.9719,
-      "longitude": 77.5950,
+      "latitude": 40.7519,
+      "longitude": -73.9851,
       "accuracy_m": 12.0,
       "intensity": 0.42,
       "speed_kmh": 31.0,
@@ -61,8 +61,8 @@
     {
       "event_id": "9e5a8d4c-3456-6789-01cd-ef0123456789",
       "timestamp_ms": 1711756860000,
-      "latitude": 12.9722,
-      "longitude": 77.5953,
+      "latitude": 40.7522,
+      "longitude": -73.9848,
       "accuracy_m": 6.0,
       "intensity": 0.55,
       "speed_kmh": 35.2,
@@ -79,8 +79,8 @@
       "device_meta": {
         "platform": "android",
         "sdk_int": 31,
-        "manufacturer": "Realme",
-        "model": "Narzo 50",
+        "manufacturer": "motorola",
+        "model": "moto g play",
         "sensor_vendor": "LSM6DS3"
       },
       "sdk_version": "1.0.0",

@@ -39,7 +39,7 @@ func recentMs(ageSeconds int64) int64 {
 // -------------------------------------------------------------------------
 
 func TestHaversineMetres_SamePoint(t *testing.T) {
-	d := haversineMetres(12.9716, 77.5946, 12.9716, 77.5946)
+	d := haversineMetres(40.7516, -73.9855, 40.7516, -73.9855)
 	if d != 0.0 {
 		t.Errorf("same-point distance should be 0, got %f", d)
 	}
@@ -47,7 +47,7 @@ func TestHaversineMetres_SamePoint(t *testing.T) {
 
 func TestHaversineMetres_KnownDistance(t *testing.T) {
 	// Rough check: 0.0003 degrees latitude ≈ 33m
-	d := haversineMetres(12.9716, 77.5946, 12.9719, 77.5946)
+	d := haversineMetres(40.7516, -73.9855, 40.7519, -73.9855)
 	if d < 25.0 || d > 45.0 {
 		t.Errorf("expected ~33m, got %f", d)
 	}
@@ -56,7 +56,7 @@ func TestHaversineMetres_KnownDistance(t *testing.T) {
 func TestHaversineMetres_WithinClusterRadius(t *testing.T) {
 	// Two points 20m apart should be within ClusterRadius (30m)
 	// 0.0002 degrees latitude ≈ 22m
-	d := haversineMetres(12.9716, 77.5946, 12.9718, 77.5946)
+	d := haversineMetres(40.7516, -73.9855, 40.7518, -73.9855)
 	if d > ClusterRadius {
 		t.Errorf("expected < %f, got %f", ClusterRadius, d)
 	}
@@ -64,7 +64,7 @@ func TestHaversineMetres_WithinClusterRadius(t *testing.T) {
 
 func TestHaversineMetres_BeyondClusterRadius(t *testing.T) {
 	// 0.0005 degrees latitude ≈ 55m, outside ClusterRadius
-	d := haversineMetres(12.9716, 77.5946, 12.9721, 77.5946)
+	d := haversineMetres(40.7516, -73.9855, 40.7521, -73.9855)
 	if d <= ClusterRadius {
 		t.Errorf("expected > %f, got %f", ClusterRadius, d)
 	}
@@ -84,7 +84,7 @@ func TestDBSCAN_NoEvents(t *testing.T) {
 func TestDBSCAN_SingleEvent_BecomeNoise(t *testing.T) {
 	// One point with minPts=2: it becomes noise, not a cluster.
 	events := []model.Event{
-		makeEvent("e1", 12.9716, 77.5946, "pothole", "four_wheeler", 0.6, recentMs(60)),
+		makeEvent("e1", 40.7516, -73.9855, "pothole", "four_wheeler", 0.6, recentMs(60)),
 	}
 	clusters := DBSCAN(events, ClusterRadius, 2)
 	if len(clusters) != 0 {
@@ -97,9 +97,9 @@ func TestDBSCAN_ClosePoints_FormCluster(t *testing.T) {
 	// so it becomes a core point and pulls in the others.
 	// Placed in a line with ~22m spacing (0.0002 deg lat ≈ 22m each step).
 	events := []model.Event{
-		makeEvent("e1", 12.9716, 77.5946, "pothole", "four_wheeler", 0.6, recentMs(60)),
-		makeEvent("e2", 12.9718, 77.5946, "pothole", "four_wheeler", 0.7, recentMs(90)),
-		makeEvent("e3", 12.9717, 77.5946, "pothole", "four_wheeler", 0.5, recentMs(120)),
+		makeEvent("e1", 40.7516, -73.9855, "pothole", "four_wheeler", 0.6, recentMs(60)),
+		makeEvent("e2", 40.7518, -73.9855, "pothole", "four_wheeler", 0.7, recentMs(90)),
+		makeEvent("e3", 40.7517, -73.9855, "pothole", "four_wheeler", 0.5, recentMs(120)),
 	}
 	clusters := DBSCAN(events, ClusterRadius, 2)
 	if len(clusters) != 1 {
@@ -112,15 +112,15 @@ func TestDBSCAN_ClosePoints_FormCluster(t *testing.T) {
 
 func TestDBSCAN_TwoDistinctClusters(t *testing.T) {
 	// Two groups separated by ~500m (different road segments).
-	// Group A: centred around 12.9716 (3 events within 30m)
-	// Group B: centred around 12.9760 (3 events within 30m, ≈490m from group A)
+	// Group A: centred around 40.7516 (3 events within 30m)
+	// Group B: centred around 40.7560 (3 events within 30m, ≈490m from group A)
 	events := []model.Event{
-		makeEvent("a1", 12.9716, 77.5946, "pothole", "four_wheeler", 0.6, recentMs(60)),
-		makeEvent("a2", 12.9717, 77.5946, "pothole", "four_wheeler", 0.5, recentMs(90)),
-		makeEvent("a3", 12.9718, 77.5946, "pothole", "four_wheeler", 0.5, recentMs(110)),
-		makeEvent("b1", 12.9760, 77.5946, "bump", "three_wheeler", 0.4, recentMs(120)),
-		makeEvent("b2", 12.9761, 77.5946, "bump", "three_wheeler", 0.5, recentMs(150)),
-		makeEvent("b3", 12.9762, 77.5946, "bump", "three_wheeler", 0.5, recentMs(180)),
+		makeEvent("a1", 40.7516, -73.9855, "pothole", "four_wheeler", 0.6, recentMs(60)),
+		makeEvent("a2", 40.7517, -73.9855, "pothole", "four_wheeler", 0.5, recentMs(90)),
+		makeEvent("a3", 40.7518, -73.9855, "pothole", "four_wheeler", 0.5, recentMs(110)),
+		makeEvent("b1", 40.7560, -73.9855, "bump", "two_wheeler", 0.4, recentMs(120)),
+		makeEvent("b2", 40.7561, -73.9855, "bump", "two_wheeler", 0.5, recentMs(150)),
+		makeEvent("b3", 40.7562, -73.9855, "bump", "two_wheeler", 0.5, recentMs(180)),
 	}
 	clusters := DBSCAN(events, ClusterRadius, 2)
 	if len(clusters) != 2 {
@@ -132,11 +132,11 @@ func TestDBSCAN_IsolatedPointExcluded(t *testing.T) {
 	// Four points: three form a cluster (e1-e2-e3 within 30m of each other),
 	// one isolated noise event 500m away.
 	events := []model.Event{
-		makeEvent("e1", 12.9716, 77.5946, "pothole", "four_wheeler", 0.6, recentMs(60)),
-		makeEvent("e2", 12.9718, 77.5946, "pothole", "four_wheeler", 0.7, recentMs(90)),
-		makeEvent("e3", 12.9717, 77.5946, "pothole", "four_wheeler", 0.5, recentMs(110)),
+		makeEvent("e1", 40.7516, -73.9855, "pothole", "four_wheeler", 0.6, recentMs(60)),
+		makeEvent("e2", 40.7518, -73.9855, "pothole", "four_wheeler", 0.7, recentMs(90)),
+		makeEvent("e3", 40.7517, -73.9855, "pothole", "four_wheeler", 0.5, recentMs(110)),
 		// Isolated: 500m away
-		makeEvent("noise", 12.9760, 77.5946, "pothole", "four_wheeler", 0.5, recentMs(120)),
+		makeEvent("noise", 40.7560, -73.9855, "pothole", "four_wheeler", 0.5, recentMs(120)),
 	}
 	clusters := DBSCAN(events, ClusterRadius, 2)
 	if len(clusters) != 1 {
@@ -152,9 +152,9 @@ func TestDBSCAN_ChainExpansion(t *testing.T) {
 	// DBSCAN should merge all three into one cluster via expansion.
 	// Place them along a line with ~20m spacing (0.0002 deg lat ≈ 22m).
 	events := []model.Event{
-		makeEvent("e1", 12.9716, 77.5946, "pothole", "four_wheeler", 0.6, recentMs(60)),
-		makeEvent("e2", 12.9718, 77.5946, "pothole", "four_wheeler", 0.7, recentMs(90)),
-		makeEvent("e3", 12.9720, 77.5946, "pothole", "four_wheeler", 0.5, recentMs(120)),
+		makeEvent("e1", 40.7516, -73.9855, "pothole", "four_wheeler", 0.6, recentMs(60)),
+		makeEvent("e2", 40.7518, -73.9855, "pothole", "four_wheeler", 0.7, recentMs(90)),
+		makeEvent("e3", 40.7520, -73.9855, "pothole", "four_wheeler", 0.5, recentMs(120)),
 	}
 	clusters := DBSCAN(events, ClusterRadius, 2)
 	if len(clusters) != 1 {
@@ -178,23 +178,23 @@ func TestScoreCluster_EmptyInput(t *testing.T) {
 
 func TestScoreCluster_CentroidIsAverage(t *testing.T) {
 	events := []model.Event{
-		makeEvent("e1", 12.0, 77.0, "pothole", "four_wheeler", 0.5, recentMs(60)),
-		makeEvent("e2", 14.0, 79.0, "pothole", "four_wheeler", 0.5, recentMs(60)),
+		makeEvent("e1", 40.0, -74.0, "pothole", "four_wheeler", 0.5, recentMs(60)),
+		makeEvent("e2", 42.0, -72.0, "pothole", "four_wheeler", 0.5, recentMs(60)),
 	}
 	c := scoreCluster(events, nowMs)
-	if c.Latitude != 13.0 {
-		t.Errorf("expected centroid lat=13.0, got %f", c.Latitude)
+	if c.Latitude != 41.0 {
+		t.Errorf("expected centroid lat=41.0, got %f", c.Latitude)
 	}
-	if c.Longitude != 78.0 {
-		t.Errorf("expected centroid lon=78.0, got %f", c.Longitude)
+	if c.Longitude != -73.0 {
+		t.Errorf("expected centroid lon=-73.0, got %f", c.Longitude)
 	}
 }
 
 func TestScoreCluster_DominantAnomalyType(t *testing.T) {
 	events := []model.Event{
-		makeEvent("e1", 12.9716, 77.5946, "pothole", "four_wheeler", 0.5, recentMs(60)),
-		makeEvent("e2", 12.9717, 77.5946, "pothole", "four_wheeler", 0.6, recentMs(90)),
-		makeEvent("e3", 12.9718, 77.5946, "bump", "four_wheeler", 0.4, recentMs(120)),
+		makeEvent("e1", 40.7516, -73.9855, "pothole", "four_wheeler", 0.5, recentMs(60)),
+		makeEvent("e2", 40.7517, -73.9855, "pothole", "four_wheeler", 0.6, recentMs(90)),
+		makeEvent("e3", 40.7518, -73.9855, "bump", "four_wheeler", 0.4, recentMs(120)),
 	}
 	c := scoreCluster(events, nowMs)
 	if c.AnomalyType != "pothole" {
@@ -204,9 +204,9 @@ func TestScoreCluster_DominantAnomalyType(t *testing.T) {
 
 func TestScoreCluster_EventCount(t *testing.T) {
 	events := []model.Event{
-		makeEvent("e1", 12.9716, 77.5946, "pothole", "four_wheeler", 0.5, recentMs(60)),
-		makeEvent("e2", 12.9717, 77.5946, "pothole", "four_wheeler", 0.6, recentMs(90)),
-		makeEvent("e3", 12.9718, 77.5946, "pothole", "four_wheeler", 0.4, recentMs(120)),
+		makeEvent("e1", 40.7516, -73.9855, "pothole", "four_wheeler", 0.5, recentMs(60)),
+		makeEvent("e2", 40.7517, -73.9855, "pothole", "four_wheeler", 0.6, recentMs(90)),
+		makeEvent("e3", 40.7518, -73.9855, "pothole", "four_wheeler", 0.4, recentMs(120)),
 	}
 	c := scoreCluster(events, nowMs)
 	if c.EventCount != 3 {
@@ -217,8 +217,8 @@ func TestScoreCluster_EventCount(t *testing.T) {
 func TestScoreCluster_MinimumRadiusEnforced(t *testing.T) {
 	// Single-point cluster: radius from centroid to itself is 0, should be clamped to 5m.
 	events := []model.Event{
-		makeEvent("e1", 12.9716, 77.5946, "pothole", "four_wheeler", 0.5, recentMs(60)),
-		makeEvent("e2", 12.9716, 77.5946, "pothole", "four_wheeler", 0.5, recentMs(90)),
+		makeEvent("e1", 40.7516, -73.9855, "pothole", "four_wheeler", 0.5, recentMs(60)),
+		makeEvent("e2", 40.7516, -73.9855, "pothole", "four_wheeler", 0.5, recentMs(90)),
 	}
 	c := scoreCluster(events, nowMs)
 	if c.RadiusM < 5.0 {
@@ -230,8 +230,8 @@ func TestScoreCluster_LastSeenIsMax(t *testing.T) {
 	early := recentMs(300)
 	late := recentMs(60)
 	events := []model.Event{
-		makeEvent("e1", 12.9716, 77.5946, "pothole", "four_wheeler", 0.5, early),
-		makeEvent("e2", 12.9717, 77.5946, "pothole", "four_wheeler", 0.6, late),
+		makeEvent("e1", 40.7516, -73.9855, "pothole", "four_wheeler", 0.5, early),
+		makeEvent("e2", 40.7517, -73.9855, "pothole", "four_wheeler", 0.6, late),
 	}
 	c := scoreCluster(events, nowMs)
 	if c.LastSeenMs != late {
@@ -245,8 +245,8 @@ func TestScoreCluster_LastSeenIsMax(t *testing.T) {
 
 func TestScoreCluster_ConfidenceInRange(t *testing.T) {
 	events := []model.Event{
-		makeEvent("e1", 12.9716, 77.5946, "pothole", "four_wheeler", 0.6, recentMs(60)),
-		makeEvent("e2", 12.9717, 77.5946, "pothole", "four_wheeler", 0.7, recentMs(90)),
+		makeEvent("e1", 40.7516, -73.9855, "pothole", "four_wheeler", 0.6, recentMs(60)),
+		makeEvent("e2", 40.7517, -73.9855, "pothole", "four_wheeler", 0.7, recentMs(90)),
 	}
 	c := scoreCluster(events, nowMs)
 	if c.Confidence < 0 || c.Confidence > 1 {
@@ -259,10 +259,10 @@ func TestScoreCluster_MoreEventsHigherConfidence(t *testing.T) {
 	small := make([]model.Event, 2)
 	large := make([]model.Event, 10)
 	for i := range small {
-		small[i] = makeEvent("s"+string(rune('0'+i)), 12.9716, 77.5946, "pothole", "four_wheeler", 0.6, recentMs(60))
+		small[i] = makeEvent("s"+string(rune('0'+i)), 40.7516, -73.9855, "pothole", "four_wheeler", 0.6, recentMs(60))
 	}
 	for i := range large {
-		large[i] = makeEvent("l"+string(rune('0'+i)), 12.9716, 77.5946, "pothole", "four_wheeler", 0.6, recentMs(60))
+		large[i] = makeEvent("l"+string(rune('0'+i)), 40.7516, -73.9855, "pothole", "four_wheeler", 0.6, recentMs(60))
 	}
 	cs := scoreCluster(small, nowMs)
 	cl := scoreCluster(large, nowMs)
@@ -274,14 +274,14 @@ func TestScoreCluster_MoreEventsHigherConfidence(t *testing.T) {
 func TestScoreCluster_DiversityBonusIncreasesConfidence(t *testing.T) {
 	// Mixed vehicle cluster vs single vehicle cluster with same event count.
 	singleType := []model.Event{
-		makeEvent("e1", 12.9716, 77.5946, "pothole", "three_wheeler", 0.5, recentMs(60)),
-		makeEvent("e2", 12.9717, 77.5946, "pothole", "three_wheeler", 0.5, recentMs(90)),
-		makeEvent("e3", 12.9718, 77.5946, "pothole", "three_wheeler", 0.5, recentMs(120)),
+		makeEvent("e1", 40.7516, -73.9855, "pothole", "two_wheeler", 0.5, recentMs(60)),
+		makeEvent("e2", 40.7517, -73.9855, "pothole", "two_wheeler", 0.5, recentMs(90)),
+		makeEvent("e3", 40.7518, -73.9855, "pothole", "two_wheeler", 0.5, recentMs(120)),
 	}
 	mixed := []model.Event{
-		makeEvent("m1", 12.9716, 77.5946, "pothole", "three_wheeler", 0.5, recentMs(60)),
-		makeEvent("m2", 12.9717, 77.5946, "pothole", "four_wheeler", 0.5, recentMs(90)),
-		makeEvent("m3", 12.9718, 77.5946, "pothole", "two_wheeler", 0.5, recentMs(120)),
+		makeEvent("m1", 40.7516, -73.9855, "pothole", "two_wheeler", 0.5, recentMs(60)),
+		makeEvent("m2", 40.7517, -73.9855, "pothole", "four_wheeler", 0.5, recentMs(90)),
+		makeEvent("m3", 40.7518, -73.9855, "pothole", "two_wheeler", 0.5, recentMs(120)),
 	}
 	cSingle := scoreCluster(singleType, nowMs)
 	cMixed := scoreCluster(mixed, nowMs)
@@ -291,64 +291,25 @@ func TestScoreCluster_DiversityBonusIncreasesConfidence(t *testing.T) {
 	}
 }
 
-func TestScoreCluster_ThreeWheelerOnlyPenalty(t *testing.T) {
-	// Sparse (n=2) auto-only cluster vs sparse car-only cluster: auto should score lower.
-	autoOnly := []model.Event{
-		makeEvent("a1", 12.9716, 77.5946, "pothole", "three_wheeler", 0.6, recentMs(60)),
-		makeEvent("a2", 12.9717, 77.5946, "pothole", "three_wheeler", 0.6, recentMs(90)),
-	}
-	carOnly := []model.Event{
-		makeEvent("c1", 12.9716, 77.5946, "pothole", "four_wheeler", 0.6, recentMs(60)),
-		makeEvent("c2", 12.9717, 77.5946, "pothole", "four_wheeler", 0.6, recentMs(90)),
-	}
-	cAuto := scoreCluster(autoOnly, nowMs)
-	cCar := scoreCluster(carOnly, nowMs)
-	if cAuto.Confidence >= cCar.Confidence {
-		t.Errorf("sparse auto-only cluster should score lower: auto=%f car=%f",
-			cAuto.Confidence, cCar.Confidence)
-	}
-}
-
-func TestScoreCluster_ThreeWheelerPenaltyLiftedAt4Events(t *testing.T) {
-	// Auto-only cluster with n>=4 should NOT receive the penalty.
-	// It should be more confident than an auto cluster with n=2.
-	sparse := []model.Event{
-		makeEvent("a1", 12.9716, 77.5946, "pothole", "three_wheeler", 0.6, recentMs(60)),
-		makeEvent("a2", 12.9717, 77.5946, "pothole", "three_wheeler", 0.6, recentMs(90)),
-	}
-	dense := []model.Event{
-		makeEvent("b1", 12.9716, 77.5946, "pothole", "three_wheeler", 0.6, recentMs(60)),
-		makeEvent("b2", 12.9717, 77.5946, "pothole", "three_wheeler", 0.6, recentMs(90)),
-		makeEvent("b3", 12.9718, 77.5946, "pothole", "three_wheeler", 0.6, recentMs(120)),
-		makeEvent("b4", 12.9719, 77.5946, "pothole", "three_wheeler", 0.6, recentMs(150)),
-	}
-	cSparse := scoreCluster(sparse, nowMs)
-	cDense := scoreCluster(dense, nowMs)
-	if cDense.Confidence <= cSparse.Confidence {
-		t.Errorf("4-event auto cluster should be more confident than 2-event: sparse=%f dense=%f",
-			cSparse.Confidence, cDense.Confidence)
-	}
-}
-
-func TestScoreCluster_WeightedIntensityLowerForThreeWheeler(t *testing.T) {
-	// Three-wheeler events have weight 0.7; their avg intensity should be
-	// lower than equivalent car events with the same raw intensity value.
-	autoEvents := []model.Event{
-		makeEvent("a1", 12.9716, 77.5946, "pothole", "three_wheeler", 0.8, recentMs(60)),
-		makeEvent("a2", 12.9717, 77.5946, "pothole", "three_wheeler", 0.8, recentMs(90)),
+func TestScoreCluster_WeightedIntensityForTwoWheeler(t *testing.T) {
+	// Two-wheeler events have weight 0.8. A cluster of only two-wheeler
+	// events should still report the raw intensity as its average.
+	bikeEvents := []model.Event{
+		makeEvent("a1", 40.7516, -73.9855, "pothole", "two_wheeler", 0.8, recentMs(60)),
+		makeEvent("a2", 40.7517, -73.9855, "pothole", "two_wheeler", 0.8, recentMs(90)),
 	}
 	carEvents := []model.Event{
-		makeEvent("c1", 12.9716, 77.5946, "pothole", "four_wheeler", 0.8, recentMs(60)),
-		makeEvent("c2", 12.9717, 77.5946, "pothole", "four_wheeler", 0.8, recentMs(90)),
+		makeEvent("c1", 40.7516, -73.9855, "pothole", "four_wheeler", 0.8, recentMs(60)),
+		makeEvent("c2", 40.7517, -73.9855, "pothole", "four_wheeler", 0.8, recentMs(90)),
 	}
-	cAuto := scoreCluster(autoEvents, nowMs)
+	cBike := scoreCluster(bikeEvents, nowMs)
 	cCar := scoreCluster(carEvents, nowMs)
 	// Both clusters have the same raw intensity (0.8), but the weighted average
 	// should be the same because we are doing weighted_sum / total_weight.
 	// The weights cancel out, so avg intensity should equal raw intensity.
 	// This test verifies the calculation doesn't accidentally amplify or suppress.
-	if cAuto.AvgIntensity < 0.79 || cAuto.AvgIntensity > 0.81 {
-		t.Errorf("expected auto avg intensity ≈ 0.8, got %f", cAuto.AvgIntensity)
+	if cBike.AvgIntensity < 0.79 || cBike.AvgIntensity > 0.81 {
+		t.Errorf("expected bike avg intensity ≈ 0.8, got %f", cBike.AvgIntensity)
 	}
 	if cCar.AvgIntensity < 0.79 || cCar.AvgIntensity > 0.81 {
 		t.Errorf("expected car avg intensity ≈ 0.8, got %f", cCar.AvgIntensity)
@@ -359,13 +320,13 @@ func TestScoreCluster_RecencyDecay(t *testing.T) {
 	// Recent cluster should have higher confidence than old cluster
 	// with identical events except timestamp.
 	recent := []model.Event{
-		makeEvent("r1", 12.9716, 77.5946, "pothole", "four_wheeler", 0.6, recentMs(60)),
-		makeEvent("r2", 12.9717, 77.5946, "pothole", "four_wheeler", 0.6, recentMs(90)),
+		makeEvent("r1", 40.7516, -73.9855, "pothole", "four_wheeler", 0.6, recentMs(60)),
+		makeEvent("r2", 40.7517, -73.9855, "pothole", "four_wheeler", 0.6, recentMs(90)),
 	}
 	// MaxAgeMs = 90 days; use 85 days old to be within decay range but not zero
 	old := []model.Event{
-		makeEvent("o1", 12.9716, 77.5946, "pothole", "four_wheeler", 0.6, recentMs(85*24*3600)),
-		makeEvent("o2", 12.9717, 77.5946, "pothole", "four_wheeler", 0.6, recentMs(85*24*3600)),
+		makeEvent("o1", 40.7516, -73.9855, "pothole", "four_wheeler", 0.6, recentMs(85*24*3600)),
+		makeEvent("o2", 40.7517, -73.9855, "pothole", "four_wheeler", 0.6, recentMs(85*24*3600)),
 	}
 	cRecent := scoreCluster(recent, nowMs)
 	cOld := scoreCluster(old, nowMs)
@@ -377,22 +338,19 @@ func TestScoreCluster_RecencyDecay(t *testing.T) {
 
 func TestScoreCluster_VehicleTypeDiversity(t *testing.T) {
 	events := []model.Event{
-		makeEvent("e1", 12.9716, 77.5946, "pothole", "four_wheeler", 0.6, recentMs(60)),
-		makeEvent("e2", 12.9717, 77.5946, "pothole", "three_wheeler", 0.6, recentMs(90)),
-		makeEvent("e3", 12.9718, 77.5946, "pothole", "two_wheeler", 0.6, recentMs(120)),
+		makeEvent("e1", 40.7516, -73.9855, "pothole", "four_wheeler", 0.6, recentMs(60)),
+		makeEvent("e2", 40.7517, -73.9855, "pothole", "two_wheeler", 0.6, recentMs(90)),
+		makeEvent("e3", 40.7518, -73.9855, "pothole", "two_wheeler", 0.6, recentMs(120)),
 	}
 	c := scoreCluster(events, nowMs)
-	if c.VehicleTypeDiversity != 3 {
-		t.Errorf("expected diversity=3, got %d", c.VehicleTypeDiversity)
+	if c.VehicleTypeDiversity != 2 {
+		t.Errorf("expected diversity=2, got %d", c.VehicleTypeDiversity)
 	}
 	if c.VehicleTypeCounts["four_wheeler"] != 1 {
 		t.Errorf("expected 1 four_wheeler, got %d", c.VehicleTypeCounts["four_wheeler"])
 	}
-	if c.VehicleTypeCounts["three_wheeler"] != 1 {
-		t.Errorf("expected 1 three_wheeler, got %d", c.VehicleTypeCounts["three_wheeler"])
-	}
-	if c.VehicleTypeCounts["two_wheeler"] != 1 {
-		t.Errorf("expected 1 two_wheeler, got %d", c.VehicleTypeCounts["two_wheeler"])
+	if c.VehicleTypeCounts["two_wheeler"] != 2 {
+		t.Errorf("expected 2 two_wheeler, got %d", c.VehicleTypeCounts["two_wheeler"])
 	}
 }
 
@@ -400,7 +358,7 @@ func TestScoreCluster_ConfidenceClampedAt1(t *testing.T) {
 	// A large cluster of identical recent events should clamp at 1.0.
 	events := make([]model.Event, 30)
 	for i := range events {
-		events[i] = makeEvent("e"+string(rune('0'+i%10)), 12.9716, 77.5946, "pothole", "four_wheeler", 0.9, recentMs(60))
+		events[i] = makeEvent("e"+string(rune('0'+i%10)), 40.7516, -73.9855, "pothole", "four_wheeler", 0.9, recentMs(60))
 	}
 	c := scoreCluster(events, nowMs)
 	if c.Confidence > 1.0 {
@@ -410,7 +368,7 @@ func TestScoreCluster_ConfidenceClampedAt1(t *testing.T) {
 
 func TestScoreCluster_ClusterIDIsNonEmpty(t *testing.T) {
 	events := []model.Event{
-		makeEvent("e1", 12.9716, 77.5946, "pothole", "four_wheeler", 0.6, recentMs(60)),
+		makeEvent("e1", 40.7516, -73.9855, "pothole", "four_wheeler", 0.6, recentMs(60)),
 	}
 	c := scoreCluster(events, nowMs)
 	if c.ClusterID == "" {

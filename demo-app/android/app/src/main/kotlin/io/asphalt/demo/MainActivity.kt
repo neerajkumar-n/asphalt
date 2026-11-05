@@ -25,7 +25,7 @@ import io.asphalt.sdk.model.VehicleType
  * Demo application entry point.
  *
  * This activity demonstrates:
- * 1. DPDP-compliant consent gate on first launch
+ * 1. Data collection consent gate on first launch
  * 2. Foreground (fine) location permission request
  * 3. Background location permission request on Android 10+ (H)
  * 4. Starting and stopping detection via [DetectionForegroundService]
@@ -44,11 +44,13 @@ import io.asphalt.sdk.model.VehicleType
  * ## Permission flow
  *
  * First launch:
- *   DPDP consent → ACCESS_FINE_LOCATION → (Android 10+) ACCESS_BACKGROUND_LOCATION → SDK ready
+ *   Consent → ACCESS_FINE_LOCATION → (Android 10+) ACCESS_BACKGROUND_LOCATION → SDK ready
  *
  * Subsequent launches (consent stored):
  *   Already granted check → SDK ready (or prompt if somehow revoked)
  */
+private const val KMH_TO_MPH = 0.621371f
+
 class MainActivity : AppCompatActivity() {
 
     private lateinit var viewModel: DemoViewModel
@@ -111,8 +113,8 @@ class MainActivity : AppCompatActivity() {
         vehicleTypeSpinner = findViewById(R.id.vehicleTypeSpinner)
 
         // Vehicle type selector — reinitialises the SDK with the chosen profile.
-        val vehicleTypes = listOf(VehicleType.FOUR_WHEELER, VehicleType.THREE_WHEELER, VehicleType.TWO_WHEELER)
-        val labels = listOf("Car / SUV (4-wheeler)", "Auto Rickshaw (3-wheeler)", "Motorcycle / Scooter (2-wheeler)")
+        val vehicleTypes = listOf(VehicleType.FOUR_WHEELER, VehicleType.TWO_WHEELER)
+        val labels = listOf("Car / SUV / Pickup", "Motorcycle / Scooter / Moped")
         vehicleTypeSpinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, labels).also {
             it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         }
@@ -154,22 +156,22 @@ class MainActivity : AppCompatActivity() {
             if (events.isNotEmpty()) {
                 eventLog.text = events.takeLast(10).reversed().joinToString("\n") { e ->
                     "[${e.anomalyType.value}] intensity=${"%.2f".format(e.intensity)} " +
-                    "speed=${"%.1f".format(e.speedKmh)}km/h " +
+                    "speed=${"%.1f".format(e.speedKmh * KMH_TO_MPH)}mph " +
                     "lat=${"%.5f".format(e.latitude)},lon=${"%.5f".format(e.longitude)}"
                 }
             }
         }
 
-        val speedThreshold = if (BuildConfig.DEBUG) "5" else "15"
+        val speedThreshold = if (BuildConfig.DEBUG) "3" else "9"
         viewModel.sdkActive.observe(this) { active ->
             statusText.text = if (active) {
                 "Detecting road anomalies..."
             } else {
-                "Idle (waiting for speed > $speedThreshold km/h)"
+                "Idle (waiting for speed > $speedThreshold mph)"
             }
         }
 
-        // I: DPDP consent gate — must be accepted before permission requests
+        // I: Consent gate — must be accepted before permission requests
         if (ConsentManager.hasConsent(this)) {
             checkPermissions()
         } else {
@@ -178,12 +180,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     // -------------------------------------------------------------------------
-    // I: DPDP consent dialog
+    // I: Consent dialog
     // -------------------------------------------------------------------------
 
     /**
-     * Displays a one-time data collection notice compliant with India's
-     * Digital Personal Data Protection Act 2023.
+     * Displays a one-time data collection notice and records the user's
+     * explicit choice (see [ConsentManager] for the rationale).
      *
      * Consent is stored in SharedPreferences. The dialog is not shown again
      * on subsequent launches unless app data is cleared.

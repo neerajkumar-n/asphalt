@@ -21,7 +21,7 @@ data class AsphaltConfig(
      * - False positives from pedestrians or slow vehicle manoeuvres
      * - Battery drain from unnecessary sensor sampling
      *
-     * Default: 15 km/h. Setting below 10 km/h is not recommended.
+     * Default: 15 km/h (~9 mph). Setting below 10 km/h (~6 mph) is not recommended.
      */
     val minSpeedKmh: Float = 15f,
 
@@ -88,24 +88,16 @@ data class AsphaltConfig(
      * It is set by the integrating application at initialisation time and
      * does not change dynamically.
      *
-     * - [VehicleType.FOUR_WHEELER]: cars and SUVs. Default. Lowest ambient
-     *   noise floor. Standard 4.0 m/s^2 detection threshold.
+     * - [VehicleType.FOUR_WHEELER]: cars, SUVs and pickups. Default. Lowest
+     *   ambient noise floor. Standard 4.0 m/s^2 detection threshold.
      *
-     * - [VehicleType.THREE_WHEELER]: auto rickshaws, tuk-tuks. Higher
-     *   structural vibration from engine and frame. Elevated lateral motion
-     *   from single-front-wheel geometry. Applies:
-     *     - Raised detection threshold (5.5 m/s^2)
-     *     - Engine vibration filter (zero-crossing rate suppression)
-     *     - Turn and lateral wobble suppression
-     *     - Longer baseline window (96 samples vs 64)
+     * - [VehicleType.TWO_WHEELER]: motorcycles, scooters and mopeds. More
+     *   sensitive to rider lean angle and road surface. Raised threshold
+     *   (5.0 m/s^2) and wider baseline window.
      *
-     * - [VehicleType.TWO_WHEELER]: motorcycles and scooters. More sensitive
-     *   to rider lean angle and road surface. Raised threshold (5.0 m/s^2)
-     *   and wider baseline window.
-     *
-     * An auto rickshaw fleet app should explicitly set THREE_WHEELER.
-     * A generic driving app for India should offer a vehicle selection prompt
-     * rather than defaulting silently to FOUR_WHEELER.
+     * A motorcycle or moped delivery app should explicitly set TWO_WHEELER.
+     * A general driving app with mixed riders should offer a vehicle
+     * selection prompt rather than defaulting silently to FOUR_WHEELER.
      */
     val vehicleType: io.asphalt.sdk.model.VehicleType = io.asphalt.sdk.model.VehicleType.FOUR_WHEELER,
 

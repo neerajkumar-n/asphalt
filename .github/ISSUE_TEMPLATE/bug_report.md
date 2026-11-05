@@ -24,10 +24,10 @@ assignees: ''
 
 | Field | Value |
 |-------|-------|
-| Vehicle type | e.g. FOUR_WHEELER / THREE_WHEELER / TWO_WHEELER |
+| Vehicle type | e.g. FOUR_WHEELER / TWO_WHEELER |
 | Road type | e.g. urban pothole, highway speed bump, rough patch |
-| Country / city | e.g. Bengaluru, India |
-| Speed (approx.) | e.g. 40 km/h |
+| City / state | e.g. Chicago, IL |
+| Speed (approx.) | e.g. 25 mph |
 | False positive or negative | |
 
 ## Device information

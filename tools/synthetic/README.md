@@ -27,14 +27,11 @@ like once phones have been reporting for a while, before real data exists.
   the two required fields (`platform` and `sdk_int`); phone make, model and
   sensor vendor are left out.
 - **Vehicle mix:** mostly cars, with two-wheelers (motorcycles and delivery
-  mopeds) making up 8 to 15% depending on the city. There are no
-  three-wheelers, as they are effectively absent from US roads, so
-  cross-vehicle confirmation is between cars and two-wheelers.
+  mopeds) making up 8 to 15% depending on the city. Cross-vehicle
+  confirmation is between cars and two-wheelers.
 - **Confidence spread:** weak single-vehicle defects (3 to 4 reports), typical
   mixed defects (4 to 9), strong ones (10 to 16) and showcase craters (20 to 32)
-  confirmed by every vehicle type the city has. A city configured with
-  three-wheelers also gets auto-only defects that trigger the three-wheeler
-  penalty. About 12% of defects have not been reported for two months, so
+  confirmed by both vehicle types. About 12% of defects have not been reported for two months, so
   recency decay shows. About 8% of events are isolated noise that clustering
   discards.
 - **Disagreement:** about 14% of reports classify the defect differently (a bump

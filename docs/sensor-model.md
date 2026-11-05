@@ -66,7 +66,7 @@ downward force, often 14-18 m/s^2 for a moderate pothole.
 **Phase 3 - Recovery:**
 The suspension absorbs the rebound. Z oscillates briefly and returns to 9.81.
 
-The total duration at 50 km/h is roughly 150-400ms. At higher speeds the
+The total duration at 30 mph (50 km/h) is roughly 150-400ms. At higher speeds the
 event is shorter in time but produces higher peak values because the wheel
 traverses the same physical defect in less time with more kinetic energy.
 
@@ -144,7 +144,6 @@ The SDK requires `gyro_peak_magnitude` to exceed a per-vehicle threshold
 during the detection window before reporting an event:
 - Four-wheeler: 0.30 rad/s
 - Two-wheeler: 0.45 rad/s
-- Three-wheeler: 0.55 rad/s
 
 These thresholds are part of the internal `VehicleProfile` and are selected
 automatically based on `AsphaltConfig.vehicleType`. This single check eliminates
@@ -156,28 +155,28 @@ a large fraction of false positives in practice.
 
 GPS provides the vehicle speed via `Location.speed` (metres per second).
 
-The SDK refuses to activate sensor collection below 15 km/h. This threshold
+The SDK refuses to activate sensor collection below 15 km/h (~9 mph). This threshold
 eliminates:
 
 | Scenario | Speed range | Z variation | Why filtered |
 |----------|------------|------------|--------------|
-| Walking  | 3-6 km/h   | 2-4 m/s^2  | Gait creates rhythmic Z oscillation at ~2Hz |
-| Slow traffic | 5-15 km/h | 1-3 m/s^2 | Kerbs, speed bumps at creep speed look like potholes |
-| Parking manoeuvre | 0-5 km/h | High | Phone orientation changes during parking |
-| Stationary vehicle | 0 km/h | Variable | Engine vibration, door slams |
+| Walking  | 2-4 mph    | 2-4 m/s^2  | Gait creates rhythmic Z oscillation at ~2Hz |
+| Slow traffic | 3-9 mph | 1-3 m/s^2 | Curbs, speed bumps at creep speed look like potholes |
+| Parking manoeuvre | 0-3 mph | High | Phone orientation changes during parking |
+| Stationary vehicle | 0 mph | Variable | Engine vibration, door slams |
 
-At speeds above 15 km/h, the pedestrian gait pattern disappears and the
+At speeds above ~9 mph, the pedestrian gait pattern disappears and the
 vehicle dynamics become the dominant signal source.
 
 The speed value also feeds the intensity normalisation. A 6 m/s^2 delta at
-30 km/h is a more severe anomaly than the same delta at 80 km/h (the vehicle
+20 mph is a more severe anomaly than the same delta at 50 mph (the vehicle
 had less kinetic energy to generate the G force at low speed).
 
 ---
 
 ## Sample Signal Patterns
 
-### Moderate Pothole at 50 km/h
+### Moderate Pothole at 30 mph (50 km/h)
 
 ```
 t=0ms    Z=9.83  (baseline, smooth road)
@@ -205,7 +204,7 @@ AnomalyDetector output:
   - delta: 5.81 m/s^2 (exceeds 4.0 threshold)
   - gyro peak: 0.65 rad/s (exceeds 0.3 threshold)
   - dip index (6): before peak index (9) -> POTHOLE
-  - intensity: (5.81 / 12.0) * 1.0 (speed 50km/h) = 0.48
+  - intensity: (5.81 / 12.0) * 1.1 (speed factor for 30-60 km/h) = 0.53
 ```
 
 ### False Positive Filtered by Gyroscope

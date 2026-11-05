@@ -1,0 +1,8 @@
+id,lat,lon,type,expect_hit,severity,notes
+# One row per defect or road feature on the route. Delete these comment rows.
+# type: pothole | bump | rough_patch | feature (manhole, rail crossing, steel plate, expansion joint)
+# expect_hit: yes if your tires will go over it on every pass; no if it is in another lane or at the edge
+# severity: 1 (minor) to 3 (severe), optional
+P01,41.88415,-87.65102,pothole,yes,2,eastbound lane 1 right wheel path
+B01,41.88421,-87.65490,bump,yes,1,speed hump mid-block
+F01,41.88418,-87.65800,feature,no,,manhole cover

@@ -279,7 +279,7 @@
   <h1>Turn every pothole into<br><span class="highlight">shared knowledge</span></h1>
   <p class="hero-sub">
     Asphalt is a crowd-sourced road anomaly detection platform. Phones silently detect
-    potholes, speed-breakers and rough patches using only their onboard sensors —
+    potholes, speed bumps and rough patches using only their onboard sensors —
     no cameras, no photos, no personal data.
   </p>
   <div class="hero-actions">
@@ -362,26 +362,21 @@
 <section style="background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
   <div class="section-inner">
     <div class="section-tag">Vehicle types</div>
-    <h2>Built for Indian roads</h2>
+    <h2>Built for American roads</h2>
     <p class="section-sub">
-      Different vehicles experience road anomalies very differently. Asphalt profiles each
+      Cars and motorcycles experience road anomalies very differently. Asphalt profiles each
       vehicle type with separate thresholds and uses cross-vehicle agreement as a confidence booster.
     </p>
     <div class="vehicles">
       <div class="vehicle-card">
-        <div class="vehicle-icon">🛺</div>
-        <h3>Three-wheelers (Autos)</h3>
-        <p>Lower suspension stiffness means more baseline vibration. The SDK applies a three-wheeler filter to suppress false positives from engine vibration and tight turns.</p>
-      </div>
-      <div class="vehicle-card">
         <div class="vehicle-icon">🚗</div>
-        <h3>Four-wheelers (Cars)</h3>
-        <p>Standard detection profile. Reports from cars carry high confidence on their own, especially on urban roads.</p>
+        <h3>Cars, SUVs &amp; pickups</h3>
+        <p>Standard detection profile. Reports from cars carry high confidence on their own, on city streets and freeways alike.</p>
       </div>
       <div class="vehicle-card">
         <div class="vehicle-icon">🏍️</div>
-        <h3>Two-wheelers</h3>
-        <p>Motorcycles and scooters have their own detection profile with a raised threshold to handle road buzz and chassis resonance.</p>
+        <h3>Motorcycles &amp; mopeds</h3>
+        <p>Motorcycles, scooters and delivery mopeds have their own detection profile with a raised threshold to handle lean, road buzz and chassis resonance.</p>
       </div>
     </div>
   </div>
@@ -398,7 +393,7 @@
         <div class="roadmap-dot dot-done"></div>
         <div class="roadmap-content">
           <h3>Android SDK with on-device detection</h3>
-          <p>Accelerometer + gyroscope fusion, vehicle-type thresholds, three-wheeler filter, GPS dual-mode.</p>
+          <p>Accelerometer + gyroscope fusion, vehicle-type thresholds, orientation-agnostic sensing, GPS dual-mode.</p>
         </div>
         <span class="roadmap-label label-done">Done</span>
       </div>
@@ -429,8 +424,8 @@
       <div class="roadmap-item">
         <div class="roadmap-dot dot-future"></div>
         <div class="roadmap-content">
-          <h3>Two-wheeler vehicle profile</h3>
-          <p>Dedicated threshold tuning and a vibration filter for motorbikes and scooters.</p>
+          <h3>Motorcycle lean and turn filter</h3>
+          <p>Suppress false positives from cornering lean and handlebar vibration on motorcycles and mopeds.</p>
         </div>
         <span class="roadmap-label label-future">Planned</span>
       </div>
@@ -438,7 +433,7 @@
         <div class="roadmap-dot dot-future"></div>
         <div class="roadmap-content">
           <h3>Anomaly classification (ML)</h3>
-          <p>On-device TFLite model to classify pothole vs speed-breaker vs rough patch from the raw sensor window.</p>
+          <p>On-device TFLite model to classify pothole vs speed bump vs rough patch from the raw sensor window.</p>
         </div>
         <span class="roadmap-label label-future">Planned</span>
       </div>
@@ -488,9 +483,9 @@
         <p>Detection is purely sensor-based — accelerometer and gyroscope. No camera permission is ever requested.</p>
       </div>
       <div class="privacy-card">
-        <div class="icon">🇮🇳</div>
-        <h3>DPDP Act compliant</h3>
-        <p>The demo app shows an explicit consent dialog before any data collection starts, aligned with India's Digital Personal Data Protection Act 2023.</p>
+        <div class="icon">✅</div>
+        <h3>Explicit consent</h3>
+        <p>The demo app shows an explicit consent dialog before any data collection starts, in line with Google Play's location disclosure rules and state privacy laws such as California's CCPA.</p>
       </div>
       <div class="privacy-card">
         <div class="icon">🔓</div>

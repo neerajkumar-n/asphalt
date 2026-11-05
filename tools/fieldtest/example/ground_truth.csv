@@ -1,0 +1,18 @@
+id,lat,lon,type,expect_hit,severity,notes
+P01,41.8816335,-87.643,pothole,yes,3,eastbound wheel path
+P02,41.8816551,-87.6465,pothole,yes,2,eastbound wheel path
+B01,41.8816634,-87.6495,bump,yes,1,eastbound wheel path
+P03,41.8816431,-87.6535,pothole,yes,1,eastbound wheel path
+P04,41.8816321,-87.6575,pothole,yes,3,eastbound wheel path
+R01,41.8816491,-87.661,rough_patch,yes,2,eastbound wheel path
+P05,41.8816564,-87.665,pothole,yes,2,westbound wheel path
+B02,41.8816648,-87.6685,bump,yes,2,westbound wheel path
+P06,41.8816336,-87.673,pothole,yes,1,westbound wheel path
+P07,41.8816326,-87.677,pothole,yes,2,westbound wheel path
+B03,41.8816595,-87.6815,bump,yes,1,westbound wheel path
+P08,41.8816564,-87.686,pothole,yes,3,westbound wheel path
+X01,41.8817039,-87.6555,pothole,no,2,opposite lane
+X02,41.8817039,-87.675,pothole,no,2,opposite lane
+F01,41.8816638,-87.651,feature,no,,manhole cover
+F02,41.8816588,-87.6635,feature,no,,steel plate over utility cut
+F03,41.8816491,-87.684,feature,no,,rail crossing
