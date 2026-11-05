@@ -54,7 +54,19 @@
 .seg button{background:none;border:0;color:var(--fg);font:500 .78rem/1 var(--f-mono);letter-spacing:.04em;padding:12px 14px;cursor:pointer}
 .seg button + button{border-left:1px solid var(--ink)}
 .seg button[aria-pressed="true"]{background:var(--ink);color:var(--off)}
+.try-go{display:flex;flex-direction:column;gap:12px;align-items:flex-start}
+.try-prompt{display:flex;align-items:center;gap:8px;color:var(--fg)}
+.try-prompt i{width:8px;height:8px;border-radius:50%;background:var(--signal);box-shadow:0 0 0 1px var(--ink);animation:blink 1.6s ease-in-out infinite}
 .try-actions{display:flex;flex-wrap:wrap;gap:12px}
+.try-actions .pl{font-size:.72em;line-height:1}
+.btn.cue{position:relative}
+.btn.cue::after{content:"";position:absolute;inset:-1px;border:2px solid var(--ink);pointer-events:none;animation:cue 1.8s ease-out infinite}
+@keyframes cue{0%{inset:-1px;opacity:.7}100%{inset:-12px;opacity:0}}
+.btn.cue:hover::after{animation:none;opacity:0}
+.trace-wrap{position:relative}
+.inst-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:1;display:inline-flex;align-items:center;gap:10px;background:var(--signal);color:var(--ink);border:0;padding:12px 16px;font:600 .74rem/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;cursor:pointer;box-shadow:0 0 0 0 rgba(198,240,77,.6);animation:halo 1.8s ease-out infinite}
+.inst-play:hover{background:var(--off)}
+@keyframes halo{0%{box-shadow:0 0 0 0 rgba(198,240,77,.55)}100%{box-shadow:0 0 0 18px rgba(198,240,77,0)}}
 .inst{background:var(--ink);color:var(--off);min-width:0}
 .inst .label{color:#a3a59c}
 .inst-bar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px 16px;padding:12px 16px;border-bottom:1px solid var(--band-line)}
@@ -369,7 +381,8 @@
   .end-copy{grid-column:1/-1}
 }
 @media (prefers-reduced-motion:reduce){
-  .live i,.net .ring{animation:none}
+  .live i,.net .ring,.try-prompt i,.inst-play{animation:none}
+  .btn.cue::after{display:none}
   .flow.in .rail b{animation:none}
 }
 </style>
@@ -556,10 +569,13 @@
             <button type="button" data-vehicle="4" aria-pressed="true">Car · 4.0</button>
             <button type="button" data-vehicle="5" aria-pressed="false">Motorcycle · 5.0</button>
           </div>
-          <div class="try-actions">
-            <button class="btn signal" type="button" id="tryMotion" data-touch hidden>Use my phone</button>
-            <button class="btn" type="button" data-play="pothole">Drive over a pothole</button>
-            <button class="btn ghost" type="button" data-play="bump">Speed bump</button>
+          <div class="try-go">
+            <p class="label try-prompt"><i aria-hidden="true"></i>Your turn · press to play</p>
+            <div class="try-actions">
+              <button class="btn signal cue" type="button" id="tryMotion" data-touch hidden><span class="pl" aria-hidden="true">●</span>Use my phone</button>
+              <button class="btn signal cue" type="button" data-play="pothole" id="playPothole"><span class="pl" aria-hidden="true">▶</span>Drive over a pothole</button>
+              <button class="btn ghost" type="button" data-play="bump"><span class="pl" aria-hidden="true">▶</span>Speed bump</button>
+            </div>
           </div>
         </div>
 
@@ -568,6 +584,8 @@
             <span class="label">Detection model / simplified browser demo</span>
             <span class="label live"><i aria-hidden="true"></i><span id="trySrc">Simulated road</span></span>
           </div>
+          <div class="trace-wrap">
+          <button class="inst-play" type="button" data-play="pothole" id="instPlay" hidden><span aria-hidden="true">▶</span>Your turn · drive over a pothole</button>
           <svg class="try-trace" viewBox="0 0 600 240" role="img" aria-label="Road-normal acceleration over the last two seconds">
             <g id="tryGrid"></g>
             <line id="tryBase" x1="0" x2="600"/>
@@ -576,6 +594,7 @@
             <path class="tcurve" id="tryCurve"/>
             <g id="tryMarks"></g>
           </svg>
+          </div>
           <dl class="inst-read num">
             <div><dt class="label">Acceleration</dt><dd id="rAcc">9.81<small>m/s²</small></dd></div>
             <div><dt class="label">Baseline</dt><dd id="rBase">9.81<small>m/s²</small></dd></div>
@@ -1189,6 +1208,17 @@ Asphalt.<span class="f">requestPermissionAndStart</span>(this)</code></pre>
     };
     requestAnimationFrame(tick);
 
+    /* until someone plays, the buttons pulse; after the demo run, the trace invites them in */
+    let played = false;
+    const invite = $t('instPlay');
+    const settle = () => {
+      if (played) return;
+      played = true; invite.hidden = true;
+      tryEl.querySelectorAll('.cue').forEach(b => b.classList.remove('cue'));
+      tryEl.querySelector('.try-prompt').hidden = true;
+    };
+    tryEl.addEventListener('click', e => { if (e.target.closest('[data-play], #tryMotion')) settle(); });
+    if (touch) $t('playPothole').classList.remove('signal', 'cue');
     tryEl.querySelectorAll('[data-play]').forEach(b => b.addEventListener('click', () => {
       if (device) return;
       // real potholes vary: some clear the car threshold but not the motorcycle one
@@ -1198,10 +1228,11 @@ Asphalt.<span class="f">requestPermissionAndStart</span>(this)</code></pre>
       const seen = new IntersectionObserver(([e]) => {
         if (!e.isIntersecting) return;
         seen.disconnect();
-        setTimeout(() => { if (!device && !play) play = { fn: pothole, start: clock, size: 1.2, peak: 0 }; }, 700);
+        setTimeout(() => { if (!device && !play && !played) play = { fn: pothole, start: clock, size: 1.2, peak: 0 }; }, 700);
+        setTimeout(() => { if (!played && !device) invite.hidden = false; }, 3400);
       }, { threshold: .5 });
       seen.observe(tryEl.querySelector('.inst'));
-    }
+    } else invite.hidden = false;
     tryEl.querySelectorAll('[data-vehicle]').forEach(b => b.addEventListener('click', () => {
       thr = +b.dataset.vehicle;
       tryEl.querySelectorAll('[data-vehicle]').forEach(o => o.setAttribute('aria-pressed', o === b));
