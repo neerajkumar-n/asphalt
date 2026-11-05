@@ -19,11 +19,15 @@
 .a-hero .label{grid-column:1/-1;margin-bottom:20px}
 .a-hero h1{grid-column:1/-1;margin:0;color:var(--hi);font-weight:700;font-size:clamp(3rem,8vw,8.4rem);line-height:.92;letter-spacing:-.045em;text-wrap:balance}
 .a-hero .lede{grid-column:1/7;margin:clamp(24px,3vw,40px) 0 0;font-size:clamp(1.1rem,1.5vw,1.35rem);line-height:1.4;max-width:40ch;text-wrap:pretty}
-.toc{grid-column:8/13;align-self:start;list-style:none;margin:clamp(32px,3.6vw,48px) 0 0;padding:0;counter-reset:toc;border-top:1px solid var(--fg)}
-.toc li{counter-increment:toc;border-bottom:1px solid var(--line)}
-.toc a{display:flex;gap:14px;align-items:baseline;padding:11px 0;text-decoration:none;font-weight:500}
+.toc-h{grid-column:1/-1;margin-top:clamp(56px,6vw,96px)!important;margin-bottom:12px!important}
+.toc{grid-column:1/-1;list-style:none;margin:0;padding:0;counter-reset:toc;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));border-top:1px solid var(--fg);border-bottom:1px solid var(--fg)}
+.toc li{counter-increment:toc;min-width:0}
+.toc li + li{border-left:1px solid var(--line)}
+.toc a{display:flex;flex-direction:column;justify-content:space-between;gap:32px;height:100%;padding:16px 16px 20px;text-decoration:none;font-weight:500;line-height:1.2;transition:box-shadow .15s}
+.toc li:first-child a{padding-left:0}
 .toc a::before{content:counter(toc,decimal-leading-zero);font-family:var(--f-mono);font-size:.75rem;font-weight:500;color:var(--fg-mute)}
-.toc a:hover{text-decoration:underline;text-underline-offset:4px}
+.toc a:hover{box-shadow:inset 0 3px 0 var(--ink)}
+.toc a:hover::before{color:var(--fg)}
 
 /* 01 system diagram */
 .sys{grid-column:1/-1}
@@ -156,7 +160,10 @@
 
 @media (max-width:1080px){
   .a-hero h1,.a-hero .lede{grid-column:1/-1}
-  .toc{grid-column:1/-1;margin-top:32px}
+  .toc{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .toc li:nth-child(4){border-left:0}
+  .toc li:nth-child(n+4){border-top:1px solid var(--line)}
+  .toc li:nth-child(4) a{padding-left:0}
   .lanes{grid-template-columns:minmax(0,1fr)}
   .boundary{height:44px}
   .boundary::before{top:50%;bottom:auto;left:0;right:0;border-left:0;border-top:1px dashed var(--ink)}
@@ -164,6 +171,12 @@
   .why{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media (max-width:760px){
+  .toc{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .toc li:nth-child(n){border-left:0;border-top:0}
+  .toc li:nth-child(2n){border-left:1px solid var(--line)}
+  .toc li:nth-child(n+3){border-top:1px solid var(--line)}
+  .toc li:nth-child(odd) a{padding-left:0}
+  .toc a{gap:16px}
   .nodes{grid-template-columns:repeat(2,minmax(0,1fr))}
   .nodes li:nth-child(2n) .node{border-right:0}
   .nodes li .node{border-right:1px solid var(--line)}
@@ -211,6 +224,7 @@
       <p class="label">Architecture</p>
       <h1 id="top-h">From the phone to the map, end to end.</h1>
       <p class="lede">Two parts you can run on their own: an Android SDK that detects anomalies on the phone, and a Go server that turns many reports into a scored map. This page follows one pothole through both.</p>
+      <p class="label toc-h">On this page</p>
       <ol class="toc">
         <li><a href="#system">The system</a></li>
         <li><a href="#confidence">Confidence</a></li>
