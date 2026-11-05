@@ -38,6 +38,7 @@
 *,*::before,*::after{box-sizing:border-box}
 [hidden]{display:none!important}
 html{scroll-behavior:smooth}
+section[id]{scroll-margin-top:60px}
 html,body{margin:0}
 body{background:var(--bg);color:var(--fg);font-family:var(--f-sans);font-size:17px;line-height:1.5;-webkit-font-smoothing:antialiased;font-variant-numeric:lining-nums}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
@@ -89,9 +90,11 @@ a{color:inherit}
 .sec{padding-block:clamp(72px,9vw,140px)}
 .sec + .sec{border-top:1px solid var(--line)}
 .sec-head{row-gap:16px;margin-bottom:clamp(40px,5vw,72px)}
-.sec-head .label{grid-column:1/4;padding-top:.55em}
-.sec-head h2{grid-column:4/11;margin:0;color:var(--hi);font-weight:800;font-stretch:82%;font-size:clamp(2.4rem,5.4vw,5.2rem);line-height:.94;letter-spacing:-.02em;text-wrap:balance}
-.sec-head .intro{grid-column:4/10;margin:8px 0 0;font-size:1.1rem;color:var(--fg-mute);max-width:56ch;text-wrap:pretty}
+.sec-head .label{grid-column:1/4}
+.sec-mark{display:flex;flex-direction:column;align-items:flex-start;gap:14px;color:var(--fg);font-size:.8rem}
+.sec-n{font-family:var(--f-sans);font-weight:800;font-stretch:78%;font-size:clamp(3.6rem,7vw,6.4rem);line-height:.78;letter-spacing:-.03em;color:var(--accent)}
+.sec-head h2{grid-column:4/12;margin:0;color:var(--hi);font-weight:800;font-stretch:80%;font-size:clamp(2.8rem,6.4vw,6.4rem);line-height:.9;letter-spacing:-.025em;text-wrap:balance}
+.sec-head .intro{grid-column:4/10;margin:12px 0 0;font-size:clamp(1.1rem,1.4vw,1.3rem);line-height:1.45;color:var(--fg);max-width:52ch;text-wrap:pretty}
 
 /* signal */
 .chart-wrap{grid-column:1/-1}
@@ -120,9 +123,11 @@ a{color:inherit}
 .mini{fill:none;stroke:var(--hi);stroke-width:2;stroke-linejoin:round}
 
 /* try it */
-.try{grid-column:1/-1;margin-top:clamp(48px,6vw,80px);background:var(--surface);padding:clamp(20px,2.4vw,36px);display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(24px,3vw,48px)}
+.try-sec{padding-bottom:clamp(72px,9vw,140px)}
+.try-sec + .sec{border-top:1px solid var(--line)}
+.try{grid-column:1/-1;background:var(--surface);border-top:4px solid var(--accent);padding:clamp(20px,2.4vw,36px);display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(24px,3vw,48px)}
 .try-side{display:flex;flex-direction:column;gap:14px;align-items:flex-start}
-.try h3{margin:0;font-size:clamp(1.6rem,2.6vw,2.2rem);font-weight:800;font-stretch:82%;line-height:1;letter-spacing:-.02em;color:var(--hi)}
+.try h2{margin:0;font-size:clamp(2.2rem,4.4vw,4rem);font-weight:800;font-stretch:82%;line-height:1;letter-spacing:-.02em;color:var(--hi)}
 .try-how{margin:0;color:var(--fg-mute);max-width:42ch}
 .try-how b{color:var(--fg);font-weight:600}
 .seg{display:inline-flex;border:1px solid var(--line)}
@@ -210,8 +215,10 @@ a{color:inherit}
 /* start */
 .band{background:var(--band);color:var(--on-band)}
 .band .label{color:var(--on-band-mute)}
+.band .sec-mark{color:var(--on-band)}
+.band .sec-n{color:var(--on-band)}
 .band .sec-head h2{color:var(--on-band)}
-.band .sec-head .intro{color:var(--on-band-mute)}
+.band .sec-head .intro{color:var(--on-band)}
 .band + .sec{border-top:0}
 .code-col{grid-column:span 6;min-width:0;display:flex;flex-direction:column;gap:12px}
 .code-col h3{margin:0;display:flex;gap:14px;align-items:baseline;font-size:1.3rem;font-weight:700;font-stretch:85%}
@@ -262,6 +269,7 @@ a{color:inherit}
   .steps{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:32px}
   .steps li:nth-child(4){padding-left:0;border-left:0}
   .sec-head .label{grid-column:1/-1}
+  .sec-mark{flex-direction:row;align-items:baseline;gap:14px}
   .sec-head h2,.sec-head .intro{grid-column:1/11}
   .limits,.limits-link{grid-column:1/-1}
 }
@@ -275,7 +283,10 @@ a{color:inherit}
   .figs p{padding-left:0}
   .sec-head h2,.sec-head .intro{grid-column:1/-1}
   .chart-key{display:block}
-  .try{grid-template-columns:minmax(0,1fr)}
+  .try{grid-template-columns:minmax(0,1fr);gap:16px}
+  .try-side{display:contents}
+  .try-main{order:1}
+  .try .seg,.try-actions{order:2}
   .multiples{grid-template-columns:minmax(0,1fr);row-gap:36px}
   .steps{grid-template-columns:minmax(0,1fr)}
   .steps li,.steps li + li{padding:20px 0;border-left:0;border-top:1px solid var(--line)}
@@ -308,6 +319,7 @@ a{color:inherit}
       asphalt
     </a>
     <ul class="nav">
+      <li><a href="#try-it">Try it</a></li>
       <li class="hide-sm"><a href="#signal">Signal</a></li>
       <li class="hide-sm"><a href="#how">How it works</a></li>
       <li class="hide-sm"><a href="#start">Get started</a></li>
@@ -349,8 +361,8 @@ a{color:inherit}
     <div class="grid hero-row">
       <p class="lede">Asphalt turns the phones already driving your city into a road quality map. No accounts. No continuous tracking. Only the bumps leave the phone.</p>
       <div class="actions">
-        <a class="btn" href="demo/"><i></i>Open the demo map</a>
-        <a class="btn ghost" href="#start">Put it in your app</a>
+        <a class="btn" href="#try-it"><i></i>Try the detector</a>
+        <a class="btn ghost" href="demo/">Open the demo map</a>
       </div>
       <div class="figs num" aria-label="Synthetic demo dataset">
         <div><b>4,583</b><span>phone reports</span></div>
@@ -363,11 +375,49 @@ a{color:inherit}
   </div>
 </section>
 
+<!-- try it -->
+<section class="try-sec" id="try-it" aria-labelledby="try-h">
+  <div class="wrap">
+    <div class="grid">
+      <div class="try" id="try">
+        <div class="try-side">
+          <p class="label">Try it · no install</p>
+          <h2 id="try-h">Feel a pothole. Right here.</h2>
+          <p class="try-how" data-touch>Hold your phone flat, tap <b>Use my phone</b>, then dip it down fast and stop it sharply. That is a pothole: a dip, then a spike.</p>
+          <p class="try-how" data-desk>Send a wheel over a pothole or a speed bump. The same check the SDK runs watches the trace.</p>
+          <div class="seg" role="group" aria-label="Vehicle">
+            <button type="button" data-vehicle="4" aria-pressed="true">Car · 4.0</button>
+            <button type="button" data-vehicle="5" aria-pressed="false">Motorcycle · 5.0</button>
+          </div>
+          <div class="try-actions">
+            <button class="btn" type="button" id="tryMotion" data-touch hidden><i></i>Use my phone</button>
+            <button class="btn" type="button" data-play="pothole"><i></i>Drive over a pothole</button>
+            <button class="btn ghost" type="button" data-play="bump">Speed bump</button>
+          </div>
+        </div>
+        <div class="try-main">
+          <svg class="try-trace" viewBox="0 0 600 220" role="img" aria-label="Live road-normal acceleration over the last two seconds">
+            <line class="base" x1="0" x2="600" id="tryBase"/>
+            <line class="thr" x1="0" x2="600" id="tryThr"/>
+            <path class="curve" id="tryCurve"/>
+            <g id="tryMarks"></g>
+          </svg>
+          <div class="try-read num">
+            <p class="try-status" id="tryStatus" role="status" aria-live="polite">Listening · flat road</p>
+            <p class="try-count"><b id="tryCount">0</b> detected</p>
+          </div>
+          <p class="try-note">Simplified in the browser: no gyroscope check or speed gate. Nothing leaves this page.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- signal -->
 <section class="sec" id="signal" aria-labelledby="signal-h">
   <div class="wrap">
     <div class="grid sec-head">
-      <p class="label">01 · The signal</p>
+      <p class="label sec-mark"><span class="sec-n">01</span><span>The signal</span></p>
       <h2 id="signal-h">A pothole lasts 150 to 400 milliseconds. That is enough.</h2>
       <p class="intro">The SDK samples linear acceleration and gravity at about 50 Hz and projects one onto the other, so it reads the force normal to the road however the phone is mounted. A pothole shows up as a dip and then a spike.</p>
     </div>
@@ -399,36 +449,6 @@ a{color:inherit}
           <svg viewBox="0 0 300 110" aria-hidden="true"><g data-mini="rough"></g></svg>
         </div>
       </div>
-      <div class="try" id="try">
-        <div class="try-side">
-          <p class="label">Try it</p>
-          <h3>Your phone is the sensor.</h3>
-          <p class="try-how" data-touch>Hold your phone flat, tap <b>Use my phone</b>, then dip it down fast and stop it sharply. That is a pothole: a dip, then a spike.</p>
-          <p class="try-how" data-desk>Send a wheel over a pothole or a speed bump. The same check the SDK runs watches the trace.</p>
-          <div class="seg" role="group" aria-label="Vehicle">
-            <button type="button" data-vehicle="4" aria-pressed="true">Car · 4.0</button>
-            <button type="button" data-vehicle="5" aria-pressed="false">Motorcycle · 5.0</button>
-          </div>
-          <div class="try-actions">
-            <button class="btn" type="button" id="tryMotion" data-touch hidden><i></i>Use my phone</button>
-            <button class="btn" type="button" data-play="pothole"><i></i>Drive over a pothole</button>
-            <button class="btn ghost" type="button" data-play="bump">Speed bump</button>
-          </div>
-        </div>
-        <div class="try-main">
-          <svg class="try-trace" viewBox="0 0 600 220" role="img" aria-label="Live road-normal acceleration over the last two seconds">
-            <line class="base" x1="0" x2="600" id="tryBase"/>
-            <line class="thr" x1="0" x2="600" id="tryThr"/>
-            <path class="curve" id="tryCurve"/>
-            <g id="tryMarks"></g>
-          </svg>
-          <div class="try-read num">
-            <p class="try-status" id="tryStatus" role="status" aria-live="polite">Listening · flat road</p>
-            <p class="try-count"><b id="tryCount">0</b> detected</p>
-          </div>
-          <p class="try-note">Simplified in the browser: no gyroscope check or speed gate. Nothing leaves this page.</p>
-        </div>
-      </div>
     </div>
   </div>
 </section>
@@ -437,7 +457,7 @@ a{color:inherit}
 <section class="sec" id="how" aria-labelledby="how-h">
   <div class="wrap">
     <div class="grid sec-head">
-      <p class="label">02 · How it works</p>
+      <p class="label sec-mark"><span class="sec-n">02</span><span>How it works</span></p>
       <h2 id="how-h">From a jolt in a cupholder to a point on a map.</h2>
     </div>
     <div class="grid">
@@ -456,7 +476,7 @@ a{color:inherit}
 <section class="sec" id="principles" aria-labelledby="principles-h">
   <div class="wrap">
     <div class="grid sec-head">
-      <p class="label">03 · Principles</p>
+      <p class="label sec-mark"><span class="sec-n">03</span><span>Principles</span></p>
       <h2 id="principles-h">Built for real phones on real roads.</h2>
     </div>
     <div class="grid">
@@ -533,7 +553,7 @@ a{color:inherit}
 <section class="sec" id="demo" aria-labelledby="demo-h">
   <div class="wrap">
     <div class="grid sec-head">
-      <p class="label">04 · The demo map</p>
+      <p class="label sec-mark"><span class="sec-n">04</span><span>The demo map</span></p>
       <h2 id="demo-h">Three cities, before a single driver installs anything.</h2>
       <p class="intro">The demo runs on a synthetic dataset generated to look like real driving: mostly cars, some motorcycles, commute-hour peaks. It shows what a populated map looks like without a backend.</p>
     </div>
@@ -559,7 +579,7 @@ a{color:inherit}
 <section class="sec band" id="start" aria-labelledby="start-h">
   <div class="wrap">
     <div class="grid sec-head">
-      <p class="label">05 · Get started</p>
+      <p class="label sec-mark"><span class="sec-n">05</span><span>Get started</span></p>
       <h2 id="start-h">One line in your app. One command for the backend.</h2>
     </div>
     <div class="grid">
@@ -605,7 +625,7 @@ curl http://localhost:8080/v1/health</code></pre>
 <section class="sec" id="limits" aria-labelledby="limits-h">
   <div class="wrap">
     <div class="grid sec-head">
-      <p class="label">06 · Known limitations</p>
+      <p class="label sec-mark"><span class="sec-n">06</span><span>Known limitations</span></p>
       <h2 id="limits-h">What v1 does not do yet.</h2>
     </div>
     <div class="grid">
@@ -629,6 +649,7 @@ curl http://localhost:8080/v1/health</code></pre>
         <p class="label">Product</p>
         <ul>
           <li><a href="demo/">Demo map</a></li>
+          <li><a href="#try-it">Try the detector</a></li>
           <li><a href="#signal">The signal</a></li>
           <li><a href="#how">How it works</a></li>
           <li><a href="#start">Get started</a></li>
@@ -808,6 +829,14 @@ curl http://localhost:8080/v1/health</code></pre>
       // real potholes vary: some clear the car threshold but not the motorcycle one
       play = { fn: b.dataset.play === 'bump' ? bump : pothole, start: clock, size: .75 + Math.random() * .65, peak: 0 };
     }));
+    if ('IntersectionObserver' in window) {
+      const seen = new IntersectionObserver(([e]) => {
+        if (!e.isIntersecting) return;
+        seen.disconnect();
+        setTimeout(() => { if (!device && !play) play = { fn: pothole, start: clock, size: 1.2, peak: 0 }; }, 700);
+      }, { threshold: .6 });
+      seen.observe(tryEl);
+    }
     tryEl.querySelectorAll('[data-vehicle]').forEach(b => b.addEventListener('click', () => {
       thr = +b.dataset.vehicle;
       tryEl.querySelectorAll('[data-vehicle]').forEach(o => o.setAttribute('aria-pressed', o === b));
