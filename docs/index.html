@@ -90,9 +90,11 @@ a{color:inherit}
 .sec{padding-block:clamp(72px,9vw,140px)}
 .sec + .sec{border-top:1px solid var(--line)}
 .sec-head{row-gap:16px;margin-bottom:clamp(40px,5vw,72px)}
-.sec-head .label{grid-column:1/4;padding-top:.55em}
-.sec-head h2{grid-column:4/11;margin:0;color:var(--hi);font-weight:800;font-stretch:82%;font-size:clamp(2.4rem,5.4vw,5.2rem);line-height:.94;letter-spacing:-.02em;text-wrap:balance}
-.sec-head .intro{grid-column:4/10;margin:8px 0 0;font-size:1.1rem;color:var(--fg-mute);max-width:56ch;text-wrap:pretty}
+.sec-head .label{grid-column:1/4}
+.sec-mark{display:flex;flex-direction:column;align-items:flex-start;gap:14px;color:var(--fg);font-size:.8rem}
+.sec-n{font-family:var(--f-sans);font-weight:800;font-stretch:78%;font-size:clamp(3.6rem,7vw,6.4rem);line-height:.78;letter-spacing:-.03em;color:var(--accent)}
+.sec-head h2{grid-column:4/12;margin:0;color:var(--hi);font-weight:800;font-stretch:80%;font-size:clamp(2.8rem,6.4vw,6.4rem);line-height:.9;letter-spacing:-.025em;text-wrap:balance}
+.sec-head .intro{grid-column:4/10;margin:12px 0 0;font-size:clamp(1.1rem,1.4vw,1.3rem);line-height:1.45;color:var(--fg);max-width:52ch;text-wrap:pretty}
 
 /* signal */
 .chart-wrap{grid-column:1/-1}
@@ -213,8 +215,10 @@ a{color:inherit}
 /* start */
 .band{background:var(--band);color:var(--on-band)}
 .band .label{color:var(--on-band-mute)}
+.band .sec-mark{color:var(--on-band)}
+.band .sec-n{color:var(--on-band)}
 .band .sec-head h2{color:var(--on-band)}
-.band .sec-head .intro{color:var(--on-band-mute)}
+.band .sec-head .intro{color:var(--on-band)}
 .band + .sec{border-top:0}
 .code-col{grid-column:span 6;min-width:0;display:flex;flex-direction:column;gap:12px}
 .code-col h3{margin:0;display:flex;gap:14px;align-items:baseline;font-size:1.3rem;font-weight:700;font-stretch:85%}
@@ -265,6 +269,7 @@ a{color:inherit}
   .steps{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:32px}
   .steps li:nth-child(4){padding-left:0;border-left:0}
   .sec-head .label{grid-column:1/-1}
+  .sec-mark{flex-direction:row;align-items:baseline;gap:14px}
   .sec-head h2,.sec-head .intro{grid-column:1/11}
   .limits,.limits-link{grid-column:1/-1}
 }
@@ -412,7 +417,7 @@ a{color:inherit}
 <section class="sec" id="signal" aria-labelledby="signal-h">
   <div class="wrap">
     <div class="grid sec-head">
-      <p class="label">01 · The signal</p>
+      <p class="label sec-mark"><span class="sec-n">01</span><span>The signal</span></p>
       <h2 id="signal-h">A pothole lasts 150 to 400 milliseconds. That is enough.</h2>
       <p class="intro">The SDK samples linear acceleration and gravity at about 50 Hz and projects one onto the other, so it reads the force normal to the road however the phone is mounted. A pothole shows up as a dip and then a spike.</p>
     </div>
@@ -452,7 +457,7 @@ a{color:inherit}
 <section class="sec" id="how" aria-labelledby="how-h">
   <div class="wrap">
     <div class="grid sec-head">
-      <p class="label">02 · How it works</p>
+      <p class="label sec-mark"><span class="sec-n">02</span><span>How it works</span></p>
       <h2 id="how-h">From a jolt in a cupholder to a point on a map.</h2>
     </div>
     <div class="grid">
@@ -471,7 +476,7 @@ a{color:inherit}
 <section class="sec" id="principles" aria-labelledby="principles-h">
   <div class="wrap">
     <div class="grid sec-head">
-      <p class="label">03 · Principles</p>
+      <p class="label sec-mark"><span class="sec-n">03</span><span>Principles</span></p>
       <h2 id="principles-h">Built for real phones on real roads.</h2>
     </div>
     <div class="grid">
@@ -548,7 +553,7 @@ a{color:inherit}
 <section class="sec" id="demo" aria-labelledby="demo-h">
   <div class="wrap">
     <div class="grid sec-head">
-      <p class="label">04 · The demo map</p>
+      <p class="label sec-mark"><span class="sec-n">04</span><span>The demo map</span></p>
       <h2 id="demo-h">Three cities, before a single driver installs anything.</h2>
       <p class="intro">The demo runs on a synthetic dataset generated to look like real driving: mostly cars, some motorcycles, commute-hour peaks. It shows what a populated map looks like without a backend.</p>
     </div>
@@ -574,7 +579,7 @@ a{color:inherit}
 <section class="sec band" id="start" aria-labelledby="start-h">
   <div class="wrap">
     <div class="grid sec-head">
-      <p class="label">05 · Get started</p>
+      <p class="label sec-mark"><span class="sec-n">05</span><span>Get started</span></p>
       <h2 id="start-h">One line in your app. One command for the backend.</h2>
     </div>
     <div class="grid">
@@ -620,7 +625,7 @@ curl http://localhost:8080/v1/health</code></pre>
 <section class="sec" id="limits" aria-labelledby="limits-h">
   <div class="wrap">
     <div class="grid sec-head">
-      <p class="label">06 · Known limitations</p>
+      <p class="label sec-mark"><span class="sec-n">06</span><span>Known limitations</span></p>
       <h2 id="limits-h">What v1 does not do yet.</h2>
     </div>
     <div class="grid">
