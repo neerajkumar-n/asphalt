@@ -5,30 +5,30 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Asphalt · Architecture</title>
 <meta name="description" content="How Asphalt works end to end: on-device detection in the Android SDK, the privacy boundary, batch upload, clustering and confidence scoring in the Go backend, deployment options and the HTTP API.">
-<meta name="color-scheme" content="dark">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231c1c1e'/%3E%3Cpath d='M6 22h20' stroke='%23e0f354' stroke-width='3' stroke-dasharray='5 3'/%3E%3Cpath d='M12 13q4 5 8 0' stroke='%23fff' stroke-width='2.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<meta name="color-scheme" content="light">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' fill='%23171917'/%3E%3Cpath d='M3 16h18' stroke='%23f4f3ee' stroke-width='2' stroke-dasharray='4 2.5'/%3E%3Ccircle cx='15' cy='16' r='3.2' fill='%23c6f04d'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="site.css">
+<script>document.documentElement.classList.add('js')</script>
 <style>
-.nav a[aria-current="page"]{color:var(--fg)}
 
 /* page hero */
 .a-hero{padding-block:clamp(40px,7vw,104px) clamp(48px,6vw,88px)}
 .a-hero .label{grid-column:1/-1;margin-bottom:20px}
-.a-hero h1{grid-column:1/11;margin:0;color:var(--hi);font-weight:800;font-stretch:78%;font-size:clamp(3rem,8vw,8.4rem);line-height:.88;letter-spacing:-.025em;text-wrap:balance}
+.a-hero h1{grid-column:1/-1;margin:0;color:var(--hi);font-weight:700;font-size:clamp(3rem,8vw,8.4rem);line-height:.92;letter-spacing:-.045em;text-wrap:balance}
 .a-hero .lede{grid-column:1/7;margin:clamp(24px,3vw,40px) 0 0;font-size:clamp(1.1rem,1.5vw,1.35rem);line-height:1.4;max-width:40ch;text-wrap:pretty}
-.toc{grid-column:8/13;align-self:end;list-style:none;margin:0;padding:0;counter-reset:toc;border-top:2px solid var(--fg)}
+.toc{grid-column:8/13;align-self:start;list-style:none;margin:clamp(32px,3.6vw,48px) 0 0;padding:0;counter-reset:toc;border-top:1px solid var(--fg)}
 .toc li{counter-increment:toc;border-bottom:1px solid var(--line)}
-.toc a{display:flex;gap:14px;align-items:baseline;padding:11px 0;text-decoration:none;font-weight:600}
-.toc a::before{content:counter(toc,decimal-leading-zero);font-family:var(--f-mono);font-size:.75rem;font-weight:500;color:var(--accent)}
-.toc a:hover{color:var(--hi)}
+.toc a{display:flex;gap:14px;align-items:baseline;padding:11px 0;text-decoration:none;font-weight:500}
+.toc a::before{content:counter(toc,decimal-leading-zero);font-family:var(--f-mono);font-size:.75rem;font-weight:500;color:var(--fg-mute)}
+.toc a:hover{text-decoration:underline;text-underline-offset:4px}
 
 /* 01 system diagram */
 .sys{grid-column:1/-1}
 .lanes{display:grid;grid-template-columns:minmax(0,1fr) 56px minmax(0,1fr);align-items:stretch}
-.lane-head{display:flex;justify-content:space-between;align-items:baseline;padding-bottom:12px;border-bottom:2px solid var(--fg)}
+.lane-head{display:flex;justify-content:space-between;align-items:baseline;padding-bottom:12px;border-bottom:1px solid var(--fg)}
 .lane-head b{font-size:1.15rem;font-weight:700}
 .nodes{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
 .node{display:flex;flex-direction:column;align-items:flex-start;gap:6px;width:100%;height:100%;min-height:128px;padding:16px 14px 14px;background:none;border:0;border-right:1px solid var(--line);border-bottom:1px solid var(--line);color:var(--fg);font:inherit;text-align:left;cursor:pointer;position:relative}
@@ -40,14 +40,14 @@
 .node:hover b{color:var(--hi)}
 .node[aria-pressed="true"]{background:var(--surface)}
 .node[aria-pressed="true"] b{color:var(--hi)}
-.node[aria-pressed="true"]::after{background:var(--accent)}
-.node[aria-pressed="true"] .n{color:var(--accent)}
+.node[aria-pressed="true"]::after{background:var(--ink)}
+.node[aria-pressed="true"] .n{color:var(--fg)}
 .boundary{position:relative;display:flex;justify-content:center}
-.boundary::before{content:"";position:absolute;top:0;bottom:0;left:50%;border-left:2px dashed var(--accent)}
-.boundary span{position:relative;align-self:center;writing-mode:vertical-rl;transform:rotate(180deg);background:var(--bg);padding:10px 0;font-family:var(--f-mono);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);white-space:nowrap}
+.boundary::before{content:"";position:absolute;top:0;bottom:0;left:50%;border-left:1px dashed var(--ink)}
+.boundary span{position:relative;align-self:center;writing-mode:vertical-rl;transform:rotate(180deg);background:var(--signal);padding:10px 4px;font-family:var(--f-mono);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);white-space:nowrap}
 
 .detail{margin-top:clamp(28px,3vw,40px);display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(24px,3vw,48px);background:var(--surface);padding:clamp(20px,2.4vw,36px)}
-.detail h3{margin:6px 0 12px;color:var(--hi);font-size:clamp(1.8rem,3vw,2.6rem);font-weight:800;font-stretch:80%;line-height:.95;letter-spacing:-.02em}
+.detail h3{margin:6px 0 12px;color:var(--hi);font-size:clamp(1.8rem,3vw,2.6rem);font-weight:500;line-height:1;letter-spacing:-.035em}
 .detail .what{margin:0 0 18px;max-width:46ch}
 .specs{margin:0;display:grid;grid-template-columns:auto minmax(0,1fr);gap:0 18px;border-top:1px solid var(--line)}
 .specs dt,.specs dd{padding:9px 0;border-bottom:1px solid var(--line);margin:0;font-size:.92rem}
@@ -62,7 +62,7 @@
 .stepper button{background:none;border:1px solid var(--line);color:var(--fg);font:500 .8rem/1 var(--f-mono);padding:10px 14px;cursor:pointer}
 .stepper button:hover{border-color:var(--fg)}
 .stepper button.go{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
-.stepper button.go:hover{background:var(--hi);border-color:var(--hi)}
+.stepper button.go:hover{background:var(--ink);border-color:var(--ink);color:var(--off)}
 .stepper .pos{font-family:var(--f-mono);font-size:.78rem;color:var(--fg-mute)}
 
 /* 02 confidence */
@@ -71,7 +71,7 @@
 .inp{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px 16px;padding-bottom:18px;border-bottom:1px solid var(--line)}
 .inp label{font-weight:600}
 .inp output{font-family:var(--f-mono);color:var(--hi)}
-.inp input[type=range]{grid-column:1/-1;width:100%;accent-color:var(--accent)}
+.inp input[type=range]{grid-column:1/-1;width:100%;accent-color:var(--ink)}
 .inp .hint{grid-column:1/-1;margin:0;font-size:.82rem;color:var(--fg-mute)}
 .count{display:inline-flex;border:1px solid var(--line)}
 .count button{width:40px;background:none;border:0;color:var(--fg);font:600 1.1rem/1 var(--f-sans);cursor:pointer;padding:8px 0}
@@ -82,10 +82,10 @@
 .presets button:hover{color:var(--fg);border-color:var(--fg)}
 .result{display:flex;flex-direction:column;gap:18px;min-width:0}
 .score{display:flex;align-items:baseline;gap:18px;flex-wrap:wrap}
-.score b{font-weight:800;font-stretch:78%;font-size:clamp(5rem,11vw,9.6rem);line-height:.8;letter-spacing:-.03em;color:var(--hi)}
+.score b{font-weight:500;font-size:clamp(5rem,11vw,9.6rem);line-height:.8;letter-spacing:-.05em;color:var(--hi)}
 .verdict{margin:0;font-weight:600;font-size:1.05rem;max-width:30ch}
 .verdict.off{color:var(--fg-mute)}
-.stack{display:flex;height:22px;background:var(--deep)}
+.stack{display:flex;height:22px;background:var(--paper);box-shadow:inset 0 0 0 1px var(--ink)}
 .stack i{display:block;height:100%;transition:width .25s}
 .stack i + i{box-shadow:inset 2px 0 0 var(--bg)}
 .parts{margin:0;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:0 16px;align-items:baseline}
@@ -102,13 +102,13 @@
 .priv{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,8fr) minmax(0,4fr);gap:clamp(24px,3vw,48px)}
 .fields{width:100%;border-collapse:collapse}
 .fields th,.fields td{text-align:left;vertical-align:baseline;padding:12px 16px 12px 0;border-bottom:1px solid var(--line);font-weight:400}
-.fields thead th{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-mute);border-bottom:2px solid var(--fg);padding-top:0}
+.fields thead th{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-mute);border-bottom:1px solid var(--fg);padding-top:0}
 .fields td:first-child{font-family:var(--f-mono);font-size:.85rem;color:var(--hi);white-space:nowrap}
 .fields td:nth-child(2){font-family:var(--f-mono);font-size:.82rem;white-space:nowrap}
 .fields td:last-child{color:var(--fg-mute);font-size:.92rem}
 .never{background:var(--band);color:var(--on-band);padding:clamp(20px,2.4vw,32px);align-self:start}
 .never .label{color:var(--on-band-mute)}
-.never h3{margin:8px 0 14px;font-size:1.6rem;font-weight:800;font-stretch:82%;line-height:1}
+.never h3{margin:8px 0 14px;font-size:1.6rem;font-weight:500;letter-spacing:-.02em;line-height:1.05}
 .never ul{list-style:none;margin:0;padding:0}
 .never li{padding:9px 0;border-top:1px solid var(--band-line);font-weight:600}
 .never li::before{content:"✕  ";font-family:var(--f-mono)}
@@ -116,25 +116,25 @@
 
 /* 04 deploy tabs */
 .tabs{grid-column:1/-1}
-.tablist{display:flex;border-bottom:2px solid var(--fg);overflow-x:auto;scrollbar-width:none}
-.tablist button{flex:none;background:none;border:0;color:var(--fg-mute);font:700 1.05rem/1 var(--f-sans);padding:14px 20px 14px 0;margin-right:20px;cursor:pointer;position:relative}
+.tablist{display:flex;border-bottom:1px solid var(--fg);overflow-x:auto;scrollbar-width:none}
+.tablist button{flex:none;background:none;border:0;color:var(--fg-mute);font:500 1.05rem/1 var(--f-sans);padding:14px 20px 14px 0;margin-right:20px;cursor:pointer;position:relative}
 .tablist button::after{content:"";position:absolute;left:0;right:0;bottom:-2px;height:4px;background:transparent}
 .tablist button[aria-selected="true"]{color:var(--hi)}
-.tablist button[aria-selected="true"]::after{background:var(--accent)}
+.tablist button[aria-selected="true"]::after{background:var(--ink)}
 .panel{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(24px,3vw,48px);padding-top:clamp(24px,3vw,40px)}
-.panel h3{margin:0 0 10px;font-size:1.6rem;font-weight:800;font-stretch:82%;line-height:1}
+.panel h3{margin:0 0 10px;font-size:1.6rem;font-weight:500;letter-spacing:-.02em;line-height:1.05}
 .panel p{margin:0 0 12px;max-width:46ch}
 .panel ul{margin:0;padding:0;list-style:none}
 .panel li{padding:8px 0;border-top:1px solid var(--line);font-size:.92rem;color:var(--fg-mute)}
 .panel li b{color:var(--fg);font-weight:600}
 
 /* 05 api */
-.api{grid-column:1/-1;border-top:2px solid var(--fg)}
+.api{grid-column:1/-1;border-top:1px solid var(--fg)}
 .api details{border-bottom:1px solid var(--line)}
 .api summary{display:grid;grid-template-columns:72px minmax(0,1fr) auto;gap:16px;align-items:baseline;padding:18px 0;cursor:pointer;list-style:none}
 .api summary::-webkit-details-marker{display:none}
 .api summary::after{content:"+";font:500 1.3rem/1 var(--f-mono);color:var(--fg-mute)}
-.api details[open] summary::after{content:"–";color:var(--accent)}
+.api details[open] summary::after{content:"–";color:var(--fg)}
 .api .m{font-family:var(--f-mono);font-size:.78rem;font-weight:500;padding:3px 0;text-align:center;border:1px solid var(--line)}
 .api .m.post{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 .api .path{font-family:var(--f-mono);font-size:clamp(.88rem,1.3vw,1.05rem);color:var(--fg);overflow-wrap:anywhere}
@@ -149,9 +149,9 @@
 
 /* 06 decisions */
 .why{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--g)}
-.why article{border-top:2px solid var(--fg);padding-top:16px}
-.why .label{color:var(--accent)}
-.why h3{margin:10px 0 8px;font-size:1.35rem;font-weight:700;font-stretch:85%;line-height:1.1}
+.why article{border-top:1px solid var(--fg);padding-top:16px}
+.why .label{color:var(--fg)}
+.why h3{margin:10px 0 8px;font-size:1.35rem;font-weight:500;letter-spacing:-.02em;line-height:1.15}
 .why p{margin:0;color:var(--fg-mute);font-size:.95rem}
 
 @media (max-width:1080px){
@@ -159,7 +159,7 @@
   .toc{grid-column:1/-1;margin-top:32px}
   .lanes{grid-template-columns:minmax(0,1fr)}
   .boundary{height:44px}
-  .boundary::before{top:50%;bottom:auto;left:0;right:0;border-left:0;border-top:2px dashed var(--accent)}
+  .boundary::before{top:50%;bottom:auto;left:0;right:0;border-left:0;border-top:1px dashed var(--ink)}
   .boundary span{writing-mode:horizontal-tb;transform:none;padding:0 10px}
   .why{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
@@ -182,17 +182,25 @@
 <header class="top">
   <div class="wrap">
     <a class="brand" href="./" aria-label="Asphalt home">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="7.5" fill="currentColor"/><path d="M1 20.5 H23" stroke="var(--accent)" stroke-width="2.4" stroke-dasharray="4 2.5"/></svg>
-      asphalt
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" fill="#171917"/><path d="M3 16h18" stroke="#f4f3ee" stroke-width="2" stroke-dasharray="4 2.5"/><circle cx="15" cy="16" r="3.2" fill="#c6f04d"/></svg>
+      ASPHALT
     </a>
-    <ul class="nav">
-      <li><a href="./#try-it">Try it</a></li>
-      <li class="hide-sm"><a href="./#how">How it works</a></li>
-      <li><a href="architecture" aria-current="page">Architecture</a></li>
-      <li class="hide-sm"><a href="./#start">Get started</a></li>
-      <li class="hide-sm"><a href="demo/">Demo map</a></li>
-      <li><a class="pill" href="https://github.com/neerajkumar-n/asphalt">GitHub</a></li>
-    </ul>
+    <nav class="nav" id="nav" aria-label="Main">
+      <ul>
+        <li><a href="./#principles">Product</a></li>
+        <li><a href="./#how">How it works</a></li>
+        <li><a href="architecture" aria-current="page">Architecture</a></li>
+        <li><a href="demo/">Demo</a></li>
+        <li><a href="https://github.com/neerajkumar-n/asphalt/tree/main/docs">Documentation</a></li>
+        <li class="nav-sm"><a href="./#start">Get started</a></li>
+        <li class="nav-sm"><a href="https://github.com/neerajkumar-n/asphalt">GitHub</a></li>
+      </ul>
+    </nav>
+    <div class="top-act">
+      <a class="gh" href="https://github.com/neerajkumar-n/asphalt" aria-label="Asphalt on GitHub"><svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a>
+      <a class="btn signal sm" href="./#try-it">Try the detector <span class="ar">↗</span></a>
+      <button class="menu-btn" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
+    </div>
   </div>
 </header>
 
@@ -531,34 +539,41 @@ curl -X POST http://localhost:8080/v1/ingest/batch \
 <footer class="foot">
   <div class="wrap">
     <div class="grid">
-      <p class="foot-say">Every road keeps a record.</p>
+      <div class="foot-id">
+        <a class="brand" href="./" aria-label="Asphalt home"><svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" fill="#171917"/><path d="M3 16h18" stroke="#f4f3ee" stroke-width="2" stroke-dasharray="4 2.5"/><circle cx="15" cy="16" r="3.2" fill="#c6f04d"/></svg>ASPHALT</a>
+        <p>An open-source road-quality platform powered by the phones already on the road.</p>
+      </div>
       <nav aria-label="Product">
         <p class="label">Product</p>
         <ul>
           <li><a href="./#try-it">Try the detector</a></li>
-          <li><a href="./#how">How it works</a></li>
-          <li><a href="./#start">Get started</a></li>
           <li><a href="demo/">Demo map</a></li>
+          <li><a href="./#how">How it works</a></li>
+          <li><a href="architecture">Architecture</a></li>
+          <li><a href="./#signal">The signal</a></li>
         </ul>
       </nav>
-      <nav aria-label="Documentation">
-        <p class="label">Docs</p>
+      <nav aria-label="Developers">
+        <p class="label">Developers</p>
         <ul>
-          <li><a href="architecture">Architecture</a></li>
           <li><a href="https://github.com/neerajkumar-n/asphalt/blob/main/docs/sdk-integration.md">SDK integration</a></li>
           <li><a href="https://github.com/neerajkumar-n/asphalt/blob/main/docs/backend-setup.md">Backend setup</a></li>
+          <li><a href="https://github.com/neerajkumar-n/asphalt/blob/main/contracts/api.yaml">API (OpenAPI)</a></li>
           <li><a href="https://github.com/neerajkumar-n/asphalt/blob/main/docs/sensor-model.md">Sensor model</a></li>
+          <li><a href="https://github.com/neerajkumar-n/asphalt/blob/main/docs/vehicle-profiles.md">Vehicle profiles</a></li>
+          <li><a href="https://github.com/neerajkumar-n/asphalt/blob/main/CONTRIBUTING.md">Contributing</a></li>
         </ul>
       </nav>
       <nav aria-label="Project">
         <p class="label">Project</p>
         <ul>
           <li><a href="https://github.com/neerajkumar-n/asphalt">GitHub</a></li>
-          <li><a href="https://github.com/neerajkumar-n/asphalt/blob/main/CONTRIBUTING.md">Contributing</a></li>
-          <li><a href="https://github.com/neerajkumar-n/asphalt/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
           <li><a href="https://github.com/neerajkumar-n/asphalt/blob/main/LICENSE">Licence</a></li>
+          <li><a href="https://github.com/neerajkumar-n/asphalt/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
+          <li><a href="./#limits">Known limitations</a></li>
         </ul>
       </nav>
+      <p class="foot-say">Every road has a signal.</p>
       <div class="foot-base label"><span>Apache 2.0 · Asphalt contributors</span><a href="#top-h">Back to top ↑</a></div>
     </div>
   </div>
@@ -653,7 +668,7 @@ curl -X POST http://localhost:8080/v1/ingest/batch \
 
   /* 02 · confidence, the same formula as backend/internal/clustering/cluster.go */
   const css = getComputedStyle(document.documentElement);
-  const C = ['--yellow', '--orange', '--fg', '--fg-mute'].map(v => css.getPropertyValue(v).trim());
+  const C = ['--ink', '--olive', '--concrete', '--signal'].map(v => css.getPropertyValue(v).trim());
   const st = { cars: 2, motos: 0, agree: 100, age: 0 };
   const calc = () => {
     const n = st.cars + st.motos, weight = st.cars + .8 * st.motos;
