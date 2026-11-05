@@ -10,59 +10,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<style>
-:root{
-  /* 60-30-10 palette. 60: asphalt charcoal, the ground (fresh blacktop). 30: crest yellow for headlines, data and feature surfaces (centre-line paint). 10: mandarin orange for actions and signals only (work-zone orange); on charcoal it is safe for small text too. */
-  --charcoal:#1c1c1e;
-  --yellow:#e0f354;
-  --orange:#fd550a;
-  --bg:var(--charcoal);
-  --fg:#f4f1e6;
-  --fg-mute:#a8a8a2;
-  --line:rgba(244,241,230,.18);
-  --surface:#26262a;
-  --deep:#121214;
-  --disc:#3a3a3f;
-  --hi:var(--yellow);
-  --band:var(--yellow);
-  --on-band:var(--charcoal);
-  --on-band-mute:#4f5230;
-  --band-line:rgba(28,28,30,.25);
-  --accent:var(--orange);
-  --on-accent:#141415;
-  --f-sans:"Archivo","Helvetica Neue",Helvetica,Arial,sans-serif;
-  --f-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
-  --g:clamp(16px,2vw,32px);
-  color-scheme:dark;
-}
-*,*::before,*::after{box-sizing:border-box}
-[hidden]{display:none!important}
-html{scroll-behavior:smooth}
-section[id]{scroll-margin-top:60px}
-html,body{margin:0}
-body{background:var(--bg);color:var(--fg);font-family:var(--f-sans);font-size:17px;line-height:1.5;-webkit-font-smoothing:antialiased;font-variant-numeric:lining-nums}
-body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
-a{color:inherit}
-:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
-.wrap{max-width:1440px;margin-inline:auto;padding-left:max(16px,3.2vw,env(safe-area-inset-left,0px));padding-right:max(16px,3.2vw,env(safe-area-inset-right,0px))}
-.grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--g)}
-.grid > *{min-width:0}
-.label{font-family:var(--f-mono);font-size:.72rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-mute);margin:0}
-.mono{font-family:var(--f-mono)}
-.num{font-variant-numeric:tabular-nums lining-nums}
-
-/* header */
-.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
-.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:24px;height:60px}
-.brand{display:inline-flex;align-items:center;gap:10px;text-decoration:none;font-weight:800;font-size:1.25rem;letter-spacing:-.02em}
-.brand svg{width:24px;height:24px;flex:none}
-.nav{display:flex;align-items:center;gap:clamp(14px,2.2vw,32px);list-style:none;margin:0;padding:0;font-size:.9rem;font-weight:500}
-.nav a{text-decoration:none;color:var(--fg-mute);transition:color .2s}
-.nav a:hover{color:var(--fg)}
-.nav .pill{color:var(--fg);border:1px solid var(--fg);padding:6px 12px}
-.nav .pill:hover{background:var(--fg);color:var(--bg)}
-
-/* hero */
+<link rel="stylesheet" href="site.css">
+<style>/* hero */
 .hero{padding-block:clamp(40px,7vw,104px) 0}
 .hero h1{grid-column:1/9;margin:0;color:var(--hi);font-weight:800;font-stretch:78%;font-size:clamp(3.4rem,9.4vw,9.6rem);line-height:.88;letter-spacing:-.025em;text-wrap:balance}
 .hero h1 .mark{text-decoration:underline;text-decoration-color:var(--accent);text-decoration-thickness:.09em;text-underline-offset:.1em}
@@ -74,27 +23,12 @@ a{color:inherit}
 .hero-row{margin-top:clamp(36px,5vw,72px);padding-block:28px clamp(40px,5vw,72px);border-top:2px solid var(--fg);row-gap:28px}
 .lede{grid-column:1/6;margin:0;font-size:clamp(1.1rem,1.5vw,1.35rem);line-height:1.4;max-width:34ch;text-wrap:pretty}
 .actions{grid-column:1/6;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center}
-.btn{display:inline-flex;align-items:center;gap:12px;background:var(--accent);color:var(--on-accent);text-decoration:none;font-weight:600;font-size:.95rem;padding:14px 20px;border:1px solid var(--accent);transition:background .2s,color .2s}
-.btn:hover{background:var(--hi);border-color:var(--hi);color:var(--charcoal)}
-.btn i{display:block;width:18px;height:2px;background:repeating-linear-gradient(90deg,currentColor 0 5px,transparent 5px 8px)}
-.btn.ghost{background:transparent;color:var(--fg);border-color:var(--fg)}
-.btn.ghost:hover{background:var(--fg);color:var(--bg);border-color:var(--fg)}
 .figs{grid-column:7/13;grid-row:1/3;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-self:start;border-left:1px solid var(--line)}
 .figs div{padding:4px 0 22px 20px;border-bottom:1px solid var(--line)}
 .figs div:nth-child(n+3){border-bottom:0;padding-top:20px}
 .figs b{display:block;color:var(--hi);font-weight:700;font-stretch:80%;font-size:clamp(2.4rem,4.4vw,4rem);line-height:1;letter-spacing:-.02em}
 .figs span{display:block;margin-top:8px;font-size:.88rem;color:var(--fg-mute)}
 .figs p{grid-column:1/-1;margin:0;padding:14px 0 0 20px}
-
-/* sections */
-.sec{padding-block:clamp(72px,9vw,140px)}
-.sec + .sec{border-top:1px solid var(--line)}
-.sec-head{row-gap:16px;margin-bottom:clamp(40px,5vw,72px)}
-.sec-head .label{grid-column:1/4}
-.sec-mark{display:flex;flex-direction:column;align-items:flex-start;gap:14px;color:var(--fg);font-size:.8rem}
-.sec-n{font-family:var(--f-sans);font-weight:800;font-stretch:78%;font-size:clamp(3.6rem,7vw,6.4rem);line-height:.78;letter-spacing:-.03em;color:var(--accent)}
-.sec-head h2{grid-column:4/12;margin:0;color:var(--hi);font-weight:800;font-stretch:80%;font-size:clamp(2.8rem,6.4vw,6.4rem);line-height:.9;letter-spacing:-.025em;text-wrap:balance}
-.sec-head .intro{grid-column:4/10;margin:12px 0 0;font-size:clamp(1.1rem,1.4vw,1.3rem);line-height:1.45;color:var(--fg);max-width:52ch;text-wrap:pretty}
 
 /* signal */
 .chart-wrap{grid-column:1/-1}
@@ -154,6 +88,7 @@ a{color:inherit}
 .steps h3{margin:14px 0 8px;font-size:1.45rem;font-weight:700;font-stretch:85%;letter-spacing:-.01em;line-height:1.05}
 .steps p{margin:0;font-size:.95rem;color:var(--fg-mute);text-wrap:pretty}
 .steps .spec{display:block;margin-top:14px;font-family:var(--f-mono);font-size:.74rem;line-height:1.6;color:var(--fg)}
+.how-more{grid-column:1/-1;margin:32px 0 0}
 
 /* bento */
 .bento{grid-column:1/-1;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:var(--g)}
@@ -213,31 +148,15 @@ a{color:inherit}
 .city-foot p{margin:0;font-size:.92rem;color:var(--fg-mute);max-width:60ch}
 
 /* start */
-.band{background:var(--band);color:var(--on-band)}
-.band .label{color:var(--on-band-mute)}
-.band .sec-mark{color:var(--on-band)}
-.band .sec-n{color:var(--on-band)}
-.band .sec-head h2{color:var(--on-band)}
-.band .sec-head .intro{color:var(--on-band)}
-.band + .sec{border-top:0}
 .code-col{grid-column:span 6;min-width:0;display:flex;flex-direction:column;gap:12px}
 .code-col h3{margin:0;display:flex;gap:14px;align-items:baseline;font-size:1.3rem;font-weight:700;font-stretch:85%}
 .code-col h3 span{font-family:var(--f-mono);font-size:.8rem;font-weight:500;background:var(--accent);color:var(--on-accent);padding:2px 7px}
-.code{position:relative;background:var(--deep);overflow-x:auto;flex:1}
-.code pre{margin:0;padding:20px 22px;font:400 .86rem/1.75 var(--f-mono);color:var(--fg)}
-.code .c{color:var(--fg-mute)}.code .s{color:var(--hi)}
-.copy{position:absolute;top:10px;right:10px;background:var(--deep);color:var(--fg-mute);border:1px solid var(--line);font:500 .68rem/1 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;padding:7px 10px;cursor:pointer}
-.copy:hover{color:var(--fg);border-color:var(--fg)}
 .facts{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin:clamp(40px,5vw,64px) 0 0;border-top:1px solid var(--band-line)}
 .facts div{padding:18px 20px 0 0;min-width:0}
 .facts div + div{padding-left:20px;border-left:1px solid var(--band-line)}
 .facts dt{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--on-band-mute)}
 .facts dd{margin:6px 0 0;font-size:1.1rem;font-weight:600}
 .start-actions{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:12px 24px;margin-top:40px}
-.band .btn{background:var(--charcoal);color:var(--fg);border-color:var(--charcoal)}
-.band .btn:hover{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
-.band .btn.ghost{background:transparent;color:var(--on-band);border-color:var(--on-band)}
-.band .btn.ghost:hover{background:var(--on-band);color:var(--band)}
 
 /* limits */
 .limits{grid-column:4/-1;list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:var(--g)}
@@ -245,20 +164,6 @@ a{color:inherit}
 .limits li b{display:block;font-weight:700;margin-bottom:4px}
 .limits li span{color:var(--fg-mute)}
 .limits-link{grid-column:4/-1;margin-top:24px}
-.tlink{font-weight:600;text-underline-offset:5px;text-decoration-thickness:1px}
-.tlink:hover{color:var(--hi)}
-
-/* footer */
-.foot{border-top:2px solid var(--fg);padding-block:48px max(32px,env(safe-area-inset-bottom,0px))}
-.foot .grid{row-gap:32px}
-.foot-say{grid-column:1/6;margin:0;font-weight:800;font-stretch:80%;font-size:clamp(2rem,3.6vw,3.4rem);line-height:.95;letter-spacing:-.02em}
-.foot nav{grid-column:span 2}
-.foot nav ul{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
-.foot nav a{text-decoration:none;font-size:.95rem}
-.foot nav a:hover{color:var(--hi)}
-.foot nav:first-of-type{grid-column:7/9}
-.foot-base a{text-decoration:none}
-.foot-base{grid-column:1/-1;display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 24px;padding-top:24px;border-top:1px solid var(--line)}
 
 /* responsive */
 @media (max-width:1080px){
@@ -268,20 +173,15 @@ a{color:inherit}
   .figs{grid-column:7/13}
   .steps{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:32px}
   .steps li:nth-child(4){padding-left:0;border-left:0}
-  .sec-head .label{grid-column:1/-1}
-  .sec-mark{flex-direction:row;align-items:baseline;gap:14px}
-  .sec-head h2,.sec-head .intro{grid-column:1/11}
   .limits,.limits-link{grid-column:1/-1}
 }
 @media (max-width:760px){
-  .nav .hide-sm{display:none}
   .hero-fig{grid-column:2/12}
   .lede,.actions,.figs{grid-column:1/-1}
   .figs{grid-row:auto;border-left:0;border-top:1px solid var(--line)}
   .figs div{padding-left:0}
   .figs div:nth-child(2n){padding-left:16px;border-left:1px solid var(--line)}
   .figs p{padding-left:0}
-  .sec-head h2,.sec-head .intro{grid-column:1/-1}
   .chart-key{display:block}
   .try{grid-template-columns:minmax(0,1fr);gap:16px}
   .try-side{display:contents}
@@ -301,11 +201,8 @@ a{color:inherit}
   .facts{grid-template-columns:repeat(2,minmax(0,1fr))}
   .facts div:nth-child(3){padding-left:0;border-left:0}
   .limits{grid-template-columns:minmax(0,1fr)}
-  .foot-say{grid-column:1/-1}
-  .foot nav,.foot nav:first-of-type{grid-column:span 6}
 }
 @media (prefers-reduced-motion:reduce){
-  html{scroll-behavior:auto}
   .disc-float{animation:none}
 }
 </style>
@@ -320,8 +217,8 @@ a{color:inherit}
     </a>
     <ul class="nav">
       <li><a href="#try-it">Try it</a></li>
-      <li class="hide-sm"><a href="#signal">Signal</a></li>
       <li class="hide-sm"><a href="#how">How it works</a></li>
+      <li class="hide-sm"><a href="architecture">Architecture</a></li>
       <li class="hide-sm"><a href="#start">Get started</a></li>
       <li><a href="demo/">Demo map</a></li>
       <li><a class="pill" href="https://github.com/neerajkumar-n/asphalt">GitHub</a></li>
@@ -468,6 +365,7 @@ a{color:inherit}
         <li><span class="n">04</span><h3>Upload</h3><p>WorkManager sends batches when there is signal and retries with exponential backoff.</p><span class="spec">POST /v1/ingest/batch</span></li>
         <li><span class="n">05</span><h3>Cluster</h3><p>The Go backend stores events in SQLite or PostgreSQL and groups nearby reports into scored clusters.</p><span class="spec">DBSCAN · 30 m · every 5 min</span></li>
       </ol>
+      <p class="how-more"><a class="tlink" href="architecture">See the full architecture →</a></p>
     </div>
   </div>
 </section>
@@ -660,7 +558,7 @@ curl http://localhost:8080/v1/health</code></pre>
         <ul>
           <li><a href="https://github.com/neerajkumar-n/asphalt/blob/main/docs/sdk-integration.md">SDK integration</a></li>
           <li><a href="https://github.com/neerajkumar-n/asphalt/blob/main/docs/sensor-model.md">Sensor model</a></li>
-          <li><a href="https://github.com/neerajkumar-n/asphalt/blob/main/docs/architecture.md">Architecture</a></li>
+          <li><a href="architecture">Architecture</a></li>
           <li><a href="https://github.com/neerajkumar-n/asphalt/blob/main/docs/vehicle-profiles.md">Vehicle profiles</a></li>
         </ul>
       </nav>
@@ -911,16 +809,8 @@ curl http://localhost:8080/v1/health</code></pre>
     io.observe(mapEl);
   }
 
-  /* copy buttons */
-  document.querySelectorAll('[data-copy]').forEach(btn => {
-    const src = document.getElementById(btn.dataset.copy);
-    btn.addEventListener('click', () => {
-      const done = l => { btn.textContent = l; setTimeout(() => btn.textContent = 'Copy', 1600); };
-      const select = () => { const r = document.createRange(); r.selectNodeContents(src); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); done('Selected'); };
-      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(src.innerText).then(() => done('Copied'), select); else select();
-    });
-  });
 })();
 </script>
+<script src="site.js"></script>
 </body>
 </html>
