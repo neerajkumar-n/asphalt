@@ -47,6 +47,7 @@ asphalt/
   demo-app/android/            Demo Android application
   contracts/                   JSON schemas and OpenAPI spec
   docs/                        Architecture, sensor model, setup guides
+  docs/index.html              Landing page (static, deployed from docs/)
   docs/demo/                   Static demo map with synthetic data (GitHub Pages)
   tools/synthetic/             Synthetic data generator and loader
   tools/fieldtest/             Field test kit for measuring detection accuracy

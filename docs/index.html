@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Asphalt · Road quality from the phones already driving</title>
+<meta name="description" content="Asphalt is an open-source Android SDK and Go backend that detects potholes, speed bumps and rough patches from smartphone sensors and turns them into a road quality map. No accounts, no continuous tracking.">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231c1c1e'/%3E%3Cpath d='M6 22h20' stroke='%23e0f354' stroke-width='3' stroke-dasharray='5 3'/%3E%3Cpath d='M12 13q4 5 8 0' stroke='%23fff' stroke-width='2.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  /* 60-30-10 palette. 60: asphalt charcoal, the ground (fresh blacktop). 30: crest yellow for headlines, data and feature surfaces (centre-line paint). 10: mandarin orange for actions and signals only (work-zone orange); on charcoal it is safe for small text too. */
+  --charcoal:#1c1c1e;
+  --yellow:#e0f354;
+  --orange:#fd550a;
+  --bg:var(--charcoal);
+  --fg:#f4f1e6;
+  --fg-mute:#a8a8a2;
+  --line:rgba(244,241,230,.18);
+  --surface:#26262a;
+  --deep:#121214;
+  --disc:#3a3a3f;
+  --hi:var(--yellow);
+  --band:var(--yellow);
+  --on-band:var(--charcoal);
+  --on-band-mute:#4f5230;
+  --band-line:rgba(28,28,30,.25);
+  --accent:var(--orange);
+  --on-accent:#141415;
+  --f-sans:"Archivo","Helvetica Neue",Helvetica,Arial,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --g:clamp(16px,2vw,32px);
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-sans);font-size:17px;line-height:1.5;-webkit-font-smoothing:antialiased;font-variant-numeric:lining-nums}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.wrap{max-width:1440px;margin-inline:auto;padding-left:max(16px,3.2vw,env(safe-area-inset-left,0px));padding-right:max(16px,3.2vw,env(safe-area-inset-right,0px))}
+.grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--g)}
+.grid > *{min-width:0}
+.label{font-family:var(--f-mono);font-size:.72rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-mute);margin:0}
+.mono{font-family:var(--f-mono)}
+.num{font-variant-numeric:tabular-nums lining-nums}
+
+/* header */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:24px;height:60px}
+.brand{display:inline-flex;align-items:center;gap:10px;text-decoration:none;font-weight:800;font-size:1.25rem;letter-spacing:-.02em}
+.brand svg{width:24px;height:24px;flex:none}
+.nav{display:flex;align-items:center;gap:clamp(14px,2.2vw,32px);list-style:none;margin:0;padding:0;font-size:.9rem;font-weight:500}
+.nav a{text-decoration:none;color:var(--fg-mute);transition:color .2s}
+.nav a:hover{color:var(--fg)}
+.nav .pill{color:var(--fg);border:1px solid var(--fg);padding:6px 12px}
+.nav .pill:hover{background:var(--fg);color:var(--bg)}
+
+/* hero */
+.hero{padding-block:clamp(40px,7vw,104px) 0}
+.hero h1{grid-column:1/9;margin:0;color:var(--hi);font-weight:800;font-stretch:78%;font-size:clamp(3.4rem,9.4vw,9.6rem);line-height:.88;letter-spacing:-.025em;text-wrap:balance}
+.hero h1 .mark{text-decoration:underline;text-decoration-color:var(--accent);text-decoration-thickness:.09em;text-underline-offset:.1em}
+.hero-fig{grid-column:9/13;align-self:end;margin:0}
+.hero-fig svg{display:block;width:100%;height:auto}
+.hero-fig figcaption{margin-top:10px}
+.disc-float{animation:hover 10s ease-in-out infinite}
+@keyframes hover{0%,100%{transform:translateY(-6px)}50%{transform:translateY(6px)}}
+.hero-row{margin-top:clamp(36px,5vw,72px);padding-block:28px clamp(40px,5vw,72px);border-top:2px solid var(--fg);row-gap:28px}
+.lede{grid-column:1/6;margin:0;font-size:clamp(1.1rem,1.5vw,1.35rem);line-height:1.4;max-width:34ch;text-wrap:pretty}
+.actions{grid-column:1/6;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:12px;background:var(--accent);color:var(--on-accent);text-decoration:none;font-weight:600;font-size:.95rem;padding:14px 20px;border:1px solid var(--accent);transition:background .2s,color .2s}
+.btn:hover{background:var(--hi);border-color:var(--hi);color:var(--charcoal)}
+.btn i{display:block;width:18px;height:2px;background:repeating-linear-gradient(90deg,currentColor 0 5px,transparent 5px 8px)}
+.btn.ghost{background:transparent;color:var(--fg);border-color:var(--fg)}
+.btn.ghost:hover{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.figs{grid-column:7/13;grid-row:1/3;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-self:start;border-left:1px solid var(--line)}
+.figs div{padding:4px 0 22px 20px;border-bottom:1px solid var(--line)}
+.figs div:nth-child(n+3){border-bottom:0;padding-top:20px}
+.figs b{display:block;color:var(--hi);font-weight:700;font-stretch:80%;font-size:clamp(2.4rem,4.4vw,4rem);line-height:1;letter-spacing:-.02em}
+.figs span{display:block;margin-top:8px;font-size:.88rem;color:var(--fg-mute)}
+.figs p{grid-column:1/-1;margin:0;padding:14px 0 0 20px}
+
+/* sections */
+.sec{padding-block:clamp(72px,9vw,140px)}
+.sec + .sec{border-top:1px solid var(--line)}
+.sec-head{row-gap:16px;margin-bottom:clamp(40px,5vw,72px)}
+.sec-head .label{grid-column:1/4;padding-top:.55em}
+.sec-head h2{grid-column:4/11;margin:0;color:var(--hi);font-weight:800;font-stretch:82%;font-size:clamp(2.4rem,5.4vw,5.2rem);line-height:.94;letter-spacing:-.02em;text-wrap:balance}
+.sec-head .intro{grid-column:4/10;margin:8px 0 0;font-size:1.1rem;color:var(--fg-mute);max-width:56ch;text-wrap:pretty}
+
+/* signal */
+.chart-wrap{grid-column:1/-1}
+.chart-wrap svg{display:block;width:100%;height:auto}
+.chart-key{display:none;grid-column:1/-1;list-style:none;counter-reset:k;margin:20px 0 0;padding:0}
+.chart-key li{counter-increment:k;display:flex;gap:10px;align-items:baseline;padding:8px 0;border-top:1px solid var(--line);font-size:.9rem;color:var(--fg-mute)}
+.chart-key li::before{content:counter(k);flex:none;display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--on-accent);font:500 .7rem/1 var(--f-mono)}
+.chart-key b{color:var(--fg);font-weight:600}
+.ax{font-family:var(--f-mono);font-size:12px;fill:var(--fg-mute)}
+.ax-strong{font-family:var(--f-mono);font-size:12px;fill:var(--fg)}
+.ann{font-family:var(--f-sans);font-size:15px;font-weight:600;fill:var(--fg)}
+.ann-sub{font-family:var(--f-mono);font-size:12px;fill:var(--fg-mute)}
+.gridline{stroke:var(--line);stroke-width:1}
+.base{stroke:var(--fg);stroke-width:1;stroke-dasharray:3 4}
+.thr{stroke:var(--accent);stroke-width:1.5;stroke-dasharray:6 4}
+.curve{fill:none;stroke:var(--hi);stroke-width:2.5;stroke-linejoin:round}
+.marker{fill:var(--accent)}
+.marker-t{font-family:var(--f-mono);font-size:12px;font-weight:500;fill:var(--on-accent)}
+.lead{stroke:var(--fg);stroke-width:1}
+.phase{fill:var(--surface)}
+.phase-t{font-family:var(--f-mono);font-size:11px;fill:var(--fg-mute);letter-spacing:.06em}
+.multiples{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--g);margin-top:clamp(40px,5vw,64px);padding-top:28px;border-top:2px solid var(--fg)}
+.mult h3{margin:0;font-size:1.25rem;font-weight:700;letter-spacing:-.01em}
+.mult p{margin:6px 0 14px;font-size:.95rem;color:var(--fg-mute);max-width:40ch}
+.mult svg{display:block;width:100%;height:auto}
+.mini{fill:none;stroke:var(--hi);stroke-width:2;stroke-linejoin:round}
+
+/* pipeline */
+.steps{list-style:none;margin:0;padding:0;grid-column:1/-1;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border-top:2px solid var(--fg)}
+.steps li{padding:22px 20px 0 0;min-width:0}
+.steps li + li{padding-left:20px;border-left:1px solid var(--line)}
+.steps .n{font-family:var(--f-mono);font-size:.8rem;font-weight:500;color:var(--accent)}
+.steps h3{margin:14px 0 8px;font-size:1.45rem;font-weight:700;font-stretch:85%;letter-spacing:-.01em;line-height:1.05}
+.steps p{margin:0;font-size:.95rem;color:var(--fg-mute);text-wrap:pretty}
+.steps .spec{display:block;margin-top:14px;font-family:var(--f-mono);font-size:.74rem;line-height:1.6;color:var(--fg)}
+
+/* bento */
+.bento{grid-column:1/-1;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:var(--g)}
+.tile{background:var(--surface);padding:clamp(20px,2.2vw,32px);display:flex;flex-direction:column;gap:12px;min-width:0}
+.tile h3{margin:0;font-size:1.5rem;font-weight:700;font-stretch:85%;line-height:1.05;letter-spacing:-.01em}
+.tile p{margin:0;font-size:.95rem;color:var(--fg-mute);text-wrap:pretty}
+.tile .big{font-weight:800;font-stretch:78%;font-size:clamp(3rem,5vw,4.6rem);line-height:.9;letter-spacing:-.02em;color:var(--hi)}
+.tile .big small{font-family:var(--f-mono);font-size:.8rem;font-weight:500;letter-spacing:0;color:var(--fg-mute);margin-left:6px}
+.t-priv{grid-column:span 4;grid-row:span 2;background:var(--band);color:var(--on-band)}
+.t-priv p{color:var(--on-band-mute)}
+.t-priv .label{color:var(--on-band-mute)}
+.t-batt,.t-orient,.t-off{grid-column:span 2}
+.t-veh,.t-conf{grid-column:span 3}
+.t-mod{grid-column:span 4}
+.json{margin:8px 0 0;padding:18px 20px;background:var(--deep);font:400 .84rem/1.75 var(--f-mono);overflow-x:auto;white-space:pre;color:var(--fg)}
+.json .k{color:var(--fg-mute)}
+.json .s{color:var(--hi)}
+.priv-list{list-style:none;margin:auto 0 0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;border-top:1px solid var(--band-line);padding-top:16px}
+.priv-list li{font-size:.88rem;color:var(--on-band)}
+.priv-list li::before{content:"✕ ";color:var(--on-band);font-family:var(--f-mono)}
+.vt{width:100%;border-collapse:collapse;margin-top:auto;font-size:.92rem}
+.vt th,.vt td{text-align:left;padding:9px 0;border-top:1px solid var(--line);font-weight:400}
+.vt th{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-mute)}
+.vt td.r,.vt th.r{text-align:right}
+.vt td b{font-weight:700}
+.conf-bars{display:flex;flex-direction:column;gap:8px;margin-top:auto}
+.cb{display:grid;grid-template-columns:9.5rem minmax(0,1fr) 3rem;align-items:center;gap:12px;font-size:.88rem}
+.cb i{display:block;height:10px;background:var(--hi)}
+.cb span:last-child{font-family:var(--f-mono);text-align:right}
+.lane{display:block;height:4px;margin-top:auto;background:repeating-linear-gradient(90deg,var(--accent) 0 26px,transparent 26px 44px)}
+
+/* cities */
+.cities{grid-column:1/-1;width:100%;border-collapse:collapse}
+.cities th,.cities td{text-align:left;padding:16px 0;border-bottom:1px solid var(--line);vertical-align:middle;font-weight:400}
+.cities thead th{font-family:var(--f-mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-mute);border-bottom:2px solid var(--fg);padding-top:0}
+.cities td.city{font-size:clamp(1.3rem,2.4vw,2rem);font-weight:700;font-stretch:85%;letter-spacing:-.01em;width:30%}
+.cities .n{text-align:right;padding-right:20px}
+.cities td.n{font-family:var(--f-mono);font-size:.95rem;width:9%}
+.cities td.bar{width:26%}
+.cities td.bar i{display:block;height:14px;background:var(--hi)}
+.cities td.bar i.cl{background:var(--accent)}
+.city-foot{grid-column:1/-1;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px;margin-top:28px}
+.city-foot p{margin:0;font-size:.92rem;color:var(--fg-mute);max-width:60ch}
+
+/* start */
+.band{background:var(--band);color:var(--on-band)}
+.band .label{color:var(--on-band-mute)}
+.band .sec-head h2{color:var(--on-band)}
+.band .sec-head .intro{color:var(--on-band-mute)}
+.band + .sec{border-top:0}
+.code-col{grid-column:span 6;min-width:0;display:flex;flex-direction:column;gap:12px}
+.code-col h3{margin:0;display:flex;gap:14px;align-items:baseline;font-size:1.3rem;font-weight:700;font-stretch:85%}
+.code-col h3 span{font-family:var(--f-mono);font-size:.8rem;font-weight:500;background:var(--accent);color:var(--on-accent);padding:2px 7px}
+.code{position:relative;background:var(--deep);overflow-x:auto;flex:1}
+.code pre{margin:0;padding:20px 22px;font:400 .86rem/1.75 var(--f-mono);color:var(--fg)}
+.code .c{color:var(--fg-mute)}.code .s{color:var(--hi)}
+.copy{position:absolute;top:10px;right:10px;background:var(--deep);color:var(--fg-mute);border:1px solid var(--line);font:500 .68rem/1 var(--f-mono);letter-spacing:.1em;text-transform:uppercase;padding:7px 10px;cursor:pointer}
+.copy:hover{color:var(--fg);border-color:var(--fg)}
+.facts{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin:clamp(40px,5vw,64px) 0 0;border-top:1px solid var(--band-line)}
+.facts div{padding:18px 20px 0 0;min-width:0}
+.facts div + div{padding-left:20px;border-left:1px solid var(--band-line)}
+.facts dt{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--on-band-mute)}
+.facts dd{margin:6px 0 0;font-size:1.1rem;font-weight:600}
+.start-actions{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:12px 24px;margin-top:40px}
+.band .btn{background:var(--charcoal);color:var(--fg);border-color:var(--charcoal)}
+.band .btn:hover{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.band .btn.ghost{background:transparent;color:var(--on-band);border-color:var(--on-band)}
+.band .btn.ghost:hover{background:var(--on-band);color:var(--band)}
+
+/* limits */
+.limits{grid-column:4/-1;list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:var(--g)}
+.limits li{padding:18px 0;border-top:1px solid var(--line);font-size:1rem;min-width:0}
+.limits li b{display:block;font-weight:700;margin-bottom:4px}
+.limits li span{color:var(--fg-mute)}
+.limits-link{grid-column:4/-1;margin-top:24px}
+.tlink{font-weight:600;text-underline-offset:5px;text-decoration-thickness:1px}
+.tlink:hover{color:var(--hi)}
+
+/* footer */
+.foot{border-top:2px solid var(--fg);padding-block:48px max(32px,env(safe-area-inset-bottom,0px))}
+.foot .grid{row-gap:32px}
+.foot-say{grid-column:1/6;margin:0;font-weight:800;font-stretch:80%;font-size:clamp(2rem,3.6vw,3.4rem);line-height:.95;letter-spacing:-.02em}
+.foot nav{grid-column:span 2}
+.foot nav ul{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.foot nav a{text-decoration:none;font-size:.95rem}
+.foot nav a:hover{color:var(--hi)}
+.foot nav:first-of-type{grid-column:7/9}
+.foot-base a{text-decoration:none}
+.foot-base{grid-column:1/-1;display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 24px;padding-top:24px;border-top:1px solid var(--line)}
+
+/* responsive */
+@media (max-width:1080px){
+  .hero h1{grid-column:1/-1}
+  .hero-fig{grid-column:7/13;margin-top:24px}
+  .lede,.actions{grid-column:1/7}
+  .figs{grid-column:7/13}
+  .steps{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:32px}
+  .steps li:nth-child(4){padding-left:0;border-left:0}
+  .sec-head .label{grid-column:1/-1}
+  .sec-head h2,.sec-head .intro{grid-column:1/11}
+  .limits,.limits-link{grid-column:1/-1}
+}
+@media (max-width:760px){
+  .nav .hide-sm{display:none}
+  .hero-fig{grid-column:2/12}
+  .lede,.actions,.figs{grid-column:1/-1}
+  .figs{grid-row:auto;border-left:0;border-top:1px solid var(--line)}
+  .figs div{padding-left:0}
+  .figs div:nth-child(2n){padding-left:16px;border-left:1px solid var(--line)}
+  .figs p{padding-left:0}
+  .sec-head h2,.sec-head .intro{grid-column:1/-1}
+  .chart-key{display:block}
+  .multiples{grid-template-columns:minmax(0,1fr);row-gap:36px}
+  .steps{grid-template-columns:minmax(0,1fr)}
+  .steps li,.steps li + li{padding:20px 0;border-left:0;border-top:1px solid var(--line)}
+  .steps li:first-child{border-top:0}
+  .bento{grid-template-columns:minmax(0,1fr)}
+  .bento > .tile{grid-column:auto;grid-row:auto}
+  .priv-list{grid-template-columns:minmax(0,1fr)}
+  .cities .bar{display:none}
+  .cities td.city{width:auto}
+  .code-col{grid-column:1/-1}
+  .code-col + .code-col{margin-top:28px}
+  .facts{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .facts div:nth-child(3){padding-left:0;border-left:0}
+  .limits{grid-template-columns:minmax(0,1fr)}
+  .foot-say{grid-column:1/-1}
+  .foot nav,.foot nav:first-of-type{grid-column:span 6}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .disc-float{animation:none}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="./" aria-label="Asphalt home">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="7.5" fill="currentColor"/><path d="M1 20.5 H23" stroke="var(--accent)" stroke-width="2.4" stroke-dasharray="4 2.5"/></svg>
+      asphalt
+    </a>
+    <ul class="nav">
+      <li class="hide-sm"><a href="#signal">Signal</a></li>
+      <li class="hide-sm"><a href="#how">How it works</a></li>
+      <li class="hide-sm"><a href="#start">Get started</a></li>
+      <li><a href="demo/">Demo map</a></li>
+      <li><a class="pill" href="https://github.com/neerajkumar-n/asphalt">GitHub</a></li>
+    </ul>
+  </div>
+</header>
+
+<main>
+<!-- hero -->
+<section class="hero" aria-labelledby="hero-h">
+  <div class="wrap">
+    <div class="grid">
+      <h1 id="hero-h">Every pothole leaves a <span class="mark">signature.</span></h1>
+      <figure class="hero-fig">
+        <svg viewBox="0 0 400 500" role="img" aria-label="A black disc of asphalt hangs above a road. The road below has a hole of exactly the same width.">
+          <defs>
+            <clipPath id="discClip"><circle cx="200" cy="170" r="140"/></clipPath>
+          </defs>
+          <g class="disc-float">
+            <circle cx="200" cy="170" r="140" fill="var(--disc)"/>
+            <g clip-path="url(#discClip)"><path d="M40 196 L 360 152" stroke="var(--yellow)" stroke-width="10" stroke-dasharray="44 26"/></g>
+          </g>
+          <path d="M200 316 V 404" stroke="var(--fg)" stroke-width="1" stroke-dasharray="2 4"/>
+          <rect x="0" y="404" width="400" height="76" fill="var(--disc)"/>
+          <path d="M0 470 H400" stroke="var(--yellow)" stroke-width="3" stroke-dasharray="26 18"/>
+          <ellipse cx="200" cy="432" rx="140" ry="18" fill="var(--accent)"/>
+          <g fill="var(--on-accent)"><circle cx="140" cy="430" r="1.6"/><circle cx="196" cy="436" r="1.2"/><circle cx="252" cy="428" r="1.8"/><circle cx="296" cy="434" r="1.1"/></g>
+          <path d="M60 170 H 20 M340 170 H 380" stroke="var(--fg)" stroke-width="1"/>
+          <path d="M60 432 H 20 M340 432 H 380" stroke="var(--fg)" stroke-width="1"/>
+          <path d="M20 170 V 432 M380 170 V 432" stroke="var(--fg)" stroke-width="1" stroke-dasharray="2 4"/>
+          <text x="388" y="306" class="ax" transform="rotate(90 388 306)" text-anchor="middle">same diameter</text>
+        </svg>
+        <figcaption class="label">Fig. 1 · The missing piece</figcaption>
+      </figure>
+    </div>
+
+    <div class="grid hero-row">
+      <p class="lede">Asphalt turns the phones already driving your city into a road quality map. No accounts. No continuous tracking. Only the bumps leave the phone.</p>
+      <div class="actions">
+        <a class="btn" href="demo/"><i></i>Open the demo map</a>
+        <a class="btn ghost" href="#start">Put it in your app</a>
+      </div>
+      <div class="figs num" aria-label="Synthetic demo dataset">
+        <div><b>4,583</b><span>phone reports</span></div>
+        <div><b>540</b><span>road anomaly clusters</span></div>
+        <div><b>3</b><span>US cities</span></div>
+        <div><b>0.72</b><span>average cluster confidence</span></div>
+        <p class="label">Synthetic demo dataset · New York, Chicago, Los Angeles</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- signal -->
+<section class="sec" id="signal" aria-labelledby="signal-h">
+  <div class="wrap">
+    <div class="grid sec-head">
+      <p class="label">01 · The signal</p>
+      <h2 id="signal-h">A pothole lasts 150 to 400 milliseconds. That is enough.</h2>
+      <p class="intro">The SDK samples linear acceleration and gravity at about 50 Hz and projects one onto the other, so it reads the force normal to the road however the phone is mounted. A pothole shows up as a dip and then a spike.</p>
+    </div>
+    <div class="grid">
+      <div class="chart-wrap">
+        <svg viewBox="0 0 1000 470" role="img" aria-label="Road-normal acceleration over 400 milliseconds of driving over a pothole. Flat at 9.81 metres per second squared, a dip to about 6.5 as the wheel drops in, a spike to about 16 as it hits the far edge, then recovery.">
+          <g id="sigChart"></g>
+        </svg>
+      </div>
+      <ol class="chart-key">
+        <li><b>Dip</b> wheel drops in · 6–7 m/s²</li>
+        <li><b>Spike</b> far edge, suspension compresses · 14–18 m/s²</li>
+        <li><b>Recovery</b> back to baseline</li>
+      </ol>
+      <div class="multiples">
+        <div class="mult">
+          <h3>Pothole</h3>
+          <p>Dip, then spike. The wheel drops in, then strikes the far edge.</p>
+          <svg viewBox="0 0 300 110" aria-hidden="true"><g data-mini="pothole"></g></svg>
+        </div>
+        <div class="mult">
+          <h3>Speed bump</h3>
+          <p>Spike, then dip. The same shape in reverse order is how the two are told apart.</p>
+          <svg viewBox="0 0 300 110" aria-hidden="true"><g data-mini="bump"></g></svg>
+        </div>
+        <div class="mult">
+          <h3>Rough patch</h3>
+          <p>No dominant peak. Variance stays high across the whole window.</p>
+          <svg viewBox="0 0 300 110" aria-hidden="true"><g data-mini="rough"></g></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- how it works -->
+<section class="sec" id="how" aria-labelledby="how-h">
+  <div class="wrap">
+    <div class="grid sec-head">
+      <p class="label">02 · How it works</p>
+      <h2 id="how-h">From a jolt in a cupholder to a point on a map.</h2>
+    </div>
+    <div class="grid">
+      <ol class="steps">
+        <li><span class="n">01</span><h3>Sense</h3><p>Accelerometer, gravity and gyroscope at about 50 Hz. Nothing runs below 15 km/h.</p><span class="spec">TYPE_LINEAR_ACCELERATION<br>TYPE_GRAVITY · GPS 1 Hz</span></li>
+        <li><span class="n">02</span><h3>Detect</h3><p>The spike-dip detector compares each reading to a rolling baseline. The gyroscope has to confirm real motion.</p><span class="spec">threshold 4.0 m/s² (car)</span></li>
+        <li><span class="n">03</span><h3>Buffer</h3><p>Events are written to SQLite on the phone before anything touches the network.</p><span class="spec">offline first</span></li>
+        <li><span class="n">04</span><h3>Upload</h3><p>WorkManager sends batches when there is signal and retries with exponential backoff.</p><span class="spec">POST /v1/ingest/batch</span></li>
+        <li><span class="n">05</span><h3>Cluster</h3><p>The Go backend stores events in PostGIS and groups nearby reports into scored clusters.</p><span class="spec">DBSCAN · 30 m · every 5 min</span></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- principles -->
+<section class="sec" id="principles" aria-labelledby="principles-h">
+  <div class="wrap">
+    <div class="grid sec-head">
+      <p class="label">03 · Principles</p>
+      <h2 id="principles-h">Built for real phones on real roads.</h2>
+    </div>
+    <div class="grid">
+      <div class="bento">
+        <article class="tile t-priv">
+          <p class="label">Privacy first</p>
+          <h3>Only the bump leaves the phone.</h3>
+          <p>No raw sensor data, no account, no device identifier, no route. Location is attached to an anomaly event and nothing else. This is a whole event:</p>
+<pre class="json">{
+  <span class="k">"anomaly_type"</span>: <span class="s">"pothole"</span>,
+  <span class="k">"intensity"</span>: 0.65,
+  <span class="k">"speed_kmh"</span>: 38.6,
+  <span class="k">"vehicle_type"</span>: <span class="s">"four_wheeler"</span>,
+  <span class="k">"latitude"</span>: 40.6796,
+  <span class="k">"longitude"</span>: -73.9531,
+  <span class="k">"accuracy_m"</span>: 8.0
+}</pre>
+          <ul class="priv-list">
+            <li>No user accounts</li>
+            <li>No continuous tracking</li>
+            <li>No device IDs</li>
+          </ul>
+        </article>
+        <article class="tile t-batt">
+          <p class="label">Battery aware</p>
+          <p class="big num">15<small>km/h</small></p>
+          <p>Sensors stay off below the speed gate. Uploads are batched to avoid waking the radio.</p>
+        </article>
+        <article class="tile t-orient">
+          <p class="label">Any mount</p>
+          <h3>Flat, upright or in a cupholder.</h3>
+          <p>Readings are projected onto the gravity vector, so orientation does not change detection.</p>
+        </article>
+        <article class="tile t-veh">
+          <p class="label">Vehicle profiles</p>
+          <h3>A car and a motorcycle feel the same pothole differently.</h3>
+          <table class="vt num">
+            <thead><tr><th>Vehicle</th><th class="r">Threshold</th><th class="r">Weight</th></tr></thead>
+            <tbody>
+              <tr><td><b>Car</b> · four_wheeler</td><td class="r">4.0 m/s²</td><td class="r">1.0×</td></tr>
+              <tr><td><b>Motorcycle</b> · two_wheeler</td><td class="r">5.0 m/s²</td><td class="r">0.8×</td></tr>
+            </tbody>
+          </table>
+          <p>Motorcycles also get turn suppression and a wider baseline window.</p>
+        </article>
+        <article class="tile t-conf">
+          <p class="label">Confidence</p>
+          <h3>One report is a rumour. Several are a pothole.</h3>
+          <p>A cluster needs at least two events within 30 m. Agreement from more reports and more vehicle types raises confidence, and old reports decay over 90 days.</p>
+          <div class="conf-bars num">
+            <div class="cb"><span>2 car reports</span><i style="width:58%"></i><span>0.58</span></div>
+            <div class="cb"><span>3 car reports</span><i style="width:60%"></i><span>0.60</span></div>
+            <div class="cb"><span>+ another vehicle type</span><i style="width:68%"></i><span>+0.08</span></div>
+          </div>
+        </article>
+        <article class="tile t-off">
+          <p class="label">Offline first</p>
+          <h3>No signal, no problem.</h3>
+          <p>Events wait in local SQLite until there is a connection.</p>
+          <span class="lane" aria-hidden="true"></span>
+        </article>
+        <article class="tile t-mod">
+          <p class="label">Modular</p>
+          <h3>Use the parts you need.</h3>
+          <p>The SDK, backend and contracts are independent. Point the SDK at your own server, or send the backend events from sources other than Android. The event schema, batch format and HTTP API are published as JSON Schema and OpenAPI 3.1.</p>
+          <span class="lane" aria-hidden="true"></span>
+        </article>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- demo data -->
+<section class="sec" id="demo" aria-labelledby="demo-h">
+  <div class="wrap">
+    <div class="grid sec-head">
+      <p class="label">04 · The demo map</p>
+      <h2 id="demo-h">Three cities, before a single driver installs anything.</h2>
+      <p class="intro">The demo runs on a synthetic dataset generated to look like real driving: mostly cars, some motorcycles, commute-hour peaks. It shows what a populated map looks like without a backend.</p>
+    </div>
+    <div class="grid">
+      <table class="cities num">
+        <thead><tr><th>City</th><th class="n">Reports</th><th class="bar"></th><th class="n">Clusters</th><th class="bar"></th></tr></thead>
+        <tbody>
+          <tr><td class="city">New York City</td><td class="n">1,640</td><td class="bar"><i style="width:100%"></i></td><td class="n">200</td><td class="bar"><i class="cl" style="width:100%"></i></td></tr>
+          <tr><td class="city">Chicago</td><td class="n">1,590</td><td class="bar"><i style="width:97%"></i></td><td class="n">175</td><td class="bar"><i class="cl" style="width:87.5%"></i></td></tr>
+          <tr><td class="city">Los Angeles</td><td class="n">1,353</td><td class="bar"><i style="width:82.5%"></i></td><td class="n">165</td><td class="bar"><i class="cl" style="width:82.5%"></i></td></tr>
+        </tbody>
+      </table>
+      <div class="city-foot">
+        <p>4,041 car reports and 542 motorcycle reports in total. Load the same data into a running backend with <span class="mono">tools/synthetic/load.py</span> and the live dashboard fills up.</p>
+        <a class="btn" href="demo/"><i></i>Open the demo map</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- get started -->
+<section class="sec band" id="start" aria-labelledby="start-h">
+  <div class="wrap">
+    <div class="grid sec-head">
+      <p class="label">05 · Get started</p>
+      <h2 id="start-h">Two calls in your app. One command for the backend.</h2>
+    </div>
+    <div class="grid">
+      <div class="code-col">
+        <h3><span>A</span>Add the Android SDK</h3>
+        <div class="code">
+          <button class="copy" type="button" data-copy="sdk">Copy</button>
+<pre id="sdk"><code><span class="c">// Application.onCreate()</span>
+Asphalt.init(this, AsphaltConfig(
+    ingestUrl = <span class="s">"https://your-host/v1/ingest/batch"</span>,
+    vehicleType = VehicleType.FOUR_WHEELER
+))
+
+<span class="c">// after location permission is granted</span>
+Asphalt.start()</code></pre>
+        </div>
+      </div>
+      <div class="code-col">
+        <h3><span>B</span>Run the backend</h3>
+        <div class="code">
+          <button class="copy" type="button" data-copy="be">Copy</button>
+<pre id="be"><code>cd backend
+docker compose up --build
+<span class="c"># API on http://localhost:8080</span>
+
+curl http://localhost:8080/v1/health</code></pre>
+        </div>
+      </div>
+      <dl class="facts">
+        <div><dt>SDK</dt><dd>Android 7.0+ · Kotlin</dd></div>
+        <div><dt>Backend</dt><dd>Go · PostgreSQL + PostGIS</dd></div>
+        <div><dt>API</dt><dd>OpenAPI 3.1</dd></div>
+        <div><dt>Licence</dt><dd>Apache 2.0</dd></div>
+      </dl>
+      <div class="start-actions">
+        <a class="btn" href="https://github.com/neerajkumar-n/asphalt/blob/main/docs/sdk-integration.md"><i></i>Read the SDK guide</a>
+        <a class="btn ghost" href="https://github.com/neerajkumar-n/asphalt/blob/main/docs/backend-setup.md">Backend setup</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- limits -->
+<section class="sec" id="limits" aria-labelledby="limits-h">
+  <div class="wrap">
+    <div class="grid sec-head">
+      <p class="label">06 · Known limitations</p>
+      <h2 id="limits-h">What v1 does not do yet.</h2>
+    </div>
+    <div class="grid">
+      <ul class="limits">
+        <li><b>No per-device calibration</b><span>Thresholds are set per vehicle type, not tuned to each phone.</span></li>
+        <li><b>Quiet roads stay uncertain</b><span>Roads with few drivers keep low confidence until more reports arrive.</span></li>
+        <li><b>GPS spoofing is limited, not prevented</b><span>Multi-report scoring reduces its impact.</span></li>
+        <li><b>Tall buildings blur location</b><span>GPS can drift 30–50 m between towers, wider than the 30 m cluster radius.</span></li>
+      </ul>
+      <p class="limits-link"><a class="tlink" href="https://github.com/neerajkumar-n/asphalt/blob/main/docs/limitations.md">Read the full list of limitations</a></p>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="grid">
+      <p class="foot-say">Every road keeps a record.</p>
+      <nav aria-label="Product">
+        <p class="label">Product</p>
+        <ul>
+          <li><a href="demo/">Demo map</a></li>
+          <li><a href="#signal">The signal</a></li>
+          <li><a href="#how">How it works</a></li>
+          <li><a href="#start">Get started</a></li>
+        </ul>
+      </nav>
+      <nav aria-label="Documentation">
+        <p class="label">Docs</p>
+        <ul>
+          <li><a href="https://github.com/neerajkumar-n/asphalt/blob/main/docs/sdk-integration.md">SDK integration</a></li>
+          <li><a href="https://github.com/neerajkumar-n/asphalt/blob/main/docs/sensor-model.md">Sensor model</a></li>
+          <li><a href="https://github.com/neerajkumar-n/asphalt/blob/main/docs/architecture.md">Architecture</a></li>
+          <li><a href="https://github.com/neerajkumar-n/asphalt/blob/main/docs/vehicle-profiles.md">Vehicle profiles</a></li>
+        </ul>
+      </nav>
+      <nav aria-label="Project">
+        <p class="label">Project</p>
+        <ul>
+          <li><a href="https://github.com/neerajkumar-n/asphalt">GitHub</a></li>
+          <li><a href="https://github.com/neerajkumar-n/asphalt/blob/main/CONTRIBUTING.md">Contributing</a></li>
+          <li><a href="https://github.com/neerajkumar-n/asphalt/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
+          <li><a href="https://github.com/neerajkumar-n/asphalt/blob/main/LICENSE">Licence</a></li>
+        </ul>
+      </nav>
+      <div class="foot-base label"><span>Apache 2.0 · Asphalt contributors</span><a href="#hero-h">Back to top ↑</a></div>
+    </div>
+  </div>
+</footer>
+
+<script>
+(() => {
+  const pt = q => q[0].toFixed(1) + ' ' + q[1].toFixed(1);
+  const g = (t, c, w) => Math.exp(-Math.pow((t - c) / w, 2));
+
+  /* road-normal acceleration (m/s²) against time (ms) */
+  const pothole = t => {
+    let z = 9.81 + .15 * Math.sin(t * .21) + .08 * Math.sin(t * .57);
+    z += -3.3 * g(t, 182, 16) + 6.2 * g(t, 232, 15);
+    if (t > 255) z += 1.4 * Math.exp(-(t - 255) / 30) * Math.sin((t - 255) / 9);
+    return z;
+  };
+  const bump = t => {
+    let z = 9.81 + .15 * Math.sin(t * .21) + .08 * Math.sin(t * .57);
+    z += 5.4 * g(t, 175, 16) - 3.1 * g(t, 228, 17);
+    if (t > 250) z += 1.1 * Math.exp(-(t - 250) / 30) * Math.sin((t - 250) / 9);
+    return z;
+  };
+  const rough = t => {
+    const env = Math.max(0, Math.min(1, (t - 70) / 40, (340 - t) / 40));
+    return 9.81 + .12 * Math.sin(t * .21) + env * (1.3 * Math.sin(t * .31) + .9 * Math.sin(t * .83 + 1) + .6 * Math.sin(t * 1.7 + 2));
+  };
+
+  /* main chart, drawn to one scale; narrower on phones, where a key replaces the inline notes */
+  const host = document.getElementById('sigChart');
+  const narrow = matchMedia('(max-width:760px)');
+  const drawChart = () => {
+    const W = narrow.matches ? 420 : 1000, H = 470;
+    host.parentNode.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    const L = narrow.matches ? 44 : 70, R = W - 20, T = 24, B = 400;
+    const x = t => L + (t / 400) * (R - L);
+    const y = z => B - ((z - 4) / 14) * (B - T);
+    let s = '';
+    [6, 9.81, 13.81, 18].forEach(v => {
+      const cls = v === 9.81 ? 'base' : v === 13.81 ? 'thr' : 'gridline';
+      s += `<line x1="${L}" x2="${R}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" class="${cls}"/>`;
+      s += `<text x="${L - 10}" y="${(y(v) + 4).toFixed(1)}" text-anchor="end" class="${v === 9.81 ? 'ax-strong' : 'ax'}">${v}</text>`;
+    });
+    const lab = narrow.matches ? `x="${L + 4}" text-anchor="start"` : `x="${R}" text-anchor="end"`;
+    s += `<text ${lab} y="${(y(9.81) + (narrow.matches ? 20 : -8)).toFixed(1)}" class="ax">baseline · gravity</text>`;
+    s += `<text ${lab} y="${(y(13.81) - 8).toFixed(1)}" class="ax">${narrow.matches ? 'car threshold · +4.0' : 'car threshold · baseline + 4.0'}</text>`;
+    [0, 100, 200, 300, 400].forEach(t => { s += `<text x="${x(t).toFixed(1)}" y="${B + 22}" text-anchor="middle" class="ax">${t}</text>`; });
+    s += `<text x="${L}" y="${B + 44}" class="ax">time (ms) · road-normal acceleration (m/s²)</text>`;
+    [[0, 160, 'FLAT ROAD'], [160, 205, 'DIP'], [205, 255, 'SPIKE'], [255, 400, 'RECOVERY']].forEach(([a, b, l]) => {
+      s += `<rect x="${x(a).toFixed(1)}" y="${B + 54}" width="${(x(b) - x(a) - 2).toFixed(1)}" height="14" class="phase"/><text x="${(x(a) + 4).toFixed(1)}" y="${B + 65}" class="phase-t">${l}</text>`;
+    });
+    const pts = []; for (let t = 0; t <= 400; t += 2) pts.push([x(t), y(pothole(t))]);
+    s += `<path class="curve" d="M${pts.map(pt).join('L')}"/>`;
+    const ann = [
+      [182, '1', 'Dip', 'wheel drops in · 6–7 m/s²', -90, 32],
+      [232, '2', 'Spike', 'far edge, suspension compresses · 14–18 m/s²', 60, -14],
+      [292, '3', 'Recovery', 'back to baseline', 60, 56]
+    ];
+    ann.forEach(([t, n, h, sub, dx, dy]) => {
+      const px = x(t), py = y(pothole(t));
+      if (!narrow.matches) {
+        const lx = px + dx, ly = py + dy;
+        const tx = (dx < 0 ? lx - 8 : lx + 8).toFixed(1), anchor = dx < 0 ? 'end' : 'start';
+        s += `<line class="lead" x1="${px.toFixed(1)}" y1="${py.toFixed(1)}" x2="${lx.toFixed(1)}" y2="${ly.toFixed(1)}"/>`;
+        s += `<text class="ann" x="${tx}" y="${(ly + 5).toFixed(1)}" text-anchor="${anchor}">${h}</text><text class="ann-sub" x="${tx}" y="${(ly + 23).toFixed(1)}" text-anchor="${anchor}">${sub}</text>`;
+      }
+      s += `<circle class="marker" cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="11"/><text class="marker-t" x="${px.toFixed(1)}" y="${(py + 4).toFixed(1)}" text-anchor="middle">${n}</text>`;
+    });
+    host.innerHTML = s;
+  };
+  drawChart();
+  narrow.addEventListener('change', drawChart);
+
+  /* small multiples, all on the same scale */
+  const fns = { pothole, bump, rough };
+  document.querySelectorAll('[data-mini]').forEach(el => {
+    const f = fns[el.dataset.mini];
+    const x = t => 4 + (t / 400) * 292, y = z => 100 - ((z - 4) / 14) * 92;
+    const pts = []; for (let t = 0; t <= 400; t += 3) pts.push([x(t), y(f(t))]);
+    el.innerHTML = `<line x1="4" x2="296" y1="${y(9.81).toFixed(1)}" y2="${y(9.81).toFixed(1)}" class="base"/><path class="mini" d="M${pts.map(pt).join('L')}"/>`;
+  });
+
+  /* copy buttons */
+  document.querySelectorAll('[data-copy]').forEach(btn => {
+    const src = document.getElementById(btn.dataset.copy);
+    btn.addEventListener('click', () => {
+      const done = l => { btn.textContent = l; setTimeout(() => btn.textContent = 'Copy', 1600); };
+      const select = () => { const r = document.createRange(); r.selectNodeContents(src); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); done('Selected'); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(src.innerText).then(() => done('Copied'), select); else select();
+    });
+  });
+})();
+</script>
+</body>
+</html>
