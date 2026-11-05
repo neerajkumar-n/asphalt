@@ -36,6 +36,7 @@
   color-scheme:dark;
 }
 *,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
 html{scroll-behavior:smooth}
 html,body{margin:0}
 body{background:var(--bg);color:var(--fg);font-family:var(--f-sans);font-size:17px;line-height:1.5;-webkit-font-smoothing:antialiased;font-variant-numeric:lining-nums}
@@ -118,6 +119,28 @@ a{color:inherit}
 .mult svg{display:block;width:100%;height:auto}
 .mini{fill:none;stroke:var(--hi);stroke-width:2;stroke-linejoin:round}
 
+/* try it */
+.try{grid-column:1/-1;margin-top:clamp(48px,6vw,80px);background:var(--surface);padding:clamp(20px,2.4vw,36px);display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(24px,3vw,48px)}
+.try-side{display:flex;flex-direction:column;gap:14px;align-items:flex-start}
+.try h3{margin:0;font-size:clamp(1.6rem,2.6vw,2.2rem);font-weight:800;font-stretch:82%;line-height:1;letter-spacing:-.02em;color:var(--hi)}
+.try-how{margin:0;color:var(--fg-mute);max-width:42ch}
+.try-how b{color:var(--fg);font-weight:600}
+.seg{display:inline-flex;border:1px solid var(--line)}
+.seg button{background:none;border:0;color:var(--fg-mute);font:500 .82rem/1 var(--f-mono);padding:10px 12px;cursor:pointer}
+.seg button + button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.try-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
+.try-actions .btn{cursor:pointer;font-family:inherit}
+.try-main{min-width:0;display:flex;flex-direction:column;gap:12px}
+.try-trace{display:block;width:100%;height:auto;background:var(--deep)}
+.try-read{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap}
+.try-status{margin:0;font-family:var(--f-mono);font-size:.9rem;color:var(--fg-mute)}
+.try-status.hit{color:var(--hi)}
+.try-count{margin:0;font-size:.9rem;color:var(--fg-mute)}
+.try-count b{font-weight:800;font-stretch:80%;font-size:1.6rem;color:var(--hi);margin-right:4px}
+.try-note{margin:0;font-size:.8rem;color:var(--fg-mute)}
+.mark-dot{fill:var(--accent)}
+
 /* pipeline */
 .steps{list-style:none;margin:0;padding:0;grid-column:1/-1;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border-top:2px solid var(--fg)}
 .steps li{padding:22px 20px 0 0;min-width:0}
@@ -156,6 +179,20 @@ a{color:inherit}
 .cb i{display:block;height:10px;background:var(--hi)}
 .cb span:last-child{font-family:var(--f-mono);text-align:right}
 .lane{display:block;height:4px;margin-top:auto;background:repeating-linear-gradient(90deg,var(--accent) 0 26px,transparent 26px 44px)}
+
+/* live map */
+.live-map{grid-column:1/-1;height:clamp(320px,42vw,520px);margin-bottom:clamp(28px,4vw,48px);background:var(--deep);display:grid;place-items:center}
+.live-map.leaflet-container{display:block;font-family:var(--f-sans)}
+.live-map .leaflet-bar{border:1px solid var(--line);border-radius:0}
+.live-map .leaflet-bar a,.live-map .leaflet-bar a:hover{background:var(--bg);color:var(--fg);border-color:var(--line);border-radius:0}
+.live-map .leaflet-control-attribution{background:rgba(28,28,30,.8);color:var(--fg-mute)}
+.live-map .leaflet-control-attribution a{color:var(--fg)}
+.live-map .leaflet-popup-content-wrapper,.live-map .leaflet-popup-tip{background:var(--bg);color:var(--fg);border-radius:0;box-shadow:0 0 0 1px var(--line)}
+.live-map .leaflet-popup-content{margin:12px 14px;font-size:.85rem;line-height:1.5}
+.live-map .leaflet-popup-content b{display:block;font-size:1rem}
+.city-link{background:none;border:0;padding:0;color:inherit;font:inherit;cursor:pointer;text-align:left}
+.city-link::after{content:" →";color:var(--fg-mute);font-weight:400}
+.city-link:hover,.cities tr.on .city-link{color:var(--hi)}
 
 /* cities */
 .cities{grid-column:1/-1;width:100%;border-collapse:collapse}
@@ -238,6 +275,7 @@ a{color:inherit}
   .figs p{padding-left:0}
   .sec-head h2,.sec-head .intro{grid-column:1/-1}
   .chart-key{display:block}
+  .try{grid-template-columns:minmax(0,1fr)}
   .multiples{grid-template-columns:minmax(0,1fr);row-gap:36px}
   .steps{grid-template-columns:minmax(0,1fr)}
   .steps li,.steps li + li{padding:20px 0;border-left:0;border-top:1px solid var(--line)}
@@ -361,6 +399,36 @@ a{color:inherit}
           <svg viewBox="0 0 300 110" aria-hidden="true"><g data-mini="rough"></g></svg>
         </div>
       </div>
+      <div class="try" id="try">
+        <div class="try-side">
+          <p class="label">Try it</p>
+          <h3>Your phone is the sensor.</h3>
+          <p class="try-how" data-touch>Hold your phone flat, tap <b>Use my phone</b>, then dip it down fast and stop it sharply. That is a pothole: a dip, then a spike.</p>
+          <p class="try-how" data-desk>Send a wheel over a pothole or a speed bump. The same check the SDK runs watches the trace.</p>
+          <div class="seg" role="group" aria-label="Vehicle">
+            <button type="button" data-vehicle="4" aria-pressed="true">Car · 4.0</button>
+            <button type="button" data-vehicle="5" aria-pressed="false">Motorcycle · 5.0</button>
+          </div>
+          <div class="try-actions">
+            <button class="btn" type="button" id="tryMotion" data-touch hidden><i></i>Use my phone</button>
+            <button class="btn" type="button" data-play="pothole"><i></i>Drive over a pothole</button>
+            <button class="btn ghost" type="button" data-play="bump">Speed bump</button>
+          </div>
+        </div>
+        <div class="try-main">
+          <svg class="try-trace" viewBox="0 0 600 220" role="img" aria-label="Live road-normal acceleration over the last two seconds">
+            <line class="base" x1="0" x2="600" id="tryBase"/>
+            <line class="thr" x1="0" x2="600" id="tryThr"/>
+            <path class="curve" id="tryCurve"/>
+            <g id="tryMarks"></g>
+          </svg>
+          <div class="try-read num">
+            <p class="try-status" id="tryStatus" role="status" aria-live="polite">Listening · flat road</p>
+            <p class="try-count"><b id="tryCount">0</b> detected</p>
+          </div>
+          <p class="try-note">Simplified in the browser: no gyroscope check or speed gate. Nothing leaves this page.</p>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -470,12 +538,13 @@ a{color:inherit}
       <p class="intro">The demo runs on a synthetic dataset generated to look like real driving: mostly cars, some motorcycles, commute-hour peaks. It shows what a populated map looks like without a backend.</p>
     </div>
     <div class="grid">
+      <div class="live-map" id="liveMap" role="region" aria-label="Map of demo road anomaly clusters"><p class="label">Loading map…</p></div>
       <table class="cities num">
         <thead><tr><th>City</th><th class="n">Reports</th><th class="bar"></th><th class="n">Clusters</th><th class="bar"></th></tr></thead>
         <tbody>
-          <tr><td class="city">New York City</td><td class="n">1,640</td><td class="bar"><i style="width:100%"></i></td><td class="n">200</td><td class="bar"><i class="cl" style="width:100%"></i></td></tr>
-          <tr><td class="city">Chicago</td><td class="n">1,590</td><td class="bar"><i style="width:97%"></i></td><td class="n">175</td><td class="bar"><i class="cl" style="width:87.5%"></i></td></tr>
-          <tr><td class="city">Los Angeles</td><td class="n">1,353</td><td class="bar"><i style="width:82.5%"></i></td><td class="n">165</td><td class="bar"><i class="cl" style="width:82.5%"></i></td></tr>
+          <tr data-city="nyc"><td class="city"><button type="button" class="city-link" data-city="nyc">New York City</button></td><td class="n">1,640</td><td class="bar"><i style="width:100%"></i></td><td class="n">200</td><td class="bar"><i class="cl" style="width:100%"></i></td></tr>
+          <tr data-city="chicago"><td class="city"><button type="button" class="city-link" data-city="chicago">Chicago</button></td><td class="n">1,590</td><td class="bar"><i style="width:97%"></i></td><td class="n">175</td><td class="bar"><i class="cl" style="width:87.5%"></i></td></tr>
+          <tr data-city="la"><td class="city"><button type="button" class="city-link" data-city="la">Los Angeles</button></td><td class="n">1,353</td><td class="bar"><i style="width:82.5%"></i></td><td class="n">165</td><td class="bar"><i class="cl" style="width:82.5%"></i></td></tr>
         </tbody>
       </table>
       <div class="city-foot">
@@ -664,6 +733,154 @@ curl http://localhost:8080/v1/health</code></pre>
     const pts = []; for (let t = 0; t <= 400; t += 3) pts.push([x(t), y(f(t))]);
     el.innerHTML = `<line x1="4" x2="296" y1="${y(9.81).toFixed(1)}" y2="${y(9.81).toFixed(1)}" class="base"/><path class="mini" d="M${pts.map(pt).join('L')}"/>`;
   });
+
+  /* try it: a simplified version of the SDK's spike-dip check, fed by the
+     phone's motion sensor or by replaying the curves drawn above */
+  const tryEl = document.getElementById('try');
+  if (tryEl) {
+    const W = 600, H = 220, SPAN = 2000, STEP = 20;
+    const ty = z => H - 12 - ((Math.max(4, Math.min(18, z)) - 4) / 14) * (H - 24);
+    const $t = id => document.getElementById(id);
+    const status = $t('tryStatus'), countEl = $t('tryCount');
+    const touch = matchMedia('(pointer:coarse)').matches && 'DeviceMotionEvent' in window;
+    tryEl.querySelectorAll('[data-touch]').forEach(el => { el.hidden = !touch; });
+    tryEl.querySelectorAll('[data-desk]').forEach(el => { el.hidden = touch; });
+
+    let thr = 4, base = 9.81, samples = [], marks = [], pending = null, lastHit = -1e9, count = 0;
+    let device = false, play = null, clock = performance.now(), statusTimer = 0;
+
+    const say = (text, hit) => {
+      status.textContent = text; status.classList.toggle('hit', !!hit);
+      clearTimeout(statusTimer);
+      if (hit) statusTimer = setTimeout(() => say(device ? 'Listening · your phone' : 'Listening · flat road'), 2600);
+    };
+    const classify = () => {
+      const win = samples.filter(([t]) => t >= pending.t - 400 && t <= pending.t + 250);
+      let peak = win[0], low = win[0];
+      for (const p of win) { if (p[1] > peak[1]) peak = p; if (p[1] < low[1]) low = p; }
+      const dipped = base - low[1] >= 1.5;
+      const kind = !dipped ? 'Jolt without a dip · logged as unknown' : low[0] < peak[0] ? 'Pothole' : 'Speed bump';
+      marks.push([peak[0], peak[1]]);
+      lastHit = peak[0]; pending = null; countEl.textContent = ++count;
+      say(`${kind} · peak ${peak[1].toFixed(1)} m/s²${dipped ? ` · dip ${low[1].toFixed(1)}` : ''}`, true);
+    };
+    const push = (t, z) => {
+      samples.push([t, z]);
+      while (samples.length && samples[0][0] < t - SPAN - 200) samples.shift();
+      if (!pending && Math.abs(z - base) < 2) base += (z - base) * 0.02;
+      if (!pending && z > base + thr && t - lastHit > 1000) pending = { t, z };
+      if (pending && t - pending.t >= 250) classify();
+    };
+
+    /* the synthetic road: flat with sensor noise, or a replayed curve */
+    const noise = () => (Math.random() - .5) * .25;
+    const tick = now => {
+      if (!device) {
+        for (; clock + STEP <= now; clock += STEP) {
+          let z = 9.81 + .12 * Math.sin(clock / 90) + noise();
+          if (play) {
+            const t = 120 + (clock - play.start);
+            if (t > 400) {
+              if (lastHit < play.start && !pending) say(`Below the threshold · peak ${play.peak.toFixed(1)} m/s², needs ${(base + thr).toFixed(1)}`, true);
+              play = null;
+            } else {
+              z = 9.81 + (play.fn(t) - 9.81) * play.size + noise();
+              play.peak = Math.max(play.peak, z);
+            }
+          }
+          push(clock, z);
+        }
+      }
+      const pts = samples.map(([t, z]) => `${(W - ((now - t) / SPAN) * W).toFixed(1)},${ty(z).toFixed(1)}`);
+      if (pts.length) $t('tryCurve').setAttribute('d', 'M' + pts.join('L'));
+      for (const [id, v] of [['tryBase', base], ['tryThr', base + thr]]) {
+        const l = $t(id); l.setAttribute('y1', ty(v).toFixed(1)); l.setAttribute('y2', ty(v).toFixed(1));
+      }
+      marks = marks.filter(([t]) => now - t < SPAN);
+      $t('tryMarks').innerHTML = marks.map(([t, z]) =>
+        `<circle class="mark-dot" r="6" cx="${(W - ((now - t) / SPAN) * W).toFixed(1)}" cy="${ty(z).toFixed(1)}"/>`).join('');
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+
+    tryEl.querySelectorAll('[data-play]').forEach(b => b.addEventListener('click', () => {
+      if (device) return;
+      // real potholes vary: some clear the car threshold but not the motorcycle one
+      play = { fn: b.dataset.play === 'bump' ? bump : pothole, start: clock, size: .75 + Math.random() * .65, peak: 0 };
+    }));
+    tryEl.querySelectorAll('[data-vehicle]').forEach(b => b.addEventListener('click', () => {
+      thr = +b.dataset.vehicle;
+      tryEl.querySelectorAll('[data-vehicle]').forEach(o => o.setAttribute('aria-pressed', o === b));
+    }));
+
+    /* the phone: project acceleration onto gravity, as the SDK does */
+    const onMotion = e => {
+      const g = e.accelerationIncludingGravity, a = e.acceleration;
+      if (!g || g.x == null) return;
+      let z;
+      if (a && a.x != null) {
+        const gx = g.x - a.x, gy = g.y - a.y, gz = g.z - a.z, gm = Math.hypot(gx, gy, gz) || 9.81;
+        z = (g.x * gx + g.y * gy + g.z * gz) / gm;
+      } else z = Math.hypot(g.x, g.y, g.z);
+      if (!device) { device = true; say('Listening · your phone'); }
+      push(performance.now(), z);
+    };
+    $t('tryMotion').addEventListener('click', async () => {
+      try {
+        if (typeof DeviceMotionEvent.requestPermission === 'function' &&
+            await DeviceMotionEvent.requestPermission() !== 'granted') { say('Motion access was declined.'); return; }
+      } catch (err) { say('Motion access is not available here.'); return; }
+      samples = []; pending = null;
+      window.addEventListener('devicemotion', onMotion);
+      $t('tryMotion').hidden = true;
+      say('Waiting for the motion sensor…');
+      setTimeout(() => { if (!device) say('No motion sensor found on this device.'); }, 2000);
+    });
+  }
+
+  /* live map of the demo dataset, loaded when the section comes into view */
+  const mapEl = document.getElementById('liveMap');
+  if (mapEl && 'IntersectionObserver' in window) {
+    const LEAFLET = 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/';
+    const loadLeaflet = () => new Promise((ok, fail) => {
+      const css = document.createElement('link'); css.rel = 'stylesheet'; css.href = LEAFLET + 'leaflet.css';
+      const js = document.createElement('script'); js.src = LEAFLET + 'leaflet.js'; js.onload = ok; js.onerror = fail;
+      document.head.append(css, js);
+    });
+    const fail = () => { mapEl.innerHTML = '<p class="label">The map could not load here. <a href="demo/">Open the demo map</a></p>'; };
+    const io = new IntersectionObserver(async ([entry]) => {
+      if (!entry.isIntersecting) return;
+      io.disconnect();
+      try {
+        const [, clusters, stats] = await Promise.all([loadLeaflet(),
+          ...['clusters', 'stats'].map(f => fetch(`demo/data/${f}.json`).then(r => { if (!r.ok) throw r; return r.json(); }))]);
+        mapEl.innerHTML = '';
+        const map = L.map(mapEl, { scrollWheelZoom: false, dragging: !L.Browser.mobile, preferCanvas: true });
+        const ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/';
+        L.tileLayer(ESRI + 'World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+          maxZoom: 16, attribution: 'Tiles &copy; Esri &mdash; Esri, HERE, Garmin, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        const css = getComputedStyle(document.documentElement);
+        const col = c => css.getPropertyValue(c >= .75 ? '--yellow' : c >= .45 ? '--orange' : '--fg-mute').trim();
+        const NAME = { pothole: 'Pothole', bump: 'Speed bump', rough_patch: 'Rough patch', unknown: 'Unknown' };
+        for (const c of clusters.clusters) {
+          L.circleMarker([c.latitude, c.longitude], {
+            radius: Math.max(4, Math.min(12, 3 + Math.sqrt(c.event_count) * 1.8)),
+            color: col(c.confidence), weight: 1, fillColor: col(c.confidence), fillOpacity: .45
+          }).bindPopup(`<b>${NAME[c.anomaly_type] || c.anomaly_type}</b>${Math.round(c.confidence * 100)}% confidence · ${c.event_count} reports`).addTo(map);
+        }
+        const rows = document.querySelectorAll('.cities tr[data-city]');
+        const show = key => {
+          const city = stats.cities[key];
+          map.setView(city.center, city.zoom);
+          rows.forEach(r => r.classList.toggle('on', r.dataset.city === key));
+        };
+        document.querySelectorAll('.city-link').forEach(b => b.addEventListener('click', () => show(b.dataset.city)));
+        show('nyc');
+      } catch (err) { fail(); }
+    }, { rootMargin: '400px' });
+    io.observe(mapEl);
+  }
 
   /* copy buttons */
   document.querySelectorAll('[data-copy]').forEach(btn => {
