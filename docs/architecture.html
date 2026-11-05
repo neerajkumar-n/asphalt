@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Asphalt · Architecture</title>
+<meta name="description" content="How Asphalt works end to end: on-device detection in the Android SDK, the privacy boundary, batch upload, clustering and confidence scoring in the Go backend, deployment options and the HTTP API.">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231c1c1e'/%3E%3Cpath d='M6 22h20' stroke='%23e0f354' stroke-width='3' stroke-dasharray='5 3'/%3E%3Cpath d='M12 13q4 5 8 0' stroke='%23fff' stroke-width='2.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="site.css">
+<style>
+.nav a[aria-current="page"]{color:var(--fg)}
+
+/* page hero */
+.a-hero{padding-block:clamp(40px,7vw,104px) clamp(48px,6vw,88px)}
+.a-hero .label{grid-column:1/-1;margin-bottom:20px}
+.a-hero h1{grid-column:1/11;margin:0;color:var(--hi);font-weight:800;font-stretch:78%;font-size:clamp(3rem,8vw,8.4rem);line-height:.88;letter-spacing:-.025em;text-wrap:balance}
+.a-hero .lede{grid-column:1/7;margin:clamp(24px,3vw,40px) 0 0;font-size:clamp(1.1rem,1.5vw,1.35rem);line-height:1.4;max-width:40ch;text-wrap:pretty}
+.toc{grid-column:8/13;align-self:end;list-style:none;margin:0;padding:0;counter-reset:toc;border-top:2px solid var(--fg)}
+.toc li{counter-increment:toc;border-bottom:1px solid var(--line)}
+.toc a{display:flex;gap:14px;align-items:baseline;padding:11px 0;text-decoration:none;font-weight:600}
+.toc a::before{content:counter(toc,decimal-leading-zero);font-family:var(--f-mono);font-size:.75rem;font-weight:500;color:var(--accent)}
+.toc a:hover{color:var(--hi)}
+
+/* 01 system diagram */
+.sys{grid-column:1/-1}
+.lanes{display:grid;grid-template-columns:minmax(0,1fr) 56px minmax(0,1fr);align-items:stretch}
+.lane-head{display:flex;justify-content:space-between;align-items:baseline;padding-bottom:12px;border-bottom:2px solid var(--fg)}
+.lane-head b{font-size:1.15rem;font-weight:700}
+.nodes{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+.node{display:flex;flex-direction:column;align-items:flex-start;gap:6px;width:100%;height:100%;min-height:128px;padding:16px 14px 14px;background:none;border:0;border-right:1px solid var(--line);border-bottom:1px solid var(--line);color:var(--fg);font:inherit;text-align:left;cursor:pointer;position:relative}
+.nodes li:last-child .node{border-right:0}
+.node .n{font-family:var(--f-mono);font-size:.72rem;color:var(--fg-mute)}
+.node b{font-size:1.1rem;font-weight:700;line-height:1.1}
+.node small{font-family:var(--f-mono);font-size:.72rem;color:var(--fg-mute);margin-top:auto}
+.node::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:4px;background:transparent}
+.node:hover b{color:var(--hi)}
+.node[aria-pressed="true"]{background:var(--surface)}
+.node[aria-pressed="true"] b{color:var(--hi)}
+.node[aria-pressed="true"]::after{background:var(--accent)}
+.node[aria-pressed="true"] .n{color:var(--accent)}
+.boundary{position:relative;display:flex;justify-content:center}
+.boundary::before{content:"";position:absolute;top:0;bottom:0;left:50%;border-left:2px dashed var(--accent)}
+.boundary span{position:relative;align-self:center;writing-mode:vertical-rl;transform:rotate(180deg);background:var(--bg);padding:10px 0;font-family:var(--f-mono);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);white-space:nowrap}
+
+.detail{margin-top:clamp(28px,3vw,40px);display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(24px,3vw,48px);background:var(--surface);padding:clamp(20px,2.4vw,36px)}
+.detail h3{margin:6px 0 12px;color:var(--hi);font-size:clamp(1.8rem,3vw,2.6rem);font-weight:800;font-stretch:80%;line-height:.95;letter-spacing:-.02em}
+.detail .what{margin:0 0 18px;max-width:46ch}
+.specs{margin:0;display:grid;grid-template-columns:auto minmax(0,1fr);gap:0 18px;border-top:1px solid var(--line)}
+.specs dt,.specs dd{padding:9px 0;border-bottom:1px solid var(--line);margin:0;font-size:.92rem}
+.specs dt{font-family:var(--f-mono);font-size:.78rem;color:var(--fg-mute);padding-top:11px}
+.src{margin:16px 0 0;font-size:.85rem;color:var(--fg-mute)}
+.src a{color:var(--fg);font-family:var(--f-mono);font-size:.8rem;text-underline-offset:3px}
+.stage{display:flex;flex-direction:column;gap:10px;min-width:0}
+.stage .code{flex:1}
+.stage .code pre{white-space:pre;overflow-x:auto}
+.stepper{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.stepper .ctrl{display:flex;gap:8px}
+.stepper button{background:none;border:1px solid var(--line);color:var(--fg);font:500 .8rem/1 var(--f-mono);padding:10px 14px;cursor:pointer}
+.stepper button:hover{border-color:var(--fg)}
+.stepper button.go{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.stepper button.go:hover{background:var(--hi);border-color:var(--hi)}
+.stepper .pos{font-family:var(--f-mono);font-size:.78rem;color:var(--fg-mute)}
+
+/* 02 confidence */
+.calc{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(24px,3vw,48px)}
+.inputs{display:flex;flex-direction:column;gap:20px}
+.inp{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px 16px;padding-bottom:18px;border-bottom:1px solid var(--line)}
+.inp label{font-weight:600}
+.inp output{font-family:var(--f-mono);color:var(--hi)}
+.inp input[type=range]{grid-column:1/-1;width:100%;accent-color:var(--accent)}
+.inp .hint{grid-column:1/-1;margin:0;font-size:.82rem;color:var(--fg-mute)}
+.count{display:inline-flex;border:1px solid var(--line)}
+.count button{width:40px;background:none;border:0;color:var(--fg);font:600 1.1rem/1 var(--f-sans);cursor:pointer;padding:8px 0}
+.count button:hover{background:var(--surface)}
+.count output{min-width:44px;text-align:center;align-self:center;border-inline:1px solid var(--line);padding:8px 0}
+.presets{display:flex;flex-wrap:wrap;gap:8px}
+.presets button{background:none;border:1px solid var(--line);color:var(--fg-mute);font:500 .78rem/1 var(--f-mono);padding:9px 11px;cursor:pointer}
+.presets button:hover{color:var(--fg);border-color:var(--fg)}
+.result{display:flex;flex-direction:column;gap:18px;min-width:0}
+.score{display:flex;align-items:baseline;gap:18px;flex-wrap:wrap}
+.score b{font-weight:800;font-stretch:78%;font-size:clamp(5rem,11vw,9.6rem);line-height:.8;letter-spacing:-.03em;color:var(--hi)}
+.verdict{margin:0;font-weight:600;font-size:1.05rem;max-width:30ch}
+.verdict.off{color:var(--fg-mute)}
+.stack{display:flex;height:22px;background:var(--deep)}
+.stack i{display:block;height:100%;transition:width .25s}
+.stack i + i{box-shadow:inset 2px 0 0 var(--bg)}
+.parts{margin:0;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:0 16px;align-items:baseline}
+.parts dt,.parts dd{margin:0;padding:10px 0;border-bottom:1px solid var(--line);font-size:.92rem}
+.parts dt{display:flex;align-items:center;gap:10px;font-weight:600}
+.parts dt i{width:12px;height:12px;flex:none}
+.parts dd.how{color:var(--fg-mute);font-family:var(--f-mono);font-size:.78rem}
+.parts dd.val{font-family:var(--f-mono);text-align:right}
+.formula{margin:0;font-family:var(--f-mono);font-size:.78rem;color:var(--fg-mute);line-height:1.7}
+.threshold{position:relative;height:0;margin-top:36px}
+.threshold::after{content:"0.30 · shown on map tiles";position:absolute;left:30%;top:-34px;transform:translateX(-1px);border-left:2px dashed var(--fg);height:30px;padding-left:8px;font-family:var(--f-mono);font-size:.68rem;color:var(--fg-mute);white-space:nowrap}
+
+/* 03 privacy */
+.priv{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,8fr) minmax(0,4fr);gap:clamp(24px,3vw,48px)}
+.fields{width:100%;border-collapse:collapse}
+.fields th,.fields td{text-align:left;vertical-align:baseline;padding:12px 16px 12px 0;border-bottom:1px solid var(--line);font-weight:400}
+.fields thead th{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-mute);border-bottom:2px solid var(--fg);padding-top:0}
+.fields td:first-child{font-family:var(--f-mono);font-size:.85rem;color:var(--hi);white-space:nowrap}
+.fields td:nth-child(2){font-family:var(--f-mono);font-size:.82rem;white-space:nowrap}
+.fields td:last-child{color:var(--fg-mute);font-size:.92rem}
+.never{background:var(--band);color:var(--on-band);padding:clamp(20px,2.4vw,32px);align-self:start}
+.never .label{color:var(--on-band-mute)}
+.never h3{margin:8px 0 14px;font-size:1.6rem;font-weight:800;font-stretch:82%;line-height:1}
+.never ul{list-style:none;margin:0;padding:0}
+.never li{padding:9px 0;border-top:1px solid var(--band-line);font-weight:600}
+.never li::before{content:"✕  ";font-family:var(--f-mono)}
+.never p{margin:14px 0 0;font-size:.88rem}
+
+/* 04 deploy tabs */
+.tabs{grid-column:1/-1}
+.tablist{display:flex;border-bottom:2px solid var(--fg);overflow-x:auto;scrollbar-width:none}
+.tablist button{flex:none;background:none;border:0;color:var(--fg-mute);font:700 1.05rem/1 var(--f-sans);padding:14px 20px 14px 0;margin-right:20px;cursor:pointer;position:relative}
+.tablist button::after{content:"";position:absolute;left:0;right:0;bottom:-2px;height:4px;background:transparent}
+.tablist button[aria-selected="true"]{color:var(--hi)}
+.tablist button[aria-selected="true"]::after{background:var(--accent)}
+.panel{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(24px,3vw,48px);padding-top:clamp(24px,3vw,40px)}
+.panel h3{margin:0 0 10px;font-size:1.6rem;font-weight:800;font-stretch:82%;line-height:1}
+.panel p{margin:0 0 12px;max-width:46ch}
+.panel ul{margin:0;padding:0;list-style:none}
+.panel li{padding:8px 0;border-top:1px solid var(--line);font-size:.92rem;color:var(--fg-mute)}
+.panel li b{color:var(--fg);font-weight:600}
+
+/* 05 api */
+.api{grid-column:1/-1;border-top:2px solid var(--fg)}
+.api details{border-bottom:1px solid var(--line)}
+.api summary{display:grid;grid-template-columns:72px minmax(0,1fr) auto;gap:16px;align-items:baseline;padding:18px 0;cursor:pointer;list-style:none}
+.api summary::-webkit-details-marker{display:none}
+.api summary::after{content:"+";font:500 1.3rem/1 var(--f-mono);color:var(--fg-mute)}
+.api details[open] summary::after{content:"–";color:var(--accent)}
+.api .m{font-family:var(--f-mono);font-size:.78rem;font-weight:500;padding:3px 0;text-align:center;border:1px solid var(--line)}
+.api .m.post{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.api .path{font-family:var(--f-mono);font-size:clamp(.88rem,1.3vw,1.05rem);color:var(--fg);overflow-wrap:anywhere}
+.api .path small{display:block;margin-top:4px;font-family:var(--f-sans);font-size:.9rem;color:var(--fg-mute)}
+.api summary:hover .path{color:var(--hi)}
+.ep{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--g);padding:0 0 24px 88px}
+.ep .code{min-height:100%}
+.ep h4{margin:0 0 8px;font-family:var(--f-mono);font-size:.72rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-mute)}
+.ep .rules{grid-column:1/-1;margin:0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:8px}
+.ep .rules li{font-family:var(--f-mono);font-size:.75rem;border:1px solid var(--line);padding:6px 9px;color:var(--fg-mute)}
+.api-foot{grid-column:1/-1;margin-top:20px}
+
+/* 06 decisions */
+.why{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--g)}
+.why article{border-top:2px solid var(--fg);padding-top:16px}
+.why .label{color:var(--accent)}
+.why h3{margin:10px 0 8px;font-size:1.35rem;font-weight:700;font-stretch:85%;line-height:1.1}
+.why p{margin:0;color:var(--fg-mute);font-size:.95rem}
+
+@media (max-width:1080px){
+  .a-hero h1,.a-hero .lede{grid-column:1/-1}
+  .toc{grid-column:1/-1;margin-top:32px}
+  .lanes{grid-template-columns:minmax(0,1fr)}
+  .boundary{height:44px}
+  .boundary::before{top:50%;bottom:auto;left:0;right:0;border-left:0;border-top:2px dashed var(--accent)}
+  .boundary span{writing-mode:horizontal-tb;transform:none;padding:0 10px}
+  .why{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:760px){
+  .nodes{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .nodes li:nth-child(2n) .node{border-right:0}
+  .nodes li .node{border-right:1px solid var(--line)}
+  .node{min-height:104px}
+  .detail,.calc,.priv,.panel{grid-template-columns:minmax(0,1fr)}
+  .fields td:nth-child(2),.fields th:nth-child(2){display:none}
+  .fields td:first-child{white-space:normal;overflow-wrap:anywhere}
+  .ep{grid-template-columns:minmax(0,1fr);padding-left:0}
+  .api summary{grid-template-columns:56px minmax(0,1fr) auto;gap:12px}
+  .why{grid-template-columns:minmax(0,1fr)}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="./" aria-label="Asphalt home">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="7.5" fill="currentColor"/><path d="M1 20.5 H23" stroke="var(--accent)" stroke-width="2.4" stroke-dasharray="4 2.5"/></svg>
+      asphalt
+    </a>
+    <ul class="nav">
+      <li><a href="./#try-it">Try it</a></li>
+      <li class="hide-sm"><a href="./#how">How it works</a></li>
+      <li><a href="architecture" aria-current="page">Architecture</a></li>
+      <li class="hide-sm"><a href="./#start">Get started</a></li>
+      <li class="hide-sm"><a href="demo/">Demo map</a></li>
+      <li><a class="pill" href="https://github.com/neerajkumar-n/asphalt">GitHub</a></li>
+    </ul>
+  </div>
+</header>
+
+<main>
+<section class="a-hero" aria-labelledby="top-h">
+  <div class="wrap">
+    <div class="grid">
+      <p class="label">Architecture</p>
+      <h1 id="top-h">From the phone to the map, end to end.</h1>
+      <p class="lede">Two parts you can run on their own: an Android SDK that detects anomalies on the phone, and a Go server that turns many reports into a scored map. This page follows one pothole through both.</p>
+      <ol class="toc">
+        <li><a href="#system">The system</a></li>
+        <li><a href="#confidence">Confidence</a></li>
+        <li><a href="#privacy">What leaves the phone</a></li>
+        <li><a href="#deploy">Run it your way</a></li>
+        <li><a href="#api">HTTP API</a></li>
+        <li><a href="#decisions">Design decisions</a></li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<!-- 01 system -->
+<section class="sec" id="system" aria-labelledby="system-h">
+  <div class="wrap">
+    <div class="grid sec-head">
+      <p class="label sec-mark"><span class="sec-n">01</span><span>The system</span></p>
+      <h2 id="system-h">Eight steps, one line nothing raw crosses.</h2>
+      <p class="intro">Choose a step to see what it does and what one pothole looks like at that point. Or press <b>Follow the pothole</b> and walk it from the sensor to the map.</p>
+    </div>
+    <div class="grid">
+      <div class="sys">
+        <div class="lanes">
+          <div>
+            <div class="lane-head"><b>On the phone</b><span class="label">Android SDK · Kotlin</span></div>
+            <ol class="nodes" id="nodesPhone"></ol>
+          </div>
+          <div class="boundary" aria-hidden="true"><span>Only anomaly events cross</span></div>
+          <div>
+            <div class="lane-head"><b>On your server</b><span class="label">Go backend</span></div>
+            <ol class="nodes" id="nodesServer" start="5"></ol>
+          </div>
+        </div>
+
+        <div class="detail" id="detail" aria-live="polite">
+          <div>
+            <p class="label" id="dPart"></p>
+            <h3 id="dTitle"></h3>
+            <p class="what" id="dWhat"></p>
+            <dl class="specs" id="dSpecs"></dl>
+            <p class="src" id="dSrc"></p>
+          </div>
+          <div class="stage">
+            <div class="stepper">
+              <span class="pos" id="dPos"></span>
+              <div class="ctrl">
+                <button type="button" id="prev" aria-label="Previous step">←</button>
+                <button type="button" class="go" id="next">Follow the pothole →</button>
+              </div>
+            </div>
+            <p class="label" id="dStageLabel"></p>
+            <div class="code"><button class="copy" type="button" data-copy="dStage">Copy</button><pre id="dStage"></pre></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 02 confidence -->
+<section class="sec" id="confidence" aria-labelledby="conf-h">
+  <div class="wrap">
+    <div class="grid sec-head">
+      <p class="label sec-mark"><span class="sec-n">02</span><span>Confidence</span></p>
+      <h2 id="conf-h">One report is a rumour. Agreement is a pothole.</h2>
+      <p class="intro">Every cluster gets a score from 0 to 1. This calculator runs the same formula as the clustering worker, so you can see what moves it.</p>
+    </div>
+    <div class="grid">
+      <div class="calc">
+        <div class="inputs">
+          <div class="inp">
+            <label id="lCars">Car reports</label>
+            <div class="count" role="group" aria-labelledby="lCars"><button type="button" data-step="cars:-1" aria-label="Fewer car reports">−</button><output id="oCars">2</output><button type="button" data-step="cars:1" aria-label="More car reports">+</button></div>
+          </div>
+          <div class="inp">
+            <label id="lMotos">Motorcycle reports</label>
+            <div class="count" role="group" aria-labelledby="lMotos"><button type="button" data-step="motos:-1" aria-label="Fewer motorcycle reports">−</button><output id="oMotos">0</output><button type="button" data-step="motos:1" aria-label="More motorcycle reports">+</button></div>
+            <p class="hint">Weighted 0.8× a car: a motorcycle shakes more on smooth road.</p>
+          </div>
+          <div class="inp">
+            <label for="iAgree">Reports agreeing on the type</label>
+            <output id="oAgree" for="iAgree">100%</output>
+            <input type="range" id="iAgree" min="34" max="100" value="100">
+          </div>
+          <div class="inp">
+            <label for="iAge">Days since the last report</label>
+            <output id="oAge" for="iAge">0</output>
+            <input type="range" id="iAge" min="0" max="90" value="0">
+          </div>
+          <div class="presets" aria-label="Examples">
+            <button type="button" data-preset="2,0,100,0">2 cars</button>
+            <button type="button" data-preset="1,1,100,0">Car + motorcycle</button>
+            <button type="button" data-preset="20,6,90,2">Busy street</button>
+            <button type="button" data-preset="3,0,100,75">Old reports</button>
+          </div>
+        </div>
+        <div class="result">
+          <div class="score num"><b id="cScore">0.58</b><p class="verdict" id="cVerdict"></p></div>
+          <div>
+            <div class="threshold" aria-hidden="true"></div>
+            <div class="stack" id="cStack" role="img" aria-label="Confidence broken into its four parts"></div>
+          </div>
+          <dl class="parts num" id="cParts"></dl>
+          <p class="formula">confidence = 0.50 × log₁₀(weight + 1) / log₁₀(21) + 0.25 × agreement + 0.15 × (1 − age / 90 days) + 0.08 × (vehicle types − 1)</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 03 privacy -->
+<section class="sec" id="privacy" aria-labelledby="priv-h">
+  <div class="wrap">
+    <div class="grid sec-head">
+      <p class="label sec-mark"><span class="sec-n">03</span><span>What leaves the phone</span></p>
+      <h2 id="priv-h">This is the whole event. Nothing else is sent.</h2>
+      <p class="intro">Each field is there for a reason the server can use. Anything that could follow a person from trip to trip stays on the device or is never collected.</p>
+    </div>
+    <div class="grid">
+      <div class="priv">
+        <table class="fields">
+          <thead><tr><th>Field</th><th>Example</th><th>Why it is sent</th></tr></thead>
+          <tbody>
+            <tr><td>event_id</td><td>7c3e6b2a…</td><td>Random per event, so a retried upload is not counted twice.</td></tr>
+            <tr><td>timestamp_ms</td><td>1793892600000</td><td>Recency in the confidence score; stale reports fade over 90 days.</td></tr>
+            <tr><td>latitude, longitude</td><td>40.7516, −73.9855</td><td>Where the anomaly is. Only at the moment of a bump, never a route.</td></tr>
+            <tr><td>accuracy_m</td><td>8.0</td><td>Lets the server discount fixes that are too vague to place.</td></tr>
+            <tr><td>anomaly_type</td><td>pothole</td><td>Pothole, speed bump, rough patch or unknown.</td></tr>
+            <tr><td>intensity</td><td>0.58</td><td>How hard the hit was, 0 to 1, adjusted for speed.</td></tr>
+            <tr><td>speed_kmh</td><td>38.6</td><td>The same pothole hits harder at speed; used to normalise.</td></tr>
+            <tr><td>vehicle_type</td><td>four_wheeler</td><td>Car or motorcycle, which sets thresholds and weight.</td></tr>
+            <tr><td>sensor_summary</td><td>peak 16.1 · Δ 6.29</td><td>Six numbers describing the 500 ms window, not the samples.</td></tr>
+            <tr><td>device_meta</td><td>Pixel 8 · LSM6DSO</td><td>Phone model and sensor chip, for per-device calibration later.</td></tr>
+            <tr><td>session_id</td><td>a3f7c1b2…</td><td>Random, and replaced every time collection starts.</td></tr>
+          </tbody>
+        </table>
+        <aside class="never">
+          <p class="label">Never sent</p>
+          <h3>What stays behind</h3>
+          <ul>
+            <li>Raw sensor samples</li>
+            <li>Routes or location between events</li>
+            <li>Accounts, names or emails</li>
+            <li>Advertising or hardware IDs</li>
+            <li>Anything while below 15 km/h</li>
+          </ul>
+          <p>Uploaded events are pruned from the phone after 24 hours.</p>
+        </aside>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 04 deploy -->
+<section class="sec" id="deploy" aria-labelledby="deploy-h">
+  <div class="wrap">
+    <div class="grid sec-head">
+      <p class="label sec-mark"><span class="sec-n">04</span><span>Run it your way</span></p>
+      <h2 id="deploy-h">Start with one command. Grow when you need to.</h2>
+    </div>
+    <div class="grid">
+      <div class="tabs">
+        <div class="tablist" role="tablist" aria-label="Deployment options">
+          <button type="button" role="tab" id="t-sqlite" aria-controls="p-sqlite" aria-selected="true">Single server</button>
+          <button type="button" role="tab" id="t-pg" aria-controls="p-pg" aria-selected="false" tabindex="-1">PostgreSQL</button>
+          <button type="button" role="tab" id="t-parts" aria-controls="p-parts" aria-selected="false" tabindex="-1">Only the parts you need</button>
+        </div>
+        <div class="panel" role="tabpanel" id="p-sqlite" aria-labelledby="t-sqlite">
+          <div>
+            <h3>SQLite, built in</h3>
+            <p>The default. One container, one data file, nothing else to install. Right for a city pilot, a fleet, or trying it out.</p>
+            <ul>
+              <li><b>Database</b> · a file at <span class="mono">/data/asphalt.db</span></li>
+              <li><b>Scale</b> · one server instance</li>
+              <li><b>Backups</b> · copy the volume</li>
+            </ul>
+          </div>
+          <div class="code"><button class="copy" type="button" data-copy="c-sqlite">Copy</button><pre id="c-sqlite"><code>cd backend
+docker build -t asphalt .
+docker run -p 8080:8080 -v asphalt:/data asphalt
+
+<span class="c"># point the SDK at</span>
+<span class="s">http://your-host:8080/v1/ingest/batch</span></code></pre></div>
+        </div>
+        <div class="panel" role="tabpanel" id="p-pg" aria-labelledby="t-pg" hidden>
+          <div>
+            <h3>PostgreSQL 13 or newer</h3>
+            <p>For several server instances behind a load balancer, or a managed database. No extensions needed; the same schema runs on both.</p>
+            <ul>
+              <li><b>Database</b> · any PostgreSQL, including managed ones</li>
+              <li><b>Scale</b> · add server replicas; the server keeps no state</li>
+              <li><b>Reads</b> · map endpoints can use a read replica</li>
+            </ul>
+          </div>
+          <div class="code"><button class="copy" type="button" data-copy="c-pg">Copy</button><pre id="c-pg"><code><span class="c"># everything locally</span>
+cd backend
+docker compose up --build
+
+<span class="c"># or any server, any PostgreSQL</span>
+DATABASE_URL=<span class="s">postgres://user:pass@host/asphalt</span> \
+  ./asphalt-server</code></pre></div>
+        </div>
+        <div class="panel" role="tabpanel" id="p-parts" aria-labelledby="t-parts" hidden>
+          <div>
+            <h3>Mix and match</h3>
+            <p>The SDK, server and contracts are independent. The event and batch formats are published, so either side can be replaced.</p>
+            <ul>
+              <li><b>Your own server</b> · accept the batch format at any URL</li>
+              <li><b>Other sources</b> · send events to the backend from iOS, dashcams or fleet hardware</li>
+              <li><b>Contracts</b> · JSON Schema for events, OpenAPI 3.1 for the HTTP API</li>
+            </ul>
+          </div>
+          <div class="code"><button class="copy" type="button" data-copy="c-parts">Copy</button><pre id="c-parts"><code><span class="c"># the contracts</span>
+contracts/event.schema.json
+contracts/api.yaml
+contracts/example-batch.json
+
+<span class="c"># send the example batch</span>
+curl -X POST http://localhost:8080/v1/ingest/batch \
+  -H <span class="s">"Content-Type: application/json"</span> \
+  -d @contracts/example-batch.json</code></pre></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 05 api -->
+<section class="sec" id="api" aria-labelledby="api-h">
+  <div class="wrap">
+    <div class="grid sec-head">
+      <p class="label sec-mark"><span class="sec-n">05</span><span>HTTP API</span></p>
+      <h2 id="api-h">One way in, three ways out.</h2>
+      <p class="intro">Phones write to one endpoint. Maps and dashboards read from the others. Open an endpoint for an example.</p>
+    </div>
+    <div class="grid">
+      <div class="api">
+        <details open>
+          <summary><span class="m post">POST</span><span class="path">/v1/ingest/batch<small>Phones upload batches of events</small></span></summary>
+          <div class="ep">
+            <ul class="rules">
+              <li>≤ 500 events</li><li>≤ 2 MB</li><li>not over 5 min in the future</li><li>not over 7 days old</li><li>same batch_id is a no-op</li><li>same event_id is ignored</li>
+            </ul>
+            <div><h4>Request</h4><div class="code"><button class="copy" type="button" data-copy="a1q">Copy</button><pre id="a1q"><code>{
+  "batch_id": <span class="s">"5f0cd4f7-…"</span>,
+  "submitted_at_ms": 1793892900000,
+  "events": [ <span class="c">/* events, as in 03 */</span> ]
+}</code></pre></div></div>
+            <div><h4>Response · 200</h4><div class="code"><button class="copy" type="button" data-copy="a1r">Copy</button><pre id="a1r"><code>{
+  "batch_id": <span class="s">"5f0cd4f7-…"</span>,
+  "accepted_count": 12,
+  "duplicate": false
+}</code></pre></div></div>
+          </div>
+        </details>
+        <details>
+          <summary><span class="m">GET</span><span class="path">/v1/map/clusters?min_lat&amp;min_lon&amp;max_lat&amp;max_lon&amp;limit<small>Clusters in a bounding box, highest confidence first</small></span></summary>
+          <div class="ep">
+            <ul class="rules"><li>limit defaults to 200</li></ul>
+            <div><h4>Request</h4><div class="code"><button class="copy" type="button" data-copy="a2q">Copy</button><pre id="a2q"><code>curl <span class="s">"http://localhost:8080/v1/map/clusters?min_lat=40.74&amp;min_lon=-74.00&amp;max_lat=40.76&amp;max_lon=-73.97"</span></code></pre></div></div>
+            <div><h4>Response · 200</h4><div class="code"><button class="copy" type="button" data-copy="a2r">Copy</button><pre id="a2r"><code>{ "clusters": [{
+  "cluster_id": <span class="s">"6929…"</span>,
+  "latitude": 40.7516, "longitude": -73.9855,
+  "anomaly_type": <span class="s">"pothole"</span>,
+  "confidence": 0.63, "event_count": 3,
+  "avg_intensity": 0.58, "radius_m": 5.0,
+  "vehicle_type_counts": { "four_wheeler": 3 },
+  "vehicle_type_diversity": 1
+}]}</code></pre></div></div>
+          </div>
+        </details>
+        <details>
+          <summary><span class="m">GET</span><span class="path">/v1/map/tiles/{z}/{x}/{y}?min_confidence<small>The same clusters, cut to a slippy-map tile for map SDKs</small></span></summary>
+          <div class="ep">
+            <ul class="rules"><li>min_confidence defaults to 0.30</li></ul>
+            <div><h4>Request</h4><div class="code"><button class="copy" type="button" data-copy="a3q">Copy</button><pre id="a3q"><code>curl <span class="s">"http://localhost:8080/v1/map/tiles/14/4824/6158?min_confidence=0.5"</span></code></pre></div></div>
+            <div><h4>Response · 200</h4><div class="code"><button class="copy" type="button" data-copy="a3r">Copy</button><pre id="a3r"><code>{ "clusters": [ <span class="c">/* as above */</span> ] }</code></pre></div></div>
+          </div>
+        </details>
+        <details>
+          <summary><span class="m">GET</span><span class="path">/v1/stats<small>Totals for dashboards</small></span></summary>
+          <div class="ep">
+            <div><h4>Request</h4><div class="code"><button class="copy" type="button" data-copy="a4q">Copy</button><pre id="a4q"><code>curl http://localhost:8080/v1/stats</code></pre></div></div>
+            <div><h4>Response · 200</h4><div class="code"><button class="copy" type="button" data-copy="a4r">Copy</button><pre id="a4r"><code>{
+  "total_events": 4583,
+  "total_clusters": 540,
+  "events_24h": 200,
+  "avg_confidence": 0.72
+}</code></pre></div></div>
+          </div>
+        </details>
+        <details>
+          <summary><span class="m">GET</span><span class="path">/v1/health<small>Liveness check for load balancers</small></span></summary>
+          <div class="ep">
+            <div><h4>Request</h4><div class="code"><button class="copy" type="button" data-copy="a5q">Copy</button><pre id="a5q"><code>curl http://localhost:8080/v1/health</code></pre></div></div>
+            <div><h4>Response · 200</h4><div class="code"><button class="copy" type="button" data-copy="a5r">Copy</button><pre id="a5r"><code>{ "status": <span class="s">"ok"</span> }</code></pre></div></div>
+          </div>
+        </details>
+        <p class="api-foot"><a class="tlink" href="https://github.com/neerajkumar-n/asphalt/blob/main/contracts/api.yaml">The full OpenAPI 3.1 contract</a></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 06 decisions -->
+<section class="sec" id="decisions" aria-labelledby="why-h">
+  <div class="wrap">
+    <div class="grid sec-head">
+      <p class="label sec-mark"><span class="sec-n">06</span><span>Design decisions</span></p>
+      <h2 id="why-h">Why it is built this way.</h2>
+    </div>
+    <div class="grid">
+      <div class="why">
+        <article><p class="label">Detection</p><h3>On the phone, not the server</h3><p>Streaming 50 Hz sensor data would cost battery, data and privacy. Detecting on the device means only a few dozen bytes per bump ever leave it.</p></article>
+        <article><p class="label">Clustering</p><h3>DBSCAN at 30 m</h3><p>Potholes line up along roads, not in neat circles. DBSCAN finds any shape, needs no cluster count, and drops lone reports as noise.</p></article>
+        <article><p class="label">Upload</p><h3>Batches, not a stream</h3><p>Waking the radio is one of the biggest battery costs. WorkManager uploads every 15 minutes at most, sooner when 200 events wait, and retries with backoff.</p></article>
+        <article><p class="label">Scoring</p><h3>Confidence, not certainty</h3><p>Any single report can be wrong. Scoring agreement, recency and vehicle variety lets a map choose its own threshold instead of trusting one phone.</p></article>
+        <article><p class="label">Backend</p><h3>Go, one static binary</h3><p>No runtime to install, a small container, and goroutines that handle many uploads at once with a standard library that covers HTTP, SQL and JSON.</p></article>
+        <article><p class="label">Storage</p><h3>SQLite first</h3><p>The schema uses no extensions and clustering runs in Go, so a single file is enough to start. PostgreSQL is one environment variable away.</p></article>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="grid">
+      <p class="foot-say">Every road keeps a record.</p>
+      <nav aria-label="Product">
+        <p class="label">Product</p>
+        <ul>
+          <li><a href="./#try-it">Try the detector</a></li>
+          <li><a href="./#how">How it works</a></li>
+          <li><a href="./#start">Get started</a></li>
+          <li><a href="demo/">Demo map</a></li>
+        </ul>
+      </nav>
+      <nav aria-label="Documentation">
+        <p class="label">Docs</p>
+        <ul>
+          <li><a href="architecture">Architecture</a></li>
+          <li><a href="https://github.com/neerajkumar-n/asphalt/blob/main/docs/sdk-integration.md">SDK integration</a></li>
+          <li><a href="https://github.com/neerajkumar-n/asphalt/blob/main/docs/backend-setup.md">Backend setup</a></li>
+          <li><a href="https://github.com/neerajkumar-n/asphalt/blob/main/docs/sensor-model.md">Sensor model</a></li>
+        </ul>
+      </nav>
+      <nav aria-label="Project">
+        <p class="label">Project</p>
+        <ul>
+          <li><a href="https://github.com/neerajkumar-n/asphalt">GitHub</a></li>
+          <li><a href="https://github.com/neerajkumar-n/asphalt/blob/main/CONTRIBUTING.md">Contributing</a></li>
+          <li><a href="https://github.com/neerajkumar-n/asphalt/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
+          <li><a href="https://github.com/neerajkumar-n/asphalt/blob/main/LICENSE">Licence</a></li>
+        </ul>
+      </nav>
+      <div class="foot-base label"><span>Apache 2.0 · Asphalt contributors</span><a href="#top-h">Back to top ↑</a></div>
+    </div>
+  </div>
+</footer>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const GH = 'https://github.com/neerajkumar-n/asphalt/blob/main/';
+  const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  // pretty-print JSON and colour string values like the code blocks elsewhere
+  const json = o => esc(JSON.stringify(o, null, 2)).replace(/"([^"]*)"(?=,|\n|$)/g, '<span class="s">"$1"</span>');
+
+  /* 01 · the system: each step, and one pothole at that step */
+  const STEPS = [
+    { part: 'Android SDK', name: 'Sensors', tag: '50 Hz · 1 Hz GPS',
+      what: 'Reads linear acceleration and gravity, the gyroscope and GPS. The motion sensors switch on only above 15 km/h, so a parked or walking phone costs nothing.',
+      specs: [['Motion', '~50 Hz linear acceleration + gravity, gyroscope'], ['Location', 'Fused GPS, 1 Hz'], ['Speed gate', 'off below 15 km/h']],
+      src: ['sensor/SensorCollector.kt', 'location/LocationTracker.kt'],
+      stageLabel: 'Inside the phone · a 500 ms window, never sent',
+      stage: 'road-normal acceleration, m/s² (gravity = 9.81)\n\n  t=000 ms   9.81  ─ flat road\n  t=150 ms   6.40  ↓ wheel drops in\n  t=210 ms  16.10  ↑ far edge hits\n  t=300 ms   9.85  ─ recovered\n\n26 samples · gyroscope peak 1.05 rad/s · 38.6 km/h' },
+    { part: 'Android SDK', name: 'Detector', tag: 'spike-dip check',
+      what: 'Projects acceleration onto gravity so mounting does not matter, compares it with a rolling baseline, and needs the gyroscope to agree. A dip before the spike is a pothole; a spike before the dip is a speed bump.',
+      specs: [['Threshold', 'baseline + 4.0 m/s² car, + 5.0 motorcycle'], ['Signature', 'dip then spike = pothole'], ['Intensity', 'Δ / 12 × speed factor (1.1 at 30–60 km/h)']],
+      src: ['detection/AnomalyDetector.kt', 'detection/VehicleProfile.kt'],
+      stageLabel: 'Detection result',
+      stage: { anomaly_type: 'pothole', intensity: 0.58, sensor_summary: { accel_peak_z: 16.1, accel_baseline_z: 9.81, accel_delta_z: 6.29, gyro_peak_magnitude: 1.05, sample_count: 26, window_duration_ms: 500 } } },
+    { part: 'Android SDK', name: 'Local buffer', tag: 'SQLite on device',
+      what: 'Writes the event to a small database on the phone before any network is involved, so detection works in tunnels and dead zones. Uploaded events are pruned after 24 hours.',
+      specs: [['Store', 'Room (SQLite) on the phone'], ['Offline', 'events wait until there is signal'], ['Pruning', 'uploaded events deleted after 24 h']],
+      src: ['storage/EventDatabase.kt'],
+      stageLabel: 'A row on the phone',
+      stage: { eventId: '7c3e6b2a-…', timestampMs: 1793892600000, latitude: 40.7516, longitude: -73.9855, accuracyMeters: 8.0, intensity: 0.58, speedKmh: 38.6, anomalyType: 'pothole', vehicleType: 'four_wheeler', uploaded: false } },
+    { part: 'Android SDK', name: 'Uploader', tag: 'WorkManager batches',
+      what: 'Sends waiting events in one batch on Android’s schedule, respecting Doze and optional Wi-Fi only. Failed uploads retry with exponential backoff.',
+      specs: [['Schedule', 'every 15 min at most (Android’s floor)'], ['Early flush', 'when 200 events are waiting'], ['Retry', 'exponential backoff from 30 s']],
+      src: ['upload/UploadWorker.kt', 'upload/BatchUploader.kt'],
+      stageLabel: 'POST /v1/ingest/batch · crosses to your server',
+      stage: { batch_id: '5f0cd4f7-…', submitted_at_ms: 1793893500000, events: [{ event_id: '7c3e6b2a-…', anomaly_type: 'pothole', intensity: 0.58, '…': 'all fields in section 03' }] } },
+    { part: 'Go backend', name: 'Ingest API', tag: 'validate · dedupe',
+      what: 'Checks every event and drops the ones that cannot be right. A batch is recorded by its ID, so a phone that retries after a timeout never doubles the count.',
+      specs: [['Limits', '≤ 500 events, ≤ 2 MB per batch'], ['Time', 'rejects > 5 min ahead or > 7 days old'], ['Idempotent', 'repeat batch_id is a no-op']],
+      src: ['backend/internal/api/handler.go', 'backend/internal/ingestion/processor.go'], root: true,
+      stageLabel: 'Response · 200',
+      stage: { batch_id: '5f0cd4f7-…', accepted_count: 12, duplicate: false } },
+    { part: 'Go backend', name: 'Database', tag: 'SQLite or PostgreSQL',
+      what: 'Stores raw events, clusters and the batch log. The same SQL runs on the built-in SQLite file or on PostgreSQL, with no extensions.',
+      specs: [['Default', 'SQLite file, zero setup'], ['Scale-out', 'PostgreSQL 13+ via DATABASE_URL'], ['Tables', 'road_events · anomaly_clusters · ingested_batches']],
+      src: ['backend/internal/storage/db.go', 'backend/internal/storage/queries.go'], root: true,
+      stageLabel: 'road_events row',
+      stage: { event_id: '7c3e6b2a-…', latitude: 40.7516, longitude: -73.9855, anomaly_type: 'pothole', intensity: 0.58, vehicle_type: 'four_wheeler', cluster_id: null, ingested_at: '2026-11-05 10:25:00' } },
+    { part: 'Go backend', name: 'Clustering', tag: 'DBSCAN · 30 m',
+      what: 'Every five minutes, groups unclustered events that sit within 30 m of each other. Two or more make a cluster; a lone report is treated as noise and never reaches the map.',
+      specs: [['Runs', 'every 5 min, up to 5,000 events'], ['Radius', '30 m, at least 2 events'], ['Score', 'see 02 · Confidence']],
+      src: ['backend/internal/clustering/cluster.go'], root: true,
+      stageLabel: 'Three nearby car reports become one cluster',
+      stage: { cluster_id: '692982c3-…', latitude: 40.7516, longitude: -73.9855, anomaly_type: 'pothole', confidence: 0.63, event_count: 3, avg_intensity: 0.58, radius_m: 5.0, vehicle_type_counts: { four_wheeler: 3 } } },
+    { part: 'Go backend', name: 'Map API', tag: 'clusters · tiles · stats',
+      what: 'Serves clusters by bounding box or by map tile, highest confidence first, plus totals for dashboards. Map clients choose how much confidence they want to show.',
+      specs: [['Bounding box', '/v1/map/clusters, 200 by default'], ['Tiles', '/v1/map/tiles/{z}/{x}/{y}, ≥ 0.30 by default'], ['Totals', '/v1/stats']],
+      src: ['backend/internal/api/routes.go'], root: true,
+      stageLabel: 'GET /v1/map/clusters · what a map draws',
+      stage: { clusters: [{ latitude: 40.7516, longitude: -73.9855, anomaly_type: 'pothole', confidence: 0.63, event_count: 3 }] } },
+  ];
+  const nodes = [];
+  STEPS.forEach((s, i) => {
+    const li = document.createElement('li');
+    li.innerHTML = `<button type="button" class="node" aria-pressed="false"><span class="n">${String(i + 1).padStart(2, '0')}</span><b>${s.name}</b><small>${s.tag}</small></button>`;
+    $(i < 4 ? 'nodesPhone' : 'nodesServer').append(li);
+    const b = li.firstChild; b.addEventListener('click', () => show(i)); nodes.push(b);
+  });
+  let cur = 0;
+  const show = i => {
+    cur = i; const s = STEPS[i];
+    nodes.forEach((b, j) => b.setAttribute('aria-pressed', j === i));
+    $('dPart').textContent = `${String(i + 1).padStart(2, '0')} · ${s.part}`;
+    $('dTitle').textContent = s.name;
+    $('dWhat').textContent = s.what;
+    $('dSpecs').innerHTML = s.specs.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join('');
+    const base = s.root ? GH : GH + 'sdk/android/asphalt-sdk/src/main/kotlin/io/asphalt/sdk/';
+    $('dSrc').innerHTML = 'Source: ' + s.src.map(f => `<a href="${base}${f}">${f.split('/').pop()}</a>`).join(' · ');
+    $('dStageLabel').textContent = s.stageLabel;
+    $('dStage').innerHTML = typeof s.stage === 'string' ? esc(s.stage) : json(s.stage);
+    $('dPos').textContent = `Step ${i + 1} of ${STEPS.length}`;
+    $('prev').disabled = i === 0;
+    $('next').textContent = i === STEPS.length - 1 ? 'Start again ↺' : 'Next step →';
+  };
+  $('prev').addEventListener('click', () => show(Math.max(0, cur - 1)));
+  $('next').addEventListener('click', () => show(cur === STEPS.length - 1 ? 0 : cur + 1));
+  show(0);
+  $('next').textContent = 'Follow the pothole →';
+
+  /* 02 · confidence, the same formula as backend/internal/clustering/cluster.go */
+  const css = getComputedStyle(document.documentElement);
+  const C = ['--yellow', '--orange', '--fg', '--fg-mute'].map(v => css.getPropertyValue(v).trim());
+  const st = { cars: 2, motos: 0, agree: 100, age: 0 };
+  const calc = () => {
+    const n = st.cars + st.motos, weight = st.cars + .8 * st.motos;
+    const types = (st.cars > 0) + (st.motos > 0);
+    const parts = [
+      ['Reports', `log₁₀(${weight.toFixed(1)} + 1) / log₁₀(21) × 0.50`, n ? .5 * Math.log10(weight + 1) / Math.log10(21) : 0],
+      ['Agreement', `${st.agree}% same type × 0.25`, n ? .25 * st.agree / 100 : 0],
+      ['Recency', `(1 − ${st.age} / 90) × 0.15`, n ? .15 * Math.max(0, 1 - st.age / 90) : 0],
+      ['Vehicle variety', `${Math.max(0, types - 1)} extra type × 0.08`, .08 * Math.max(0, types - 1)],
+    ];
+    const total = Math.min(1, parts.reduce((a, p) => a + p[2], 0));
+    $('oCars').textContent = st.cars; $('oMotos').textContent = st.motos;
+    $('oAgree').textContent = st.agree + '%'; $('oAge').textContent = st.age;
+    $('iAgree').value = st.agree; $('iAge').value = st.age;
+    const verdict = $('cVerdict');
+    if (n < 2) { $('cScore').textContent = '—'; verdict.textContent = 'Not a cluster yet. DBSCAN needs at least two reports within 30 m; one alone is noise.'; verdict.classList.add('off'); }
+    else {
+      $('cScore').textContent = total.toFixed(2);
+      verdict.textContent = total >= .3 ? 'On the map. Above the 0.30 default for map tiles.' : 'Below the 0.30 tile default. Hidden unless a client asks for less.';
+      verdict.classList.toggle('off', total < .3);
+    }
+    $('cStack').innerHTML = n < 2 ? '' : parts.map((p, i) => `<i style="width:${p[2] * 100}%;background:${C[i]}" title="${p[0]} ${p[2].toFixed(2)}"></i>`).join('');
+    $('cParts').innerHTML = parts.map((p, i) => `<dt><i style="background:${C[i]}"></i>${p[0]}</dt><dd class="how">${p[1]}</dd><dd class="val">${n < 2 ? '—' : p[2].toFixed(2)}</dd>`).join('');
+  };
+  document.querySelectorAll('[data-step]').forEach(b => b.addEventListener('click', () => {
+    const [k, d] = b.dataset.step.split(':'); st[k] = Math.max(0, Math.min(40, st[k] + +d)); calc();
+  }));
+  $('iAgree').addEventListener('input', e => { st.agree = +e.target.value; calc(); });
+  $('iAge').addEventListener('input', e => { st.age = +e.target.value; calc(); });
+  document.querySelectorAll('[data-preset]').forEach(b => b.addEventListener('click', () => {
+    [st.cars, st.motos, st.agree, st.age] = b.dataset.preset.split(',').map(Number); calc();
+  }));
+  calc();
+
+  /* 04 · deployment tabs, with arrow-key navigation */
+  const tabs = [...document.querySelectorAll('[role="tab"]')];
+  const select = t => tabs.forEach(o => {
+    const on = o === t;
+    o.setAttribute('aria-selected', on); o.tabIndex = on ? 0 : -1;
+    $(o.getAttribute('aria-controls')).hidden = !on;
+    if (on) o.focus();
+  });
+  tabs.forEach((t, i) => {
+    t.addEventListener('click', () => select(t));
+    t.addEventListener('keydown', e => {
+      const d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+      if (d) { e.preventDefault(); select(tabs[(i + d + tabs.length) % tabs.length]); }
+    });
+  });
+})();
+</script>
+<script src="site.js"></script>
+</body>
+</html>

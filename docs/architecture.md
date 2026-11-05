@@ -1,5 +1,8 @@
 # Asphalt Architecture
 
+> An interactive version of this page, with a step-by-step walk through the
+> pipeline and a confidence calculator, is on the website at `/architecture`.
+
 ## Overview
 
 Asphalt is a pipeline from raw smartphone sensors to a queryable road quality
@@ -56,7 +59,7 @@ flowchart TD
         end
 
         subgraph Processing["Processing Pipeline"]
-            PG[("PostgreSQL + PostGIS\nroad_events table\nSpatial index on geom")]
+            PG[("SQLite or PostgreSQL\nroad_events table\nlat/lon index")]
             CLUSTER_WORKER["Clustering Worker\nDBSCAN, 30m radius\nRuns every 5 minutes"]
             CLUSTER_TABLE[("anomaly_clusters table\nConfidence scored\nUpdated incrementally")]
         end
@@ -168,7 +171,8 @@ Go was chosen over Node.js for the following reasons:
    cover all needs without heavy third-party dependencies. Less surface area
    to audit for security vulnerabilities.
 
-The backend is stateless. All state lives in PostgreSQL. Horizontal scaling
+The backend keeps no state of its own. With the default SQLite file it runs as
+a single instance. With PostgreSQL (13+, no extensions), horizontal scaling
 requires only adding more container replicas behind a load balancer.
 
 ### Clustering Pipeline
@@ -227,11 +231,12 @@ At 00:00.210:
 
 ...more driving...
 
-After 5 minutes OR buffer fills to 200:
+After the next periodic upload (every 15 minutes at most, Android's floor for
+periodic work) OR when the buffer fills to 200:
   WorkManager fires UploadWorker
   -> 12 events batched
   -> POST /v1/ingest/batch with batch_id=UUID
-  -> Server validates, deduplicates, stores to PostgreSQL
+  -> Server validates, deduplicates, stores to SQLite or PostgreSQL
   -> Events marked as uploaded in Room DB
 
 At T+5 minutes (backend side):
@@ -266,12 +271,13 @@ Map client query:
                                   |
                          +--------+---------+
                          |   PostgreSQL     |
-                         |   + PostGIS      |
                          |   (Primary)      |
+                         |                  |
                          +------------------+
 ```
 
-For a single-operator deployment, a single VM running docker-compose is
-sufficient for up to approximately 10,000 active users. The main bottleneck
+For a single-operator deployment, one container with the built-in SQLite
+database (`docker run -v asphalt:/data asphalt`) is the simplest start; a
+single VM running docker-compose with PostgreSQL is sufficient for up to approximately 10,000 active users. The main bottleneck
 is PostgreSQL write throughput, which can be addressed with connection pooling
 (PgBouncer) and read replicas for the query endpoints.
