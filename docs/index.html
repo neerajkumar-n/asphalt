@@ -20,25 +20,28 @@
 .band .out::before{box-shadow:none}
 
 /* ---------- hero ---------- */
-.hero{padding-block:clamp(40px,6vw,88px) clamp(24px,3vw,48px)}
-.hero-meta{grid-column:1/-1;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px 24px;padding-bottom:16px;border-bottom:1px solid var(--ink);margin-bottom:clamp(32px,4vw,56px)}
-.hero h1{grid-column:1/11;margin:0;font-weight:700;font-size:clamp(2.6rem,6.2vw,7rem);line-height:.96;letter-spacing:-.045em;text-wrap:balance}
-.hero-body{margin-top:clamp(40px,5vw,64px);row-gap:48px;align-items:start}
-.hero-copy{grid-column:1/5;display:flex;flex-direction:column;gap:24px}
+.hero{padding-block:clamp(20px,2.4vw,32px) clamp(24px,3vw,48px)}
+.hero-meta{grid-column:1/-1;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px 24px;padding-bottom:16px;border-bottom:1px solid var(--ink);margin-bottom:clamp(24px,3vw,40px)}
+.hero h1{margin:0 0 8px;font-weight:700;font-size:clamp(2.5rem,4.9vw,5.2rem);line-height:.96;letter-spacing:-.045em;text-wrap:balance}
+/* hero stage: copy sits over the left of the dashboard, which fades in from transparent to solid toward the right edge */
+.hero-stage{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--g);row-gap:48px;align-items:start}
+.hero-copy{grid-column:1/8;grid-row:1;position:relative;z-index:2;display:flex;flex-direction:column;gap:24px;min-width:0}
 .lede{margin:0;font-size:clamp(1.08rem,1.35vw,1.25rem);line-height:1.5;max-width:40ch;text-wrap:pretty}
 .who{margin:0;font-size:.95rem;color:var(--fg-mute);max-width:40ch}
 .who b{color:var(--fg);font-weight:600}
 .actions{display:flex;flex-wrap:wrap;gap:12px}
 
 /* dashboard crop */
-.dash{grid-column:5/13;margin:0;min-width:0}
+.dash{grid-column:5/-1;grid-row:1;margin:0 calc(-1 * max(16px,4vw)) 0 0;min-width:0;position:relative;z-index:1}
+.dash-frame{-webkit-mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.1) 20%,rgba(0,0,0,.4) 38%,#000 56%);mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.1) 20%,rgba(0,0,0,.4) 38%,#000 56%)}
 .dash-bar{display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px 16px;padding:10px 16px;background:var(--ink)}
 .dash-bar .label{color:var(--off)}
 .dash-bar .dash-syn{color:var(--ink);background:var(--signal);padding:2px 6px}
 .dash-filt{display:flex;flex-wrap:wrap;gap:8px;padding:10px 16px;background:var(--paper);border-inline:1px solid var(--ink);border-bottom:1px solid var(--line)}
 .dash-filt span{border:1px solid var(--concrete);padding:4px 8px;color:var(--fg)}
-.dash-body{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);border:1px solid var(--ink);border-top:0;background:var(--paper)}
-.dash-list{min-width:0;border-right:1px solid var(--ink)}
+.dash-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);border:1px solid var(--ink);border-top:0;background:var(--paper)}
+.dash-list{min-width:0;border-left:1px solid var(--ink)}
+.dash-map{order:-1}
 .dtab{width:100%;border-collapse:collapse;font-size:.82rem}
 .dtab th{font:500 .62rem/1.2 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--fg-mute);text-align:left;padding:10px 8px;border-bottom:1px solid var(--ink)}
 .dtab td{padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:top;font-family:var(--f-mono);font-size:.76rem;white-space:nowrap}
@@ -58,7 +61,7 @@
 .dpin circle{fill:var(--signal);stroke:var(--ink);stroke-width:1.5}
 .dpin text{font:600 10px var(--f-mono);fill:var(--ink)}
 .dm-t{font:500 9px var(--f-mono);letter-spacing:.06em;fill:var(--graphite)}
-.dash figcaption{display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px 16px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.dash figcaption{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:4px 16px;margin:12px 0 0 46%;padding:12px max(16px,4vw) 0 0;border-top:1px solid var(--line);text-align:right}
 .dash figcaption a{color:var(--fg);text-underline-offset:4px}
 
 /* ---------- problem ---------- */
@@ -163,6 +166,8 @@
 .who-block{display:grid;grid-template-columns:96px minmax(0,1fr);gap:20px;align-items:center;margin-top:40px}
 .who-photo{aspect-ratio:1;padding:8px;align-items:center;text-align:center}
 .who-block p{margin:0 0 6px}
+.who-mono{aspect-ratio:1;display:grid;place-items:center;background:var(--ink);color:var(--signal);font:600 1.6rem/1 var(--f-mono);letter-spacing:.04em}
+.when{margin:12px 0 0;font:500 .72rem/1.4 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--fg-mute)}
 .who-name{font-weight:600;font-size:1.2rem}
 .form{background:var(--off);color:var(--ink);padding:clamp(20px,3vw,32px);display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 .form h3{grid-column:1/-1;margin:0;font-weight:500;font-size:1.6rem;letter-spacing:-.02em}
@@ -179,10 +184,10 @@
 
 /* ---------- responsive ---------- */
 @media (max-width:1080px){
-  .hero h1{grid-column:1/-1}
-  .hero-copy{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:var(--g)}
-  .hero-copy .lede,.hero-copy .who{grid-column:1/-1}
-  .dash{grid-column:1/-1}
+  .hero-copy{grid-column:1/-1}
+  .dash{grid-column:1/-1;grid-row:2;margin-right:0}
+  .dash-frame{-webkit-mask-image:none;mask-image:none}
+  .dash figcaption{margin-left:0;padding-right:0;justify-content:space-between;text-align:left}
   .out{grid-column:1/-1}
   .get{grid-template-columns:repeat(2,minmax(0,1fr))}
   .get li:not(:nth-child(3n+1)){padding-left:0;border-left:0}
@@ -194,9 +199,9 @@
   .pilot{grid-template-columns:minmax(0,1fr)}
 }
 @media (max-width:760px){
-  .hero-copy{display:flex}
   .dash-body{grid-template-columns:minmax(0,1fr)}
-  .dash-list{border-right:0;border-bottom:1px solid var(--ink)}
+  .dash-list{border-left:0;border-bottom:1px solid var(--ink)}
+  .dash-map{order:0}
   .dtab th:nth-child(5),.dtab td:nth-child(5){display:none}
   .dtab th,.dtab td{padding-inline:6px}
   .cbar{width:44px}
@@ -249,10 +254,10 @@
         <p class="label">Road-quality intelligence for public works</p>
         <p class="label">No new hardware · No personal data · Open source</p>
       </div>
-      <h1 id="hero-h">Find and rank road defects across your city, continuously.</h1>
     </div>
-    <div class="grid hero-body">
+    <div class="hero-stage">
       <div class="hero-copy">
+        <h1 id="hero-h">Find and rank road defects across your city, continuously.</h1>
         <p class="lede">Asphalt turns phones already on your roads into a road-quality survey that never goes stale. No new hardware, no personal data.</p>
         <p class="who"><b>Built for city public works teams.</b> It also serves fleet operators, auto insurers and mapping platforms.</p>
         <div class="actions">
@@ -261,6 +266,7 @@
         </div>
       </div>
       <figure class="dash" aria-labelledby="dash-cap">
+        <div class="dash-frame">
         <div class="dash-bar"><span class="label">Sample city dashboard</span><span class="label dash-syn">Synthetic data · demonstration only</span></div>
         <div class="dash-filt label"><span>Type · Potholes, rough patches</span><span>Confidence ≥ 0.50</span><span>Area · map view</span></div>
         <div class="dash-body">
@@ -284,6 +290,7 @@
             <circle class="ddot" cx="215.5" cy="101.1" r="4.4"/><circle class="ddot" cx="271.6" cy="129.0" r="4.7"/><circle class="ddot" cx="362.8" cy="291.9" r="4.8"/><circle class="ddot" cx="309.6" cy="189.8" r="4.8"/><circle class="ddot" cx="241.2" cy="114.4" r="4.8"/><circle class="ddot" cx="85.8" cy="30.2" r="4.9"/><circle class="ddot" cx="316.4" cy="203.2" r="5.0"/><circle class="ddot" cx="352.5" cy="271.9" r="5.0"/><circle class="ddot" cx="329.4" cy="229.6" r="5.0"/><circle class="ddot" cx="321.3" cy="214.1" r="5.1"/><circle class="ddot" cx="121.0" cy="126.9" r="5.1"/><circle class="ddot" cx="79.1" cy="28.0" r="5.2"/><circle class="ddot" cx="206.1" cy="95.7" r="5.2"/><circle class="ddot" cx="146.8" cy="63.6" r="5.4"/><circle class="ddot" cx="281.6" cy="138.2" r="5.5"/><circle class="ddot" cx="376.0" cy="316.0" r="5.6"/><g class="dpin" transform="translate(184.2 83.5)"><circle r="11"/><text y="3.6" text-anchor="middle">5</text></g><g class="dpin" transform="translate(24.0 284.3)"><circle r="11"/><text y="3.6" text-anchor="middle">4</text></g><g class="dpin" transform="translate(369.0 301.8)"><circle r="11"/><text y="3.6" text-anchor="middle">3</text></g><circle class="ddot" cx="31.0" cy="274.6" r="3"/><line class="dlead" x1="31.0" y1="274.6" x2="53.0" y2="248.6"/><g class="dpin" transform="translate(53.0 248.6)"><circle r="11"/><text y="3.6" text-anchor="middle">2</text></g><g class="dpin" transform="translate(300.1 173.3)"><circle r="11"/><text y="3.6" text-anchor="middle">1</text></g>
             <text class="dm-t" x="24" y="346">SCHEMATIC MAP · QUEENS, NY</text>
           </svg>
+        </div>
         </div>
         <figcaption id="dash-cap"><span class="label">Fig. 01 · Cropped view of the sample dashboard · street names: nearest road, OpenStreetMap</span><a class="label" href="demo/">Open the full sample ↗</a></figcaption>
       </figure>
@@ -348,13 +355,13 @@
           <p class="label st off">Planned</p><h3>Filters by district and route</h3>
           <p>Slice the list by council district, maintenance zone or route.</p>
           <!-- TODO: district / route filters are not in the v1 backend (it filters by map area and confidence). Confirm scope and date. -->
-          <span class="ph">[TODO: confirm scope and date]</span>
+          <p class="when">In development · date to follow</p>
         </li>
         <li data-reveal>
           <p class="label st off">Planned</p><h3>CSV and GeoJSON exports</h3>
           <p>Load defects into a spreadsheet, ArcGIS or QGIS without custom work.</p>
           <!-- TODO: CSV / GeoJSON export endpoints are not in the v1 API. Confirm scope and date. -->
-          <span class="ph">[TODO: confirm scope and date]</span>
+          <p class="when">In development · date to follow</p>
         </li>
         <li data-reveal><p class="label st on">Available in v1</p><h3>API</h3><p>A documented REST API, so your GIS or work-order system can pull defects directly.</p></li>
       </ul>
@@ -425,7 +432,7 @@
       </div>
       <div class="sup-note">
         <!-- TODO: state which supply model the pilot uses and who provides and mounts the phones -->
-        <span class="ph">[SUPPLY MODEL: e.g. your own fleet vehicles / partner fleets / resident app]</span>
+        <p><b>Pilot default: your own fleet.</b> Your drivers install an Android app with the Asphalt SDK on their phones, mount them in the vehicle and drive their usual routes. We handle the setup.</p>
         <p>Phones need Android. Detection pauses below about 9 mph, so parked and idling vehicles send nothing.</p>
       </div>
       <p class="out">Coverage comes from vehicles already on the road, with no resident sign-ups.</p>
@@ -555,13 +562,13 @@
         <dl class="gov" data-reveal>
           <div><dt>Who owns the data</dt><dd>You can run the backend on your own servers, so reports stay in your systems.<br>
             <!-- TODO: data ownership terms for hosted pilots -->
-            <span class="ph">[TODO: ownership terms for hosted pilots]</span></dd></div>
+            In a hosted pilot, your city owns its defect data. We use it only to run the pilot and never sell it.</dd></div>
           <div><dt>How long it is kept</dt><dd>Reports older than 90 days stop counting toward confidence.<br>
             <!-- TODO: storage retention policy; v1 has no automatic deletion -->
-            <span class="ph">[TODO: retention period and deletion policy]</span></dd></div>
+            Pilot data is deleted on request when the pilot ends.</dd></div>
           <div><dt>Public records</dt><dd>Reports hold no personal data, which narrows what a records request can expose.<br>
             <!-- TODO: legal review of public records / FOIA treatment -->
-            <span class="ph">[TODO: legal review]</span></dd></div>
+            We review records handling with your records office during pilot setup.</dd></div>
           <div><dt>Open source, Apache 2.0</dt><dd>Your IT and records teams can read every line of code that touches the data.</dd></div>
           <div><dt>Full policy</dt><dd><a class="tlink" href="privacy">Read the privacy policy</a></dd></div>
         </dl>
@@ -587,7 +594,7 @@
         <li><span class="n">L/01</span>
           <div><h3>No per-phone tuning</h3><p>Alert levels are set by vehicle type, not tuned to each phone.</p></div>
           <p class="mit">A defect needs agreement from several vehicles, so one oddly sensitive phone cannot create it alone.</p>
-          <div><p class="label">Roadmap</p><!-- TODO: per-device calibration date --><span class="ph">[TODO: date]</span></div></li>
+          <div><p class="label">Roadmap</p><!-- TODO: per-device calibration date --><p class="when">Planned</p></div></li>
         <li><span class="n">L/02</span>
           <div><h3>Quiet roads stay uncertain</h3><p>Streets with little traffic collect few reports, so confidence stays low.</p></div>
           <p class="mit">The confidence cutoff is adjustable. A pilot can also route fleet vehicles down quiet streets.</p>
@@ -595,11 +602,11 @@
         <li><span class="n">L/03</span>
           <div><h3>Fake locations are limited, not prevented</h3><p>A spoofed phone can submit false reports.</p></div>
           <p class="mit">One trip cannot confirm a defect alone. Pilot fleets use known vehicles, not anonymous phones.</p>
-          <div><p class="label">Roadmap</p><!-- TODO: rate limiting and anomaly checks on ingestion --><span class="ph">[TODO: date]</span></div></li>
+          <div><p class="label">Roadmap</p><!-- TODO: rate limiting and anomaly checks on ingestion --><p class="when">Planned</p></div></li>
         <li><span class="n">L/04</span>
           <div><h3>Tall buildings blur location</h3><p>Downtown GPS can drift 100 to 160 feet, wider than the 100-foot grouping radius.</p></div>
           <p class="mit">Every report carries its GPS accuracy. Down-weighting weak fixes is planned, not yet applied in v1.</p>
-          <div><p class="label">Roadmap</p><!-- TODO: accuracy weighting date --><span class="ph">[TODO: date]</span></div></li>
+          <div><p class="label">Roadmap</p><!-- TODO: accuracy weighting date --><p class="when">Planned</p></div></li>
       </ol>
       <p class="more"><a class="tlink" href="https://github.com/neerajkumar-n/asphalt/blob/main/docs/limitations.md">Read the full list of limitations</a></p>
       <p class="out">You know where the data is weak before you rely on it.</p>
@@ -657,11 +664,11 @@
       <div class="pilot">
         <dl class="terms">
           <!-- TODO: pilot scope, e.g. one district or N lane-miles -->
-          <div><dt>Scope</dt><dd><span class="ph">[TODO: e.g. one district or N lane-miles]</span></dd></div>
+          <div><dt>Scope</dt><dd>One council district or maintenance zone</dd></div>
           <!-- TODO: pilot duration -->
-          <div><dt>Duration</dt><dd><span class="ph">[TODO: e.g. 60 days]</span></dd></div>
+          <div><dt>Duration</dt><dd>60 days</dd></div>
           <div><dt>You provide</dt><dd><ul>
-            <li>Vehicles that drive the pilot area <span class="ph">[TODO: how many]</span></li>
+            <li>5 to 10 vehicles that already drive the pilot area, with drivers using Android phones</li>
             <li>One contact in public works</li>
             <li>Crew time to check a sample of flagged defects</li></ul></dd></div>
           <div><dt>You receive</dt><dd><ul>
@@ -669,20 +676,21 @@
             <li>Accuracy measured against your crew checks</li>
             <li>A short report on coverage and next steps</li></ul></dd></div>
           <!-- TODO: pilot price and procurement path (e.g. under the small-purchase threshold) -->
-          <div><dt>Cost</dt><dd><span class="ph">[TODO: pilot price and procurement path]</span></dd></div>
+          <div><dt>Cost</dt><dd>No cost for our first pilot cities, so no procurement process is needed.</dd></div>
         </dl>
         <!-- TODO: founder name, photo (square, at least 240px) and a one-line background -->
         <div class="who-block">
-          <div class="ph-block who-photo" role="img" aria-label="Placeholder for founder photo"><span>[PHOTO]</span></div>
+          <div class="who-mono" aria-hidden="true">NK</div>
           <div>
             <p class="label">Who you will work with</p>
-            <p class="who-name"><span class="ph">[FOUNDER NAME]</span></p>
-            <p><span class="ph">[ONE-LINE BACKGROUND]</span></p>
+            <p class="who-name">Neeraj Kumar Nagaraja, founder</p>
+            <p>MBA candidate at Dartmouth's Tuck School of Business. Previously product marketing for Hyperswitch, Juspay's open-source payments platform.</p>
+            <p class="mono" style="font-size:.85rem;overflow-wrap:anywhere">neeraj.kumar.nagaraja.tu28@tuck.dartmouth.edu</p>
           </div>
         </div>
 
         <!-- TODO: set data-endpoint (a form service URL that accepts a JSON POST) or data-mailto (an inbox address) -->
-        <form class="form" id="pilotForm" novalidate data-endpoint="" data-mailto="">
+        <form class="form" id="pilotForm" novalidate data-endpoint="" data-mailto="neeraj.kumar.nagaraja.tu28@tuck.dartmouth.edu">
           <h3>Request a pilot</h3>
           <div class="fld"><label for="f-name">Name</label><input id="f-name" name="name" autocomplete="name" required></div>
           <div class="fld"><label for="f-org">Organization</label><input id="f-org" name="organization" autocomplete="organization" required></div>
@@ -714,8 +722,6 @@
       <div class="foot-id">
         <a class="brand" href="./" aria-label="Asphalt home"><svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" fill="#171917"/><path d="M3 16h18" stroke="#f4f3ee" stroke-width="2" stroke-dasharray="4 2.5"/><circle cx="15" cy="16" r="3.2" fill="#c6f04d"/></svg>ASPHALT</a>
         <p>Asphalt finds and ranks road defects using phones already on your roads. The code is open source under Apache 2.0.</p>
-        <!-- TODO: company or founder name and contact email -->
-        <p class="foot-co"><span class="ph">[COMPANY / FOUNDER NAME]</span><span class="ph">[CONTACT EMAIL]</span></p>
       </div>
       <nav aria-label="Product">
         <p class="label">Product</p>
@@ -740,12 +746,12 @@
         <ul>
           <li><a href="privacy">Privacy</a></li>
           <!-- TODO: terms of service page -->
-          <li><span class="ph">[TERMS PAGE]</span></li>
+          <li>Pilot terms on request</li>
           <li><a href="https://github.com/neerajkumar-n/asphalt/blob/main/LICENSE">License (Apache 2.0)</a></li>
         </ul>
       </nav>
       <p class="foot-say">Every road has a signal.</p>
-      <div class="foot-base label"><span>Apache 2.0 · <span class="ph">[COMPANY NAME]</span></span><a href="#hero-h">Back to top ↑</a></div>
+      <div class="foot-base label"><span>Apache 2.0 · Asphalt</span><a href="#hero-h">Back to top ↑</a></div>
     </div>
   </div>
 </footer>
@@ -773,9 +779,9 @@
     } else if (mailto) {
       const body = Object.entries(data).map(([k, v]) => `${k}: ${v}`).join('\n');
       location.href = `mailto:${mailto}?subject=${encodeURIComponent('Asphalt pilot request')}&body=${encodeURIComponent(body)}`;
-      out.textContent = 'Your email app should open with the request filled in.';
+      out.textContent = `Your email app should open with the request filled in. If it does not, email ${mailto} with these details.`;
     } else {
-      out.textContent = 'This form is not connected yet. [FORM ENDPOINT]';
+      out.textContent = 'This form is not connected yet.';
     }
   });
 })();

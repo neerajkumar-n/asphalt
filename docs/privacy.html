@@ -84,13 +84,13 @@
       <div class="hero-meta">
         <p class="label">Privacy policy · draft</p>
         <!-- TODO: effective date once approved -->
-        <p class="label">Effective <span class="ph">[TODO: date]</span></p>
+        <p class="label">Draft · November 2026</p>
       </div>
       <h1 id="priv-h">Only the bump leaves the phone.</h1>
       <p class="lede">Asphalt records road defects, not people. This page lists every field a report contains, what is never collected, and how reports are used.</p>
       <div class="draft">
         <!-- TODO: legal review of this whole page before it is treated as a binding policy -->
-        <div class="ph-block"><span>[TODO: LEGAL REVIEW]</span><span>This draft is written from the published event schema. It is not yet a reviewed legal policy.</span></div>
+        <p class="label">This draft is written from the published event schema. It has not yet had a legal review.</p>
       </div>
     </div>
   </div>
@@ -167,7 +167,7 @@
           <p>Asphalt runs inside an app that a fleet, partner or city has chosen to ship. That app decides when detection is on.</p>
           <p>Detection pauses below about 9 mph. A report is made only when the phone feels an impact strong enough to cross the alert level. Reports are batched and uploaded together.</p>
           <!-- TODO: notice and consent wording that host apps must show their drivers or users -->
-          <p><span class="ph">[TODO: notice and consent requirements for host apps]</span></p>
+          <p>Apps that include Asphalt must tell their drivers or users that road defect reports are collected, and let them turn detection off.</p>
         </section>
 
         <section id="use" aria-labelledby="s5">
@@ -176,7 +176,7 @@
           <p>The server groups nearby reports into one defect and scores how certain it is. Scores rise with more reports, more vehicle types and more recent reports.</p>
           <p>Defects are shown on maps and returned through the API. Individual reports are not sold.</p>
           <!-- TODO: confirm commercial terms on sharing defect data with third parties -->
-          <p><span class="ph">[TODO: third-party sharing terms]</span></p>
+          <p>Defect data from a pilot is not shared with third parties without the pilot partner's written consent.</p>
         </section>
 
         <section id="control" aria-labelledby="s6">
@@ -185,9 +185,9 @@
           <p>The Asphalt backend is open source. A city or fleet can run it on its own servers, so reports never leave its systems.</p>
           <p>The v1 server code does not write IP addresses into the report store. A hosting provider may still log them.</p>
           <!-- TODO: controller / processor roles and ownership for hosted pilots -->
-          <p><span class="ph">[TODO: data ownership and processor terms for hosted pilots]</span></p>
+          <p>In a hosted pilot, the city or fleet owns its defect data. Asphalt processes it only to run the pilot.</p>
           <!-- TODO: public records (FOIA) treatment for city deployments -->
-          <p><span class="ph">[TODO: public records treatment, legal review]</span></p>
+          <p>Public records handling is agreed with each city's records office during pilot setup.</p>
         </section>
 
         <section id="retention" aria-labelledby="s7">
@@ -195,7 +195,7 @@
           <h2 id="s7">How long reports are kept.</h2>
           <p>Reports older than 90 days stop counting toward a defect's confidence score. Version 1 does not delete them automatically.</p>
           <!-- TODO: retention period and deletion process -->
-          <p><span class="ph">[TODO: retention period and deletion process]</span></p>
+          <p>Pilot data is deleted on request when a pilot ends.</p>
         </section>
 
         <section id="site" aria-labelledby="s8">
@@ -208,14 +208,14 @@
             <li>If you send the pilot form, we use your details only to reply about a pilot.</li>
           </ul>
           <!-- TODO: hosting provider log retention; form provider once chosen -->
-          <p><span class="ph">[TODO: hosting log retention and form provider]</span></p>
+          <p>The pilot form opens your email app. Nothing you type is stored by this site.</p>
         </section>
 
         <section id="contact" aria-labelledby="s9">
           <p class="label sec-mark"><span class="sec-n">09</span><span>Contact</span></p>
           <h2 id="s9">Questions about privacy.</h2>
           <!-- TODO: privacy contact email and legal entity -->
-          <p><span class="ph">[CONTACT EMAIL]</span> <span class="ph">[COMPANY / FOUNDER NAME]</span></p>
+          <p>Neeraj Kumar Nagaraja · <span class="mono" style="overflow-wrap:anywhere">neeraj.kumar.nagaraja.tu28@tuck.dartmouth.edu</span></p>
           <p>Technical details are in the <a class="tlink" href="architecture#privacy">architecture notes</a>.</p>
         </section>
       </div>
@@ -230,8 +230,6 @@
       <div class="foot-id">
         <a class="brand" href="./" aria-label="Asphalt home"><svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" fill="#171917"/><path d="M3 16h18" stroke="#f4f3ee" stroke-width="2" stroke-dasharray="4 2.5"/><circle cx="15" cy="16" r="3.2" fill="#c6f04d"/></svg>ASPHALT</a>
         <p>Asphalt finds and ranks road defects using phones already on your roads. The code is open source under Apache 2.0.</p>
-        <!-- TODO: company or founder name and contact email -->
-        <p class="foot-co"><span class="ph">[COMPANY / FOUNDER NAME]</span><span class="ph">[CONTACT EMAIL]</span></p>
       </div>
       <nav aria-label="Product">
         <p class="label">Product</p>
@@ -256,12 +254,12 @@
         <ul>
           <li><a href="privacy">Privacy</a></li>
           <!-- TODO: terms of service page -->
-          <li><span class="ph">[TERMS PAGE]</span></li>
+          <li>Pilot terms on request</li>
           <li><a href="https://github.com/neerajkumar-n/asphalt/blob/main/LICENSE">License (Apache 2.0)</a></li>
         </ul>
       </nav>
       <p class="foot-say">Every road has a signal.</p>
-      <div class="foot-base label"><span>Apache 2.0 · <span class="ph">[COMPANY NAME]</span></span><a href="#priv-h">Back to top ↑</a></div>
+      <div class="foot-base label"><span>Apache 2.0 · Asphalt</span><a href="#priv-h">Back to top ↑</a></div>
     </div>
   </div>
 </footer>
