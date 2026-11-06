@@ -87,6 +87,26 @@
 .st.off::before{border:1px solid var(--graphite)}
 .get-foot{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:16px 32px;align-items:center;margin-top:32px}
 
+/* ---------- what happens next ---------- */
+.loop{grid-column:1/-1}
+.loop-steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:var(--g);position:relative}
+.loop-steps li{position:relative;border-top:1px solid var(--ink);padding-top:28px;min-width:0;display:flex;flex-direction:column;gap:8px}
+.loop-steps li::before{content:"";position:absolute;top:-6px;left:0;width:11px;height:11px;background:var(--off);border:1px solid var(--ink);border-radius:50%}
+.loop-steps li:nth-child(5){border-top:3px solid var(--signal)}
+.loop-steps li:nth-child(5)::before{background:var(--signal);top:-7px}
+.loop-steps h3{margin:0 0 4px;font-weight:500;font-size:1.45rem;letter-spacing:-.02em;line-height:1.1}
+.loop-steps p{margin:0;color:var(--fg-mute);font-size:.96rem}
+.loop-steps p b{color:var(--fg);font-weight:600}
+.loop-steps dl{margin:8px 0 4px}
+.loop-steps dd{margin:4px 0 0;font-size:.92rem}
+.loop-steps .label{color:var(--fg-mute);font-size:.72rem}
+.loop-steps .loop-n{color:var(--fg)}
+.st.plain::before{background:var(--concrete)}
+.loop-back{display:block;width:100%;height:56px;margin-top:24px;overflow:visible}
+.loop-back path{fill:none;stroke:var(--ink);stroke-width:1;vector-effect:non-scaling-stroke}
+.loop-cap{margin-top:12px;color:var(--fg)}
+.loop-cap span{font-size:1rem}
+
 /* ---------- proof ---------- */
 .proof{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,8fr) minmax(0,4fr);gap:clamp(32px,4vw,64px);align-items:start}
 .measure{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--g)}
@@ -193,6 +213,8 @@
   .get li:not(:nth-child(3n+1)){padding-left:0;border-left:0}
   .get li:nth-child(2n){padding-left:24px;border-left:1px solid var(--line)}
   .proof{grid-template-columns:minmax(0,1fr)}
+  .loop-steps{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:48px}
+  .loop-back{display:none}
   .csteps{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:48px}
   .trust{grid-template-columns:minmax(0,1fr)}
   .uses{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:48px}
@@ -212,6 +234,11 @@
   .get{grid-template-columns:minmax(0,1fr)}
   .get li:nth-child(2n){padding-left:0;border-left:0}
   .measure{grid-template-columns:minmax(0,1fr);row-gap:32px}
+  .loop-steps{grid-template-columns:minmax(0,1fr);row-gap:0}
+  .loop-steps li{border-top:0;border-left:1px solid var(--ink);padding:0 0 32px 24px}
+  .loop-steps li::before{top:4px;left:-6px}
+  .loop-steps li:nth-child(5){border-top:0;border-left:3px solid var(--signal);padding-left:22px}
+  .loop-steps li:nth-child(5)::before{left:-7px;top:4px}
   .csteps,.uses{grid-template-columns:minmax(0,1fr)}
   .never{grid-template-columns:minmax(0,1fr)}
   .reg-h{display:none}
@@ -374,13 +401,74 @@
   </div>
 </section>
 
+<!-- 03 what happens next -->
+<section class="sec" id="next" aria-labelledby="next-h">
+  <div class="wrap">
+    <div class="grid sec-head">
+      <p class="label sec-mark"><span class="sec-n">03</span><span>What happens next</span></p>
+      <h2 id="next-h">Find it, fix it, then let the road confirm the fix.</h2>
+      <p class="intro">The same vehicles that find a defect keep driving past it. That turns a list into a loop your team can run every week.</p>
+    </div>
+    <div class="grid">
+      <div class="loop">
+        <ol class="loop-steps">
+          <li data-reveal>
+            <p class="label loop-n">Step 01</p><h3>Detect</h3>
+            <p>Vehicles on their normal routes feel each impact.</p>
+            <dl><dt class="label">Who acts</dt><dd>Your fleet. No staff time.</dd></dl>
+            <p class="label st on">Available in v1</p>
+          </li>
+          <li data-reveal>
+            <p class="label loop-n">Step 02</p><h3>Rank</h3>
+            <p>Reports from several vehicles merge into one defect with a confidence score.</p>
+            <dl><dt class="label">Who acts</dt><dd>Asphalt, automatically.</dd></dl>
+            <p class="label st on">Available in v1</p>
+          </li>
+          <li data-reveal>
+            <p class="label loop-n">Step 03</p><h3>Dispatch</h3>
+            <p><b>Where do crews go today?</b> Supervisors send crews to the most certain defects first.</p>
+            <dl><dt class="label">Who acts</dt><dd>Crew supervisor, 311 desk</dd></dl>
+            <p class="label st on">Ranked list in v1</p>
+            <!-- TODO: 311 ticket matching -->
+            <p class="label st off">Matching 311 tickets: planned</p>
+          </li>
+          <li data-reveal>
+            <p class="label loop-n">Step 04</p><h3>Repair</h3>
+            <p>Crews fix the defect and close it in your work-order system, as they do today.</p>
+            <dl><dt class="label">Who acts</dt><dd>Your crews</dd></dl>
+            <p class="label st plain">Your current process</p>
+          </li>
+          <li data-reveal>
+            <p class="label loop-n">Step 05</p><h3>Verify</h3>
+            <p><b>Did the fix hold?</b> Each defect shows its last report date. New reports after a repair mean the fix failed.</p>
+            <dl><dt class="label">Who acts</dt><dd>Crew supervisor</dd></dl>
+            <p class="label st on">Last report date in v1</p>
+            <!-- TODO: explicit "repaired" status -->
+            <p class="label st off">"Repaired" status: planned</p>
+          </li>
+          <li data-reveal>
+            <p class="label loop-n">Step 06</p><h3>Plan</h3>
+            <p><b>Patch or repave?</b> Defect history by street shows where patching keeps failing.</p>
+            <dl><dt class="label">Who acts</dt><dd>Pavement engineer, director</dd></dl>
+            <!-- TODO: street-segment history and repave scoring -->
+            <p class="label st off">Planned</p>
+          </li>
+        </ol>
+        <svg class="loop-back" viewBox="0 0 1200 56" preserveAspectRatio="none" aria-hidden="true"><path d="M1192 0V40H8V0"/><path class="ah" d="M1 10L8 0L15 10"/></svg>
+        <p class="label loop-cap"><span aria-hidden="true">↺</span> Vehicles keep driving, so the list stays current and the loop repeats.</p>
+      </div>
+      <p class="out">Every repair gets checked by the next vehicle that drives past.</p>
+    </div>
+  </div>
+</section>
+
 <div class="say"><div class="wrap grid"><p class="label">Field note · 01</p><p><b>Repair what is worst, not what is loudest.</b> The road tells you where to start.</p></div></div>
 
 <!-- 03 proof -->
 <section class="sec" id="proof" aria-labelledby="proof-h">
   <div class="wrap">
     <div class="grid sec-head">
-      <p class="label sec-mark"><span class="sec-n">03</span><span>Proof</span></p>
+      <p class="label sec-mark"><span class="sec-n">04</span><span>Proof</span></p>
       <h2 id="proof-h">Be our first pilot city.</h2>
       <p class="intro">We will measure accuracy against your crew inspections and publish the method.</p>
     </div>
@@ -408,7 +496,7 @@
 <section class="sec" id="supply" aria-labelledby="supply-h">
   <div class="wrap">
     <div class="grid sec-head">
-      <p class="label sec-mark"><span class="sec-n">04</span><span>Where the data comes from</span></p>
+      <p class="label sec-mark"><span class="sec-n">05</span><span>Where the data comes from</span></p>
       <h2 id="supply-h">Your residents do not need to install anything.</h2>
       <p class="intro">Asphalt is a software kit, not a consumer app. It runs inside apps on Android phones that already travel your streets.</p>
     </div>
@@ -444,7 +532,7 @@
 <section class="sec" id="how" aria-labelledby="how-h">
   <div class="wrap">
     <div class="grid sec-head">
-      <p class="label sec-mark"><span class="sec-n">05</span><span>How it works for a city</span></p>
+      <p class="label sec-mark"><span class="sec-n">06</span><span>How it works for a city</span></p>
       <h2 id="how-h">From a vehicle on the road to a crew on site.</h2>
     </div>
     <div class="grid">
@@ -452,7 +540,7 @@
         <li data-reveal><h3>Install on vehicles</h3><p>Add Asphalt to an Android app on phones in your vehicles. No new hardware to buy or wire in.</p></li>
         <li data-reveal><h3>Detect</h3><p>As vehicles drive, each phone feels impacts and tells a pothole from a speed bump. Only the defect is sent.</p></li>
         <li data-reveal><h3>Confirm through multiple reports</h3><p>A defect counts once at least two reports land within about 100 feet. Each extra vehicle raises confidence.</p></li>
-        <li data-reveal><h3>Act on a ranked list</h3><p>Your team works from the ranked list and sends crews to the most certain defects first.</p></li>
+        <li data-reveal><h3>Act and verify</h3><p>Crews fix the most certain defects first. Vehicles keep driving past, so you see whether each fix held.</p></li>
       </ol>
       <p class="more"><a class="tlink" href="architecture">See the full architecture</a></p>
       <p class="out">Crews arrive at confirmed defects, not at rumors.</p>
@@ -466,7 +554,7 @@
     <div class="grid">
       <div class="det" id="try" data-plain>
         <div class="det-side">
-          <p class="label sec-mark"><span class="sec-n">06</span><span>Try the detector · no install</span></p>
+          <p class="label sec-mark"><span class="sec-n">07</span><span>Try the detector · no install</span></p>
           <h2 id="try-h">See how Asphalt tells a pothole from a speed bump.</h2>
           <p class="det-copy">A pothole has a signature. The road drops away, then the wheel hits the far edge. A speed bump does the reverse.</p>
           <ol class="det-steps" data-desk>
@@ -530,7 +618,7 @@
 <section class="sec" id="trust" aria-labelledby="trust-h">
   <div class="wrap">
     <div class="grid sec-head">
-      <p class="label sec-mark"><span class="sec-n">07</span><span>Trust and data governance</span></p>
+      <p class="label sec-mark"><span class="sec-n">08</span><span>Trust and data governance</span></p>
       <h2 id="trust-h">Know exactly what is collected, and what never is.</h2>
       <p class="intro">Each report describes one road defect. It carries no name, account or device ID, and no route.</p>
     </div>
@@ -584,7 +672,7 @@
 <section class="sec paper" id="limits" aria-labelledby="limits-h">
   <div class="wrap">
     <div class="grid sec-head">
-      <p class="label sec-mark"><span class="sec-n">08</span><span>Limitations and mitigations</span></p>
+      <p class="label sec-mark"><span class="sec-n">09</span><span>Limitations and mitigations</span></p>
       <h2 id="limits-h">Where the data is weak, and what we do about it.</h2>
       <p class="intro">Version 1 makes deliberate trade-offs. Here is each one, paired with how it is handled today.</p>
     </div>
@@ -618,7 +706,7 @@
 <section class="sec" id="use-cases" aria-labelledby="use-h">
   <div class="wrap">
     <div class="grid sec-head">
-      <p class="label sec-mark"><span class="sec-n">09</span><span>Use cases</span></p>
+      <p class="label sec-mark"><span class="sec-n">10</span><span>Use cases</span></p>
       <h2 id="use-h">One road signal, four decisions.</h2>
     </div>
     <div class="grid">
@@ -656,7 +744,7 @@
 <section class="sec band" id="pilot" aria-labelledby="pilot-h">
   <div class="wrap">
     <div class="grid sec-head">
-      <p class="label sec-mark"><span class="sec-n">10</span><span>Pilot</span></p>
+      <p class="label sec-mark"><span class="sec-n">11</span><span>Pilot</span></p>
       <h2 id="pilot-h">Start with one district. Judge the results yourself.</h2>
       <p class="intro">A pilot runs Asphalt on a small set of your vehicles. Then your crews check what it found.</p>
     </div>
@@ -670,10 +758,12 @@
           <div><dt>You provide</dt><dd><ul>
             <li>5 to 10 vehicles that already drive the pilot area, with drivers using Android phones</li>
             <li>One contact in public works</li>
-            <li>Crew time to check a sample of flagged defects</li></ul></dd></div>
+            <li>Crew time to check a sample of flagged defects</li>
+            <li>Repair dates for any flagged defects your crews fix</li></ul></dd></div>
           <div><dt>You receive</dt><dd><ul>
             <li>A ranked defect list and map for the pilot area</li>
             <li>Accuracy measured against your crew checks</li>
+            <li>A before and after for each defect your crews fix during the pilot</li>
             <li>A short report on coverage and next steps</li></ul></dd></div>
           <!-- TODO: pilot price and procurement path (e.g. under the small-purchase threshold) -->
           <div><dt>Cost</dt><dd>No cost for our first pilot cities, so no procurement process is needed.</dd></div>
