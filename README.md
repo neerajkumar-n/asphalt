@@ -107,7 +107,7 @@ Full backend documentation: [docs/backend-setup.md](docs/backend-setup.md)
 
 ### Demo with synthetic data
 
-A synthetic dataset (about 4,400 phone reports across New York City, Chicago
+A synthetic dataset (about 4,600 phone reports across New York City, Chicago
 and Los Angeles) shows what a populated map looks like. View it without a backend by
 opening the static demo map in `docs/demo/`, or load it into a running backend
 so the live dashboard fills up:
@@ -179,17 +179,16 @@ a physical Android device to test detection end-to-end.
    If testing on an **emulator**, the default `http://10.0.2.2:8080` (emulator
    alias for host localhost) already works.
 
-   If testing on a **physical device** over Wi-Fi, pass your development
-   machine's local IP address at build time (step 3):
-   ```bash
-   ./gradlew installDebug -PingestUrl="http://192.168.1.42:8080/v1/ingest/batch"
-   ```
-   Debug builds allow plain HTTP to any host; release builds do not.
+   If testing on a **physical device** over Wi-Fi, you will pass your
+   development machine's local IP address at build time in step 3 (macOS:
+   `ipconfig getifaddr en0`). Debug builds allow plain HTTP to any host;
+   release builds do not.
 
 3. Build and install the debug APK:
    ```bash
    cd demo-app/android
-   ./gradlew installDebug
+   ./gradlew installDebug                    # emulator
+   ./gradlew installDebug -PingestUrl="http://192.168.1.42:8080/v1/ingest/batch"   # physical device
    ```
 
 4. Open the app, grant location permission when prompted, then press **Start**.
@@ -200,7 +199,7 @@ a physical Android device to test detection end-to-end.
 |-----------|-------------|---------------|
 | Speed gate | ~3 mph (5 km/h) | ~9 mph (15 km/h) |
 | Logging | Verbose (Logcat tag: `Asphalt`) | Silent |
-| Backend URL | `http://10.0.2.2:8080` | Set in `build.gradle.kts` |
+| Backend URL | `http://10.0.2.2:8080`, or `-PingestUrl=...` | `-PingestUrl=...` (placeholder otherwise) |
 | Obfuscation | Off | R8 + ProGuard |
 
 The lower speed gate in debug builds means you can trigger real detections while
