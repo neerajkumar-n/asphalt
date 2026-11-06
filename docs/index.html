@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Asphalt · Road defects, found and ranked</title>
+<title>Asphalt · Road defect intelligence for cities</title>
 <meta name="description" content="Asphalt finds and ranks road defects across your city using phones already on your roads. A ranked defect list with confidence, a map and an API. No new hardware, no personal data.">
 <meta name="color-scheme" content="light">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' fill='%23171917'/%3E%3Cpath d='M3 16h18' stroke='%23f4f3ee' stroke-width='2' stroke-dasharray='4 2.5'/%3E%3Ccircle cx='15' cy='16' r='3.2' fill='%23c6f04d'/%3E%3C/svg%3E">
@@ -54,6 +54,7 @@
 .dm-bg{fill:var(--light-concrete)}
 .dm-grid line{stroke:var(--paper);stroke-width:3}
 .ddot{fill:var(--olive);stroke:var(--ink);stroke-width:1;fill-opacity:.85}
+.dlead{stroke:var(--ink);stroke-width:1}
 .dpin circle{fill:var(--signal);stroke:var(--ink);stroke-width:1.5}
 .dpin text{font:600 10px var(--f-mono);fill:var(--ink)}
 .dm-t{font:500 9px var(--f-mono);letter-spacing:.06em;fill:var(--graphite)}
@@ -84,17 +85,14 @@
 .get-foot{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:16px 32px;align-items:center;margin-top:32px}
 
 /* ---------- proof ---------- */
-.proof{grid-column:1/-1;display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--g);row-gap:24px}
-.proof-head{grid-column:1/-1;margin:0}
-.proof-head .ph{font-size:.9rem;padding:8px 12px}
-.pairs{grid-column:1/8;grid-row:span 2;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--g)}
-.pairs .ph-block{aspect-ratio:4/3}
-.acc{grid-column:8/13;margin:0;border-top:1px solid var(--ink)}
-.acc div{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:16px 0;border-bottom:1px solid var(--line)}
-.acc dt{font-weight:500}
-.acc dt small{display:block;font-weight:400;color:var(--fg-mute);font-size:.86rem;margin-top:2px}
-.acc dd{margin:0}
-.acc-note{grid-column:8/13;margin:0;color:var(--fg-mute);font-size:.92rem}
+.proof{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,8fr) minmax(0,4fr);gap:clamp(32px,4vw,64px);align-items:start}
+.measure{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--g)}
+.measure li{border-top:1px solid var(--ink);padding-top:16px;min-width:0}
+.measure h3{margin:16px 0 8px;font-weight:500;font-size:1.4rem;letter-spacing:-.02em}
+.measure p{margin:0;color:var(--fg-mute)}
+.measure .label{color:var(--fg-mute)}
+.proof-cta{border-top:3px solid var(--signal);padding-top:14px;display:flex;flex-direction:column;gap:20px;align-items:flex-start}
+.proof-cta p{margin:0}
 
 /* ---------- supply ---------- */
 .sup{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--g)}
@@ -162,6 +160,10 @@
 .terms dd{margin:0}
 .terms ul{margin:0;padding-left:18px}
 .terms li + li{margin-top:4px}
+.who-block{display:grid;grid-template-columns:96px minmax(0,1fr);gap:20px;align-items:center;margin-top:40px}
+.who-photo{aspect-ratio:1;padding:8px;align-items:center;text-align:center}
+.who-block p{margin:0 0 6px}
+.who-name{font-weight:600;font-size:1.2rem}
 .form{background:var(--off);color:var(--ink);padding:clamp(20px,3vw,32px);display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 .form h3{grid-column:1/-1;margin:0;font-weight:500;font-size:1.6rem;letter-spacing:-.02em}
 .fld{display:flex;flex-direction:column;gap:6px;min-width:0}
@@ -185,7 +187,7 @@
   .get{grid-template-columns:repeat(2,minmax(0,1fr))}
   .get li:not(:nth-child(3n+1)){padding-left:0;border-left:0}
   .get li:nth-child(2n){padding-left:24px;border-left:1px solid var(--line)}
-  .pairs,.acc,.acc-note{grid-column:1/-1;grid-row:auto}
+  .proof{grid-template-columns:minmax(0,1fr)}
   .csteps{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:48px}
   .trust{grid-template-columns:minmax(0,1fr)}
   .uses{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:48px}
@@ -199,11 +201,12 @@
   .dtab th,.dtab td{padding-inline:6px}
   .cbar{width:44px}
   .dtab td span:not(.cbar){font-size:.62rem}
+  .dtab td:nth-child(2){white-space:normal}
   .dash-map{height:auto;min-height:0}
   .cmp,.sup{grid-template-columns:minmax(0,1fr);row-gap:40px}
   .get{grid-template-columns:minmax(0,1fr)}
   .get li:nth-child(2n){padding-left:0;border-left:0}
-  .pairs{grid-template-columns:minmax(0,1fr)}
+  .measure{grid-template-columns:minmax(0,1fr);row-gap:32px}
   .csteps,.uses{grid-template-columns:minmax(0,1fr)}
   .never{grid-template-columns:minmax(0,1fr)}
   .reg-h{display:none}
@@ -266,23 +269,23 @@
               <caption class="sr">Top five road defects in the sample area, ranked by confidence</caption>
               <thead><tr><th scope="col">#</th><th scope="col">Defect</th><th scope="col">Confidence</th><th scope="col">Reports</th><th scope="col">Last report</th></tr></thead>
               <tbody>
-                <tr><td class="rk">01</td><td><b>Pothole</b><span>40.6815, -73.9640</span></td><td><span class="cbar"><i style="width:100%"></i></span>1.00</td><td>28<span>2 vehicle types</span></td><td>3 days ago</td></tr>
-                <tr><td class="rk">02</td><td><b>Pothole</b><span>40.6766, -73.9183</span></td><td><span class="cbar"><i style="width:98%"></i></span>0.98</td><td>25<span>2 vehicle types</span></td><td>Today</td></tr>
-                <tr><td class="rk">03</td><td><b>Pothole</b><span>40.6772, -73.9273</span></td><td><span class="cbar"><i style="width:94%"></i></span>0.94</td><td>16<span>2 vehicle types</span></td><td>Today</td></tr>
-                <tr><td class="rk">04</td><td><b>Rough patch</b><span>40.6779, -73.9414</span></td><td><span class="cbar"><i style="width:84%"></i></span>0.84</td><td>10<span>2 vehicle types</span></td><td>Today</td></tr>
-                <tr><td class="rk">05</td><td><b>Rough patch</b><span>40.6765, -73.9152</span></td><td><span class="cbar"><i style="width:83%"></i></span>0.83</td><td>8<span>2 vehicle types</span></td><td>Today</td></tr>
+                <tr><td class="rk">01</td><td><b>Pothole</b><span>56th Avenue</span></td><td><span class="cbar"><i style="width:89%"></i></span>0.89</td><td>15<span>2 vehicle types</span></td><td>4 days ago</td></tr>
+                <tr><td class="rk">02</td><td><b>Pothole</b><span>54th Drive</span></td><td><span class="cbar"><i style="width:88%"></i></span>0.88</td><td>14<span>2 vehicle types</span></td><td>2 days ago</td></tr>
+                <tr><td class="rk">03</td><td><b>Pothole</b><span>Queens Boulevard</span></td><td><span class="cbar"><i style="width:86%"></i></span>0.86</td><td>11<span>2 vehicle types</span></td><td>Today</td></tr>
+                <tr><td class="rk">04</td><td><b>Pothole</b><span>43rd Street</span></td><td><span class="cbar"><i style="width:85%"></i></span>0.85</td><td>9<span>2 vehicle types</span></td><td>1 day ago</td></tr>
+                <tr><td class="rk">05</td><td><b>Pothole</b><span>69th Street</span></td><td><span class="cbar"><i style="width:85%"></i></span>0.85</td><td>13<span>2 vehicle types</span></td><td>1 day ago</td></tr>
               </tbody>
             </table>
-            <p class="dash-more label">19 defects in this view · 5 shown</p>
+            <p class="dash-more label">21 defects in this view · 5 shown</p>
           </div>
-          <svg class="dash-map" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Schematic map of the sample area with the five ranked defects numbered and 14 more shown as dots">
-            <rect width="400" height="300" class="dm-bg"/>
-            <g class="dm-grid"><line x1="0" x2="400" y1="20" y2="20"/><line x1="0" x2="400" y1="60" y2="60"/><line x1="0" x2="400" y1="100" y2="100"/><line x1="0" x2="400" y1="140" y2="140"/><line x1="0" x2="400" y1="180" y2="180"/><line x1="0" x2="400" y1="220" y2="220"/><line x1="0" x2="400" y1="260" y2="260"/><line x1="24" x2="24" y1="0" y2="300"/><line x1="80" x2="80" y1="0" y2="300"/><line x1="136" x2="136" y1="0" y2="300"/><line x1="192" x2="192" y1="0" y2="300"/><line x1="248" x2="248" y1="0" y2="300"/><line x1="304" x2="304" y1="0" y2="300"/><line x1="360" x2="360" y1="0" y2="300"/></g>
-            <circle class="ddot" cx="177.6" cy="166.8" r="4.6"/><circle class="ddot" cx="150.4" cy="152.8" r="4.6"/><circle class="ddot" cx="312.3" cy="190.7" r="4.6"/><circle class="ddot" cx="225.3" cy="175.3" r="4.8"/><circle class="ddot" cx="235.5" cy="176.4" r="4.8"/><circle class="ddot" cx="14.1" cy="77.7" r="5.0"/><circle class="ddot" cx="326.4" cy="191.1" r="5.1"/><circle class="ddot" cx="362.7" cy="197.5" r="5.1"/><circle class="ddot" cx="157.2" cy="156.5" r="5.1"/><circle class="ddot" cx="346.6" cy="194.5" r="5.2"/><circle class="ddot" cx="248.0" cy="179.0" r="5.2"/><circle class="ddot" cx="33.9" cy="87.0" r="5.2"/><circle class="ddot" cx="127.0" cy="139.9" r="5.4"/><circle class="ddot" cx="41.0" cy="90.1" r="5.4"/><g class="dpin" transform="translate(337.6 193.3)"><circle r="11"/><text y="3.6" text-anchor="middle">5</text></g><g class="dpin" transform="translate(192.5 169.4)"><circle r="11"/><text y="3.6" text-anchor="middle">4</text></g><g class="dpin" transform="translate(270.7 182.6)"><circle r="11"/><text y="3.6" text-anchor="middle">3</text></g><g class="dpin" transform="translate(320.8 191.6)"><circle r="11"/><text y="3.6" text-anchor="middle">2</text></g><g class="dpin" transform="translate(66.6 105.4)"><circle r="11"/><text y="3.6" text-anchor="middle">1</text></g>
-            <text class="dm-t" x="10" y="290">SCHEMATIC MAP · BROOKLYN, NY</text>
+          <svg class="dash-map" viewBox="0 0 400 360" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Schematic map of the sample area with the five ranked defects numbered and 16 more shown as dots">
+            <rect width="400" height="360" class="dm-bg"/>
+            <g class="dm-grid"><line x1="0" x2="400" y1="20" y2="20"/><line x1="0" x2="400" y1="60" y2="60"/><line x1="0" x2="400" y1="100" y2="100"/><line x1="0" x2="400" y1="140" y2="140"/><line x1="0" x2="400" y1="180" y2="180"/><line x1="0" x2="400" y1="220" y2="220"/><line x1="0" x2="400" y1="260" y2="260"/><line x1="0" x2="400" y1="300" y2="300"/><line x1="0" x2="400" y1="340" y2="340"/><line x1="24" x2="24" y1="0" y2="360"/><line x1="80" x2="80" y1="0" y2="360"/><line x1="136" x2="136" y1="0" y2="360"/><line x1="192" x2="192" y1="0" y2="360"/><line x1="248" x2="248" y1="0" y2="360"/><line x1="304" x2="304" y1="0" y2="360"/><line x1="360" x2="360" y1="0" y2="360"/></g>
+            <circle class="ddot" cx="215.5" cy="101.1" r="4.4"/><circle class="ddot" cx="271.6" cy="129.0" r="4.7"/><circle class="ddot" cx="362.8" cy="291.9" r="4.8"/><circle class="ddot" cx="309.6" cy="189.8" r="4.8"/><circle class="ddot" cx="241.2" cy="114.4" r="4.8"/><circle class="ddot" cx="85.8" cy="30.2" r="4.9"/><circle class="ddot" cx="316.4" cy="203.2" r="5.0"/><circle class="ddot" cx="352.5" cy="271.9" r="5.0"/><circle class="ddot" cx="329.4" cy="229.6" r="5.0"/><circle class="ddot" cx="321.3" cy="214.1" r="5.1"/><circle class="ddot" cx="121.0" cy="126.9" r="5.1"/><circle class="ddot" cx="79.1" cy="28.0" r="5.2"/><circle class="ddot" cx="206.1" cy="95.7" r="5.2"/><circle class="ddot" cx="146.8" cy="63.6" r="5.4"/><circle class="ddot" cx="281.6" cy="138.2" r="5.5"/><circle class="ddot" cx="376.0" cy="316.0" r="5.6"/><g class="dpin" transform="translate(184.2 83.5)"><circle r="11"/><text y="3.6" text-anchor="middle">5</text></g><g class="dpin" transform="translate(24.0 284.3)"><circle r="11"/><text y="3.6" text-anchor="middle">4</text></g><g class="dpin" transform="translate(369.0 301.8)"><circle r="11"/><text y="3.6" text-anchor="middle">3</text></g><circle class="ddot" cx="31.0" cy="274.6" r="3"/><line class="dlead" x1="31.0" y1="274.6" x2="53.0" y2="248.6"/><g class="dpin" transform="translate(53.0 248.6)"><circle r="11"/><text y="3.6" text-anchor="middle">2</text></g><g class="dpin" transform="translate(300.1 173.3)"><circle r="11"/><text y="3.6" text-anchor="middle">1</text></g>
+            <text class="dm-t" x="24" y="346">SCHEMATIC MAP · QUEENS, NY</text>
           </svg>
         </div>
-        <figcaption id="dash-cap"><span class="label">Fig. 01 · Cropped view of the sample dashboard</span><a class="label" href="demo/">Open the full sample ↗</a></figcaption>
+        <figcaption id="dash-cap"><span class="label">Fig. 01 · Cropped view of the sample dashboard · street names: nearest road, OpenStreetMap</span><a class="label" href="demo/">Open the full sample ↗</a></figcaption>
       </figure>
     </div>
   </div>
@@ -358,8 +361,6 @@
       <div class="get-foot">
         <a class="btn signal" href="#pilot">Start a pilot <span class="ar">↗</span></a>
         <a class="tlink" href="demo/">See a sample city dashboard</a>
-        <!-- TODO: link to a sample export file once the export format is final -->
-        <span><span class="label">Download sample export</span> <span class="ph">[TODO: sample file path]</span></span>
       </div>
       <p class="out">Decide what to fix this week from one ranked list, not a pile of tickets.</p>
     </div>
@@ -373,25 +374,23 @@
   <div class="wrap">
     <div class="grid sec-head">
       <p class="label sec-mark"><span class="sec-n">03</span><span>Proof</span></p>
-      <h2 id="proof-h">Pilot results, checked against crew inspection.</h2>
-      <p class="intro">Every pilot compares flagged defects with what crews find on site. Results appear here once a pilot is verified.</p>
+      <h2 id="proof-h">Be our first pilot city.</h2>
+      <p class="intro">We will measure accuracy against your crew inspections and publish the method.</p>
     </div>
     <div class="grid">
+      <!-- TODO: once a pilot is verified, replace this block with the result:
+           [PILOT RESULT: X lane-miles driven, Y defects flagged, Z% confirmed on site],
+           two photo pairs (map pin beside a site photo), and precision / recall / sample size. -->
       <div class="proof">
-        <!-- TODO: replace with the first verified pilot result. Do not publish estimates. -->
-        <p class="proof-head"><span class="ph">[PILOT RESULT: X lane-miles driven, Y defects flagged, Z% confirmed on site]</span></p>
-        <div class="pairs">
-          <!-- TODO: photo pairs from the pilot: dashboard map pin beside a site photo of the same defect -->
-          <div class="ph-block" role="img" aria-label="Placeholder for a photo pair"><span>[PROOF DATA: map pin, defect 1]</span><span>beside a site photo</span></div>
-          <div class="ph-block" role="img" aria-label="Placeholder for a photo pair"><span>[PROOF DATA: map pin, defect 2]</span><span>beside a site photo</span></div>
+        <ol class="measure">
+          <li><p class="label">Measure 01</p><h3>Precision</h3><p>Of the defects Asphalt flags, how many your crews confirm on site.</p></li>
+          <li><p class="label">Measure 02</p><h3>Recall</h3><p>Of the defects your crews find, how many Asphalt flagged first.</p></li>
+          <li><p class="label">Measure 03</p><h3>Sample size</h3><p>How many defects were checked, so you can judge the numbers.</p></li>
+        </ol>
+        <div class="proof-cta">
+          <p>No pilot result has been published yet. The sample dashboard uses synthetic data only. Your pilot can be the first real result.</p>
+          <a class="btn signal" href="#pilot">Start a pilot <span class="ar">↗</span></a>
         </div>
-        <dl class="acc">
-          <!-- TODO: accuracy from the pilot, with the method used to count true and false positives -->
-          <div><dt>Precision<small>Share of flagged defects that crews confirmed</small></dt><dd><span class="ph">[PROOF DATA]</span></dd></div>
-          <div><dt>Recall<small>Share of crew-found defects that Asphalt flagged</small></dt><dd><span class="ph">[PROOF DATA]</span></dd></div>
-          <div><dt>Sample size<small>Defects checked on site</small></dt><dd><span class="ph">[PROOF DATA]</span></dd></div>
-        </dl>
-        <p class="acc-note">No pilot result has been published yet. The sample dashboard uses synthetic data only.</p>
       </div>
       <p class="out">Know how accurate the list is before you send a crew.</p>
     </div>
@@ -672,6 +671,15 @@
           <!-- TODO: pilot price and procurement path (e.g. under the small-purchase threshold) -->
           <div><dt>Cost</dt><dd><span class="ph">[TODO: pilot price and procurement path]</span></dd></div>
         </dl>
+        <!-- TODO: founder name, photo (square, at least 240px) and a one-line background -->
+        <div class="who-block">
+          <div class="ph-block who-photo" role="img" aria-label="Placeholder for founder photo"><span>[PHOTO]</span></div>
+          <div>
+            <p class="label">Who you will work with</p>
+            <p class="who-name"><span class="ph">[FOUNDER NAME]</span></p>
+            <p><span class="ph">[ONE-LINE BACKGROUND]</span></p>
+          </div>
+        </div>
 
         <!-- TODO: set data-endpoint (a form service URL that accepts a JSON POST) or data-mailto (an inbox address) -->
         <form class="form" id="pilotForm" novalidate data-endpoint="" data-mailto="">
