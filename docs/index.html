@@ -183,12 +183,7 @@
 .terms dd{margin:0}
 .terms ul{margin:0;padding-left:18px}
 .terms li + li{margin-top:4px}
-.who-block{display:grid;grid-template-columns:96px minmax(0,1fr);gap:20px;align-items:center;margin-top:40px}
-.who-photo{aspect-ratio:1;padding:8px;align-items:center;text-align:center}
-.who-block p{margin:0 0 6px}
-.who-mono{aspect-ratio:1;display:grid;place-items:center;background:var(--ink);color:var(--signal);font:600 1.6rem/1 var(--f-mono);letter-spacing:.04em}
 .when{margin:12px 0 0;font:500 .72rem/1.4 var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--fg-mute)}
-.who-name{font-weight:600;font-size:1.2rem}
 .form{background:var(--off);color:var(--ink);padding:clamp(20px,3vw,32px);display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 .form h3{grid-column:1/-1;margin:0;font-weight:500;font-size:1.6rem;letter-spacing:-.02em}
 .fld{display:flex;flex-direction:column;gap:6px;min-width:0}
@@ -768,19 +763,9 @@
           <!-- TODO: pilot price and procurement path (e.g. under the small-purchase threshold) -->
           <div><dt>Cost</dt><dd>No cost for our first pilot cities, so no procurement process is needed.</dd></div>
         </dl>
-        <!-- TODO: founder name, photo (square, at least 240px) and a one-line background -->
-        <div class="who-block">
-          <div class="who-mono" aria-hidden="true">NK</div>
-          <div>
-            <p class="label">Who you will work with</p>
-            <p class="who-name">Neeraj Kumar Nagaraja, founder</p>
-            <p>MBA candidate at Dartmouth's Tuck School of Business. Previously product marketing for Hyperswitch, Juspay's open-source payments platform.</p>
-            <p class="mono" style="font-size:.85rem;overflow-wrap:anywhere">neeraj.kumar.nagaraja.tu28@tuck.dartmouth.edu</p>
-          </div>
-        </div>
 
         <!-- TODO: set data-endpoint (a form service URL that accepts a JSON POST) or data-mailto (an inbox address) -->
-        <form class="form" id="pilotForm" novalidate data-endpoint="" data-mailto="neeraj.kumar.nagaraja.tu28@tuck.dartmouth.edu">
+        <form class="form" id="pilotForm" novalidate data-endpoint="" data-mailto="">
           <h3>Request a pilot</h3>
           <div class="fld"><label for="f-name">Name</label><input id="f-name" name="name" autocomplete="name" required></div>
           <div class="fld"><label for="f-org">Organization</label><input id="f-org" name="organization" autocomplete="organization" required></div>
