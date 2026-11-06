@@ -140,6 +140,13 @@ a{color:inherit}
 .foot-base a{text-decoration:none}
 .foot-base a:hover{color:var(--fg)}
 
+.foot-co{display:flex;flex-wrap:wrap;gap:8px}
+
+/* placeholders: content still to be supplied. Each one has a TODO comment beside it in the markup. */
+.ph{display:inline-block;font:500 .72rem/1.4 var(--f-mono);letter-spacing:.04em;color:var(--ink);background:repeating-linear-gradient(135deg,var(--light-concrete) 0 6px,var(--paper) 6px 12px);border:1px dashed var(--ink);padding:2px 6px;vertical-align:baseline;text-transform:none}
+.ph-block{display:flex;flex-direction:column;justify-content:center;gap:8px;padding:24px;border:1px dashed var(--ink);background:repeating-linear-gradient(135deg,var(--light-concrete) 0 10px,var(--paper) 10px 20px);font:500 .78rem/1.5 var(--f-mono);letter-spacing:.04em;color:var(--ink);min-width:0}
+.band .ph,.band .ph-block{color:var(--ink)}
+
 @media (max-width:1080px){
   .nav ul{gap:16px}
   .sec-head .label,.say .label{grid-column:1/-1;padding-top:0}

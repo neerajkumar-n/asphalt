@@ -1,0 +1,81 @@
+/* Asphalt detector: the interactive pothole / speed bump instrument shared by / and /developers.
+   Markup lives in each page; behaviour is in detector.js. */
+.det{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(32px,4vw,64px);align-items:start}
+.det-side{display:flex;flex-direction:column;gap:24px;align-items:flex-start}
+.det-side h2{margin:0;font-weight:500;font-size:clamp(2.4rem,4.6vw,4.4rem);line-height:1;letter-spacing:-.035em;text-wrap:balance}
+.det-copy{margin:0;color:var(--fg-mute);max-width:44ch;font-size:1.06rem}
+.det-steps{list-style:none;margin:0;padding:0;width:100%;border-top:1px solid var(--ink);counter-reset:s}
+.det-steps li{counter-increment:s;display:grid;grid-template-columns:40px minmax(0,1fr);padding:12px 0;border-bottom:1px solid var(--line);font-size:.95rem}
+.det-steps li::before{content:counter(s,decimal-leading-zero);font:500 .74rem/1.9 var(--f-mono);color:var(--fg-mute)}
+.det-steps b{font-weight:600}
+.seg{display:inline-flex;border:1px solid var(--ink)}
+.seg button{background:none;border:0;color:var(--fg);font:500 .78rem/1 var(--f-mono);letter-spacing:.04em;padding:12px 14px;cursor:pointer}
+.seg button + button{border-left:1px solid var(--ink)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--off)}
+.try-go{display:flex;flex-direction:column;gap:12px;align-items:flex-start}
+.try-prompt{display:flex;align-items:center;gap:8px;color:var(--fg)}
+.try-prompt i{width:8px;height:8px;border-radius:50%;background:var(--signal);box-shadow:0 0 0 1px var(--ink);animation:blink 1.6s ease-in-out infinite}
+.try-actions{display:flex;flex-wrap:wrap;gap:12px}
+.try-actions .pl{font-size:.72em;line-height:1}
+.btn.cue{position:relative}
+.btn.cue::after{content:"";position:absolute;inset:-1px;border:2px solid var(--ink);pointer-events:none;animation:cue 1.8s ease-out infinite}
+@keyframes cue{0%{inset:-1px;opacity:.7}100%{inset:-12px;opacity:0}}
+.btn.cue:hover::after{animation:none;opacity:0}
+.trace-wrap{position:relative}
+.inst-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:1;display:inline-flex;align-items:center;gap:10px;background:var(--signal);color:var(--ink);border:0;padding:12px 16px;font:600 .74rem/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;cursor:pointer;box-shadow:0 0 0 0 rgba(198,240,77,.6);animation:halo 1.8s ease-out infinite}
+.inst-play:hover{background:var(--off)}
+@keyframes halo{0%{box-shadow:0 0 0 0 rgba(198,240,77,.55)}100%{box-shadow:0 0 0 18px rgba(198,240,77,0)}}
+.inst{background:var(--ink);color:var(--off);min-width:0}
+.inst .label{color:#a3a59c}
+.inst-bar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px 16px;padding:12px 16px;border-bottom:1px solid var(--band-line)}
+.live{display:inline-flex;align-items:center;gap:8px}
+.live i{width:8px;height:8px;border-radius:50%;background:var(--signal);animation:blink 1.6s ease-in-out infinite}
+@keyframes blink{50%{opacity:.25}}
+.try-trace{display:block;width:100%;height:auto}
+.tg{stroke:rgba(244,243,238,.08);stroke-width:1}
+.tax{font-family:var(--f-mono);font-size:10px;fill:#8b8d86}
+#tryBase{stroke:#8b8d86;stroke-width:1;stroke-dasharray:3 4}
+#tryThr{stroke:rgba(244,243,238,.6);stroke-width:1;stroke-dasharray:8 4}
+#tryThrT{font-family:var(--f-mono);font-size:10px;fill:rgba(244,243,238,.7)}
+.tcurve{fill:none;stroke:var(--off);stroke-width:2;stroke-linejoin:round}
+.mark-dot{fill:var(--signal)}
+.mark-line{stroke:var(--signal);stroke-width:1;opacity:.5}
+.inst-read{margin:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border-top:1px solid var(--band-line)}
+.inst-read div{padding:12px 16px;min-width:0}
+.inst-read div + div{border-left:1px solid var(--band-line)}
+.inst-read dd{margin:6px 0 0;font:500 1.05rem/1.2 var(--f-mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.inst-read dd small{font-size:.7rem;color:#8b8d86;margin-left:4px}
+.inst-read dd.hit{color:var(--signal)}
+.try-status{margin:0;padding:12px 16px;border-top:1px solid var(--band-line);font:400 .85rem/1.4 var(--f-mono);color:#a3a59c;min-height:3.1em}
+.try-status.hit{color:var(--signal)}
+.inst-key{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border-top:1px solid var(--band-line)}
+.inst-key div{display:flex;align-items:center;gap:12px;padding:12px 16px;min-width:0}
+.inst-key div + div{border-left:1px solid var(--band-line)}
+.inst-key svg{flex:none;width:72px;height:28px}
+.inst-key path{fill:none;stroke:var(--off);stroke-width:1.5}
+.inst-key span{font:400 .74rem/1.4 var(--f-mono);color:#a3a59c}
+.inst-key b{display:block;color:var(--off);font-weight:500;letter-spacing:.06em}
+.try-note{margin:0;padding:12px 16px;border-top:1px solid var(--band-line);font-size:.8rem;color:#a3a59c}
+/* plain mode (buyer homepage): fewer readouts */
+.inst-read.plain{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (max-width:1080px){
+  .det{grid-template-columns:minmax(0,1fr)}
+  .det-side{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:var(--g);align-items:start}
+  .det-side > .label,.det-side h2,.det-copy{grid-column:1/-1}
+  .det-steps{grid-row:span 3}
+}
+@media (max-width:760px){
+  .det-side{display:flex}
+  .inst-read{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .inst-read div:nth-child(4){border-left:0}
+  .inst-read div:nth-child(n+4){border-top:1px solid var(--band-line)}
+  .inst-key{grid-template-columns:minmax(0,1fr)}
+  .inst-key div + div{border-left:0;border-top:1px solid var(--band-line)}
+  .inst-read.plain{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .inst-read.plain div:nth-child(n){border-top:0}
+  .inst-read.plain div + div{border-left:1px solid var(--band-line)}
+}
+@media (prefers-reduced-motion:reduce){
+  .live i,.try-prompt i,.inst-play{animation:none}
+  .btn.cue::after{display:none}
+}
