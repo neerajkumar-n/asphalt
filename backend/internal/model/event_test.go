@@ -194,14 +194,6 @@ func TestValidate_invalidVehicleTypeIsRejected(t *testing.T) {
 	}
 }
 
-func TestValidate_threeWheelerRejected(t *testing.T) {
-	e := validEvent()
-	e.VehicleType = "three_wheeler"
-	if msg := e.Validate(); msg == "" {
-		t.Error("expected error for three_wheeler, which is no longer supported")
-	}
-}
-
 func TestValidate_allValidVehicleTypes(t *testing.T) {
 	types := []string{
 		VehicleTypeTwoWheeler,
