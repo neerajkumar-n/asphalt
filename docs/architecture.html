@@ -200,18 +200,14 @@
     </a>
     <nav class="nav" id="nav" aria-label="Main">
       <ul>
-        <li><a href="./#principles">Product</a></li>
+        <li><a href="./#use-cases">Use cases</a></li>
         <li><a href="./#how">How it works</a></li>
-        <li><a href="architecture" aria-current="page">Architecture</a></li>
-        <li><a href="demo/">Demo</a></li>
-        <li><a href="https://github.com/neerajkumar-n/asphalt/tree/main/docs">Documentation</a></li>
-        <li class="nav-sm"><a href="./#start">Get started</a></li>
-        <li class="nav-sm"><a href="https://github.com/neerajkumar-n/asphalt">GitHub</a></li>
+        <li><a href="./#pilot">Pilot</a></li>
+        <li><a href="developers" aria-current="page">Developers</a></li>
       </ul>
     </nav>
     <div class="top-act">
-      <a class="gh" href="https://github.com/neerajkumar-n/asphalt" aria-label="Asphalt on GitHub"><svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a>
-      <a class="btn signal sm" href="./#try-it">Try the detector <span class="ar">↗</span></a>
+      <a class="btn signal sm" href="./#pilot">Start a pilot <span class="ar">↗</span></a>
       <button class="menu-btn" type="button" aria-expanded="false" aria-controls="nav">Menu</button>
     </div>
   </div>
@@ -555,40 +551,37 @@ curl -X POST http://localhost:8080/v1/ingest/batch \
     <div class="grid">
       <div class="foot-id">
         <a class="brand" href="./" aria-label="Asphalt home"><svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" fill="#171917"/><path d="M3 16h18" stroke="#f4f3ee" stroke-width="2" stroke-dasharray="4 2.5"/><circle cx="15" cy="16" r="3.2" fill="#c6f04d"/></svg>ASPHALT</a>
-        <p>An open-source road-quality platform powered by the phones already on the road.</p>
+        <p>Asphalt finds and ranks road defects using phones already on your roads. The code is open source under Apache 2.0.</p>
       </div>
       <nav aria-label="Product">
         <p class="label">Product</p>
         <ul>
-          <li><a href="./#try-it">Try the detector</a></li>
-          <li><a href="demo/">Demo map</a></li>
+          <li><a href="./#use-cases">Use cases</a></li>
           <li><a href="./#how">How it works</a></li>
-          <li><a href="architecture">Architecture</a></li>
-          <li><a href="./#signal">The signal</a></li>
+          <li><a href="demo/">Sample city dashboard</a></li>
+          <li><a href="./#pilot">Start a pilot</a></li>
         </ul>
       </nav>
       <nav aria-label="Developers">
         <p class="label">Developers</p>
         <ul>
-          <li><a href="https://github.com/neerajkumar-n/asphalt/blob/main/docs/sdk-integration.md">SDK integration</a></li>
-          <li><a href="https://github.com/neerajkumar-n/asphalt/blob/main/docs/backend-setup.md">Backend setup</a></li>
+          <li><a href="developers">Developer overview</a></li>
+          <li><a href="architecture">Architecture</a></li>
           <li><a href="https://github.com/neerajkumar-n/asphalt/blob/main/contracts/api.yaml">API (OpenAPI)</a></li>
-          <li><a href="https://github.com/neerajkumar-n/asphalt/blob/main/docs/sensor-model.md">Sensor model</a></li>
-          <li><a href="https://github.com/neerajkumar-n/asphalt/blob/main/docs/vehicle-profiles.md">Vehicle profiles</a></li>
-          <li><a href="https://github.com/neerajkumar-n/asphalt/blob/main/CONTRIBUTING.md">Contributing</a></li>
+          <li><a href="https://github.com/neerajkumar-n/asphalt">GitHub</a></li>
         </ul>
       </nav>
-      <nav aria-label="Project">
-        <p class="label">Project</p>
+      <nav aria-label="Company">
+        <p class="label">Company</p>
         <ul>
-          <li><a href="https://github.com/neerajkumar-n/asphalt">GitHub</a></li>
-          <li><a href="https://github.com/neerajkumar-n/asphalt/blob/main/LICENSE">Licence</a></li>
-          <li><a href="https://github.com/neerajkumar-n/asphalt/blob/main/CODE_OF_CONDUCT.md">Code of conduct</a></li>
-          <li><a href="./#limits">Known limitations</a></li>
+          <li><a href="privacy">Privacy</a></li>
+          <!-- TODO: terms of service page -->
+          <li>Pilot terms on request</li>
+          <li><a href="https://github.com/neerajkumar-n/asphalt/blob/main/LICENSE">License (Apache 2.0)</a></li>
         </ul>
       </nav>
       <p class="foot-say">Every road has a signal.</p>
-      <div class="foot-base label"><span>Apache 2.0 · Asphalt contributors</span><a href="#top-h">Back to top ↑</a></div>
+      <div class="foot-base label"><span>Apache 2.0 · Asphalt</span><a href="#top-h">Back to top ↑</a></div>
     </div>
   </div>
 </footer>
@@ -698,14 +691,14 @@ curl -X POST http://localhost:8080/v1/ingest/batch \
     $('oAgree').textContent = st.agree + '%'; $('oAge').textContent = st.age;
     $('iAgree').value = st.agree; $('iAge').value = st.age;
     const verdict = $('cVerdict');
-    if (n < 2) { $('cScore').textContent = '—'; verdict.textContent = 'Not a cluster yet. DBSCAN needs at least two reports within 30 m; one alone is noise.'; verdict.classList.add('off'); }
+    if (n < 2) { $('cScore').textContent = '–'; verdict.textContent = 'Not a cluster yet. DBSCAN needs at least two reports within 30 m; one alone is noise.'; verdict.classList.add('off'); }
     else {
       $('cScore').textContent = total.toFixed(2);
       verdict.textContent = total >= .3 ? 'On the map. Above the 0.30 default for map tiles.' : 'Below the 0.30 tile default. Hidden unless a client asks for less.';
       verdict.classList.toggle('off', total < .3);
     }
     $('cStack').innerHTML = n < 2 ? '' : parts.map((p, i) => `<i style="width:${p[2] * 100}%;background:${C[i]}" title="${p[0]} ${p[2].toFixed(2)}"></i>`).join('');
-    $('cParts').innerHTML = parts.map((p, i) => `<dt><i style="background:${C[i]}"></i>${p[0]}</dt><dd class="how">${p[1]}</dd><dd class="val">${n < 2 ? '—' : p[2].toFixed(2)}</dd>`).join('');
+    $('cParts').innerHTML = parts.map((p, i) => `<dt><i style="background:${C[i]}"></i>${p[0]}</dt><dd class="how">${p[1]}</dd><dd class="val">${n < 2 ? '–' : p[2].toFixed(2)}</dd>`).join('');
   };
   document.querySelectorAll('[data-step]').forEach(b => b.addEventListener('click', () => {
     const [k, d] = b.dataset.step.split(':'); st[k] = Math.max(0, Math.min(40, st[k] + +d)); calc();
